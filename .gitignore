@@ -1,0 +1,7 @@
+# Portage-generated metadata cache (created by `ebuild`/`egencache` runs on
+# this checkout; regenerated on demand — never source).
+/metadata/md5-cache/
+
+# Output directory of scripts/gen-distfiles.sh when run from the repo root;
+# the tarballs it produces are release assets, not repository content.
+/distfiles-out/

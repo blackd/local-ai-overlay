@@ -1,0 +1,11 @@
+# Environment for the LocalAI server. Every LOCALAI_* variable the binary
+# understands can be set here; see `local-ai run --help`.
+
+# Listen address.
+LOCALAI_ADDRESS=:8080
+
+# Where models live and where runtime-installed backends go. The backends
+# directory also receives symlinks from Portage-installed backend packages
+# (app-localai/*).
+LOCALAI_MODELS_PATH=/var/lib/localai/models
+LOCALAI_BACKENDS_PATH=/var/lib/localai/backends

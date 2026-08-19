@@ -1,0 +1,20 @@
+#!/sbin/openrc-run
+# OpenRC service for the LocalAI server.
+
+description="Self-hosted, OpenAI-compatible AI server"
+command="/usr/bin/local-ai"
+command_args="run"
+command_user="localai:localai"
+command_background="yes"
+pidfile="/run/${RC_SVCNAME}.pid"
+directory="/var/lib/localai"
+output_log="/var/log/local-ai.log"
+error_log="/var/log/local-ai.log"
+
+depend() {
+	need net
+}
+
+start_pre() {
+	checkpath -f -o localai:localai "${output_log}"
+}
