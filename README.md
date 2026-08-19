@@ -7,12 +7,13 @@ against system libraries. See `metadata/docs/specs/` for the design.
 
 ## Enabling the overlay
 
-Create `/etc/portage/repos.conf/localai.conf`:
+Needs app-eselect/eselect-repository and dev-vcs/git installed.
 
-    [localai]
-    location = /home/plamen/development/gentoo/local-ai-overlay
-    masters = gentoo
-    auto-sync = no
+    eselect repository add localai git https://git.ipnmod.org/mirinimi/local-ai-overlay.git
+    emaint sync -r localai
+
+This registers the overlay under the name `localai` (checkout managed by
+Portage in /var/db/repos/localai, kept up to date by `emerge --sync`).
 
 ## Version bumps
 
