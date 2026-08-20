@@ -8,8 +8,23 @@ jobs:
     runs-on: ubuntu-latest
     container: gentoo/stage3:latest
     steps:
-      - name: Probe Portage inside the container
+      - name: Inventory preinstalled tools
         run: |
-          cat /etc/gentoo-release
+          for t in git curl wget rsync go node npm protoc xz emerge-webrsync python3; do command -v "$t" >/dev/null && echo "present: $t" || echo "MISSING: $t"; done
+
+      - name: Configure gentoo repo from LAN mirror
+        run: |
+          if [ -f /etc/portage/repos.conf ]; then rm /etc/portage/repos.conf; fi
+          mkdir -p /etc/portage/repos.conf
+          printf '[gentoo]\nlocation = /var/db/repos/gentoo\nsync-type = git\nsync-uri = http://gitea.lan/mirrors/gentoo-portage.git\nsync-depth = 1\nauto-sync = yes\n' > /etc/portage/repos.conf/gentoo.conf
+          cat /etc/portage/repos.conf/gentoo.conf
+
+      - name: Sync tree from mirror
+        run: |
+          time emaint sync -r gentoo
+
+      - name: Verify Portage is fully functional
+        run: |
           emerge --version
-          ebuild --version
+          portageq get_repo_path / gentoo
+          ls /var/db/repos/gentoo/profiles | head -5
