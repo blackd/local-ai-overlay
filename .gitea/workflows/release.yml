@@ -1,0 +1,31 @@
+name: release-distfiles
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # golang from apt may be older than LocalAI's go directive; Go's
+      # automatic toolchain download (GOTOOLCHAIN=auto) fetches the right
+      # version on first use.
+      - name: Install toolchain
+        run: |
+          apt-get update
+          apt-get install -y curl git golang nodejs npm protobuf-compiler xz-utils
+
+      - name: Generate distfiles
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          bash scripts/gen-distfiles.sh "${VERSION}"
+
+      - name: Create release and upload assets
+        uses: akkuman/gitea-release-action@v1
+        with:
+          files: distfiles-out/*.tar.xz
+          sha256sum: true

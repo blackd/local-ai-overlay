@@ -21,8 +21,10 @@ Portage in /var/db/repos/localai, kept up to date by `emerge --sync`).
 2. Update the commit pins: `LOCALAI_COMMIT` in `sci-ml/local-ai`,
    `LLAMA_COMMIT` in `app-localai/llama-cpp` (read `LLAMA_VERSION` from
    `backend/cpp/llama-cpp/Makefile` at the new upstream tag).
-3. Run `scripts/gen-distfiles.sh <new-version>` on a networked machine.
-4. Create a Gitea release on mirinimi/local-ai-overlay tagged `v<version>`
-   and attach the three generated tarballs as release assets.
-5. Regenerate Manifests: `ebuild <pkg>.ebuild manifest` for each package.
-6. Build and smoke-test (see metadata/docs/specs, "Acceptance / smoke test").
+3. Commit and push, then push a tag `v<version>` — the release-distfiles
+   Gitea Action generates the dependency tarballs on the runner and
+   publishes them as the release's assets.
+4. Regenerate Manifests once the release is up (Portage fetches straight
+   from it): `ebuild <pkg>.ebuild manifest` for each package; commit the
+   Manifest changes.
+5. Build and smoke-test (see metadata/docs/testing.md).
