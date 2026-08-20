@@ -1,0 +1,15 @@
+name: test-gentoo-container
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    container: gentoo/stage3:latest
+    steps:
+      - name: Probe Portage inside the container
+        run: |
+          cat /etc/gentoo-release
+          emerge --version
+          ebuild --version
