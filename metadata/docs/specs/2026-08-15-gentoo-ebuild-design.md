@@ -67,7 +67,7 @@ independently.
   build, offline, from a pre-packed `node_modules` (npm dependency) tarball —
   rather than shipping a pre-built copy of it.
 - **Distfiles**: overlay is a git repo (remote:
-  `git.ipnmod.org/mirinimi/local-ai-overlay` on the maintainer's Gitea); it
+  `git.ipnmod.org/packages/local-ai-overlay` on the maintainer's Gitea); it
   ships a script that generates the dependency tarballs, which are hosted as
   Gitea release assets on that same repository — one release per LocalAI
   version, tagged `v<version>`. GitHub-fetchable sources (LocalAI release

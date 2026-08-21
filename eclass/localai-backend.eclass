@@ -30,7 +30,7 @@ _LOCALAI_BACKEND_ECLASS=1
 # scripts/gen-distfiles.sh and attached as release assets on the overlay's
 # own Gitea repository: one release per LocalAI version, tagged v<version>,
 # holding that version's three tarballs.
-DISTFILES_BASE="https://git.ipnmod.org/mirinimi/local-ai-overlay/releases/download/v${PV}"
+DISTFILES_BASE="https://git.ipnmod.org/packages/local-ai-overlay/releases/download/v${PV}"
 
 # @ECLASS_VARIABLE: LOCALAI_BACKENDS_DIR
 # @DESCRIPTION:

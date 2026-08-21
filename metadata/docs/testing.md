@@ -12,7 +12,7 @@ be asserted by reading code, not by building it.
 ## Prerequisites
 
 - Overlay enabled (see README) and the `v4.8.2` release published on
-  git.ipnmod.org/mirinimi/local-ai-overlay with its three tarball assets
+  git.ipnmod.org/packages/local-ai-overlay with its three tarball assets
   (`local-ai-4.8.2-deps.tar.xz`, `-node_modules.tar.xz`, `-prebuilt.tar.xz`).
 
 ## 1. Core server (sci-ml/local-ai)

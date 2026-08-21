@@ -9,7 +9,7 @@ against system libraries. See `metadata/docs/specs/` for the design.
 
 Needs app-eselect/eselect-repository and dev-vcs/git installed.
 
-    eselect repository add localai git https://git.ipnmod.org/mirinimi/local-ai-overlay.git
+    eselect repository add localai git https://git.ipnmod.org/packages/local-ai-overlay.git
     emaint sync -r localai
 
 This registers the overlay under the name `localai` (checkout managed by
