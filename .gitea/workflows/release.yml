@@ -3,7 +3,7 @@ name: release-distfiles
 on:
   push:
     tags:
-      - 'v*'
+      - 'distfiles-v*'
 
 jobs:
   release:
@@ -21,22 +21,25 @@ jobs:
         run: emerge -G -q dev-lang/go net-libs/nodejs dev-libs/protobuf
       - name: Generate distfiles
         run: |
-          VERSION=${GITHUB_REF_NAME#v}
+          VERSION=${GITHUB_REF_NAME#distfiles-v}
           bash scripts/gen-distfiles.sh "${VERSION}"
-      - name: Regenerate Manifests
+      - name: Push Manifests
+        id: manifests
         run: |
           cp distfiles-out/*.tar.xz /var/cache/distfiles/
           ebuild sci-ml/local-ai/local-ai-*.ebuild manifest
           ebuild app-localai/llama-cpp/llama-cpp-*.ebuild manifest
-      - name: Push Manifests
-        run: |
           git config user.name "gitea-actions"
           git config user.email "gitea-actions@noreply.ipnmod.org"
           git add sci-ml/local-ai/Manifest app-localai/llama-cpp/Manifest
           git diff --cached --quiet || git commit -m "Manifests for ${GITHUB_REF_NAME}"
           git push origin HEAD:master
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "version_tag=v${GITHUB_REF_NAME#distfiles-v}" >> "$GITHUB_OUTPUT"
       - name: Publish release
         uses: akkuman/gitea-release-action@v1
         with:
+          tag_name: ${{ steps.manifests.outputs.version_tag }}
+          target_commitish: ${{ steps.manifests.outputs.sha }}
           files: distfiles-out/*.tar.xz
           sha256sum: true

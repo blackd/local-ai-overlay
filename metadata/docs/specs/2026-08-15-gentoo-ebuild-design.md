@@ -70,7 +70,9 @@ independently.
   `git.ipnmod.org/packages/local-ai-overlay` on the maintainer's Gitea); it
   ships a script that generates the dependency tarballs, which are hosted as
   Gitea release assets on that same repository — one release per LocalAI
-  version, tagged `v<version>`. GitHub-fetchable sources (LocalAI release
+  version. The release workflow triggers on a `distfiles-v<version>` tag,
+  regenerates the Manifests in CI, and creates the release under a
+  `v<version>` tag pointing at the Manifest commit. GitHub-fetchable sources (LocalAI release
   tarball, llama.cpp commit tarball) are referenced directly in `SRC_URI`.
 - **Coexistence**: `app-localai/llama-cpp` must be co-installable with
   Portage's `llama-cpp`. Achieved by construction: backends install under
@@ -135,8 +137,8 @@ machine. It clones/downloads the LocalAI release, then produces:
 
 The script only creates the tarballs (into a local output directory)
 and prints their SHA256 sums; uploading them to the hosting server is done
-manually by the maintainer (a Gitea release tagged `v<version>` with the
-three tarballs attached). `SRC_URI` references them at
+by CI (a Gitea release tagged `v<version>` with the three tarballs
+attached, created by the release workflow). `SRC_URI` references them at
 `${DISTFILES_BASE}/...`, defined once in the eclass as the Gitea release
 download URL for the package's version.
 
