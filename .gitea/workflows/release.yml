@@ -42,3 +42,5 @@ jobs:
           target_commitish: ${{ steps.manifests.outputs.sha }}
           files: distfiles-out/*.tar.xz
           sha256sum: true
+      - name: Advance release branch
+        run: git push origin ${{ steps.manifests.outputs.sha }}:release
