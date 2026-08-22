@@ -7,24 +7,35 @@ on:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: gentoo-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
-
-      # golang from apt may be older than LocalAI's go directive; Go's
-      # automatic toolchain download (GOTOOLCHAIN=auto) fetches the right
-      # version on first use.
-      - name: Install toolchain
+      - name: Unpack repos snapshot
         run: |
-          apt-get update
-          apt-get install -y curl git golang nodejs npm protobuf-compiler xz-utils
-
+          API=https://git.ipnmod.org/v2/mirinimi/gentoo-runner-repos
+          DIGEST=$(curl -sf -u "mirinimi:${{ secrets.REGISTRY_TOKEN }}" -H 'Accept: application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json' ${API}/manifests/latest | python3 -c 'import json,sys; print(json.load(sys.stdin)["layers"][0]["digest"])')
+          curl -sfL -u "mirinimi:${{ secrets.REGISTRY_TOKEN }}" ${API}/blobs/${DIGEST} | tar -xzf - -C /
+      - name: Install toolchain from binhost
+        run: emerge -G -q dev-lang/go net-libs/nodejs dev-libs/protobuf
       - name: Generate distfiles
         run: |
           VERSION=${GITHUB_REF_NAME#v}
           bash scripts/gen-distfiles.sh "${VERSION}"
-
-      - name: Create release and upload assets
+      - name: Regenerate Manifests
+        run: |
+          cp distfiles-out/*.tar.xz /var/cache/distfiles/
+          ebuild sci-ml/local-ai/local-ai-*.ebuild manifest
+          ebuild app-localai/llama-cpp/llama-cpp-*.ebuild manifest
+      - name: Push Manifests
+        run: |
+          git config user.name "gitea-actions"
+          git config user.email "gitea-actions@noreply.ipnmod.org"
+          git add sci-ml/local-ai/Manifest app-localai/llama-cpp/Manifest
+          git diff --cached --quiet || git commit -m "Manifests for ${GITHUB_REF_NAME}"
+          git push origin HEAD:master
+      - name: Publish release
         uses: akkuman/gitea-release-action@v1
         with:
           files: distfiles-out/*.tar.xz
