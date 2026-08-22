@@ -19,6 +19,8 @@ jobs:
       - name: Install toolchain from binhost
         run: emerge -G -q dev-lang/go net-libs/nodejs dev-libs/protobuf
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Generate distfiles
         run: |
           VERSION=${GITHUB_REF_NAME#distfiles-v}
