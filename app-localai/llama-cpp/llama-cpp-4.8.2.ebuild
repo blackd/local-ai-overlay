@@ -33,7 +33,16 @@ LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64 ~arm64"
 IUSE="cuda native openblas rocm test vulkan"
-REQUIRED_USE="?? ( cuda rocm ) rocm? ( ${ROCM_REQUIRED_USE} )"
+# Any selected amdgpu_targets_* flag (typically expanded from AMDGPU_TARGETS
+# in make.conf) requires USE=rocm — otherwise the target flags apply to a
+# non-HIP build and break it. Derive "flag? ( rocm )" for every target the
+# eclass knows.
+_amdgpu_implies_rocm=""
+for _f in ${ROCM_REQUIRED_USE//[!a-z0-9_ ]/}; do
+	_amdgpu_implies_rocm+=" ${_f}? ( rocm )"
+done
+REQUIRED_USE="?? ( cuda rocm ) rocm? ( ${ROCM_REQUIRED_USE} ) ${_amdgpu_implies_rocm}"
+unset _amdgpu_implies_rocm _f
 RESTRICT="!test? ( test )"
 
 # The server package provides the localai user and the runtime backends
@@ -82,6 +91,13 @@ src_prepare() {
 	pushd "${WORKDIR}/LocalAI-${PV}/backend/cpp/llama-cpp" >/dev/null || die
 	bash ./prepare.sh || die "prepare.sh failed"
 	popd >/dev/null || die
+
+	# System abseil is built for C++20 (its installed headers force
+	# std::*_ordering), so the gRPC glue must compile as C++20 too;
+	# upstream's C++17 setting only works against its vendored,
+	# C++17-configured gRPC/absl stack.
+	sed -i 's/set(CMAKE_CXX_STANDARD 17)/set(CMAKE_CXX_STANDARD 20)/' "${S}/tools/grpc-server/CMakeLists.txt" || die
+	grep -q 'set(CMAKE_CXX_STANDARD 20)' "${S}/tools/grpc-server/CMakeLists.txt" || die "C++ standard bump did not apply"
 
 	cmake_src_prepare
 
