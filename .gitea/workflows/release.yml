@@ -27,8 +27,8 @@ jobs:
         id: manifests
         run: |
           cp distfiles-out/*.tar.xz /var/cache/distfiles/
-          ebuild sci-ml/local-ai/local-ai-*.ebuild manifest
-          ebuild app-localai/llama-cpp/llama-cpp-*.ebuild manifest
+          ebuild --force sci-ml/local-ai/local-ai-*.ebuild manifest
+          ebuild --force app-localai/llama-cpp/llama-cpp-*.ebuild manifest
           git config user.name "gitea-actions"
           git config user.email "gitea-actions@noreply.ipnmod.org"
           git add sci-ml/local-ai/Manifest app-localai/llama-cpp/Manifest
