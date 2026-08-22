@@ -11,7 +11,6 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
       - name: Unpack repos snapshot
         run: |
           API=https://git.ipnmod.org/v2/mirinimi/gentoo-runner-repos
@@ -19,6 +18,7 @@ jobs:
           curl -sfL -u "mirinimi:${{ secrets.REGISTRY_TOKEN }}" ${API}/blobs/${DIGEST} | tar -xzf - -C /
       - name: Install toolchain from binhost
         run: emerge -G -q dev-lang/go net-libs/nodejs dev-libs/protobuf
+      - uses: actions/checkout@v4
       - name: Generate distfiles
         run: |
           VERSION=${GITHUB_REF_NAME#distfiles-v}
