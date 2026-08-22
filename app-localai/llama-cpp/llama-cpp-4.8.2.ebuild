@@ -157,5 +157,5 @@ src_install() {
 	# LocalAI discovers backends by scanning its backends directory for
 	# subdirectories containing run.sh; nothing goes into PATH or the
 	# library directories — hence no collision with a system llama-cpp.
-	localai-backend_install llama-cpp "${BUILD_DIR}"/tools/grpc-server/grpc-server
+	localai-backend_install llama-cpp "${BUILD_DIR}"/bin/grpc-server
 }
