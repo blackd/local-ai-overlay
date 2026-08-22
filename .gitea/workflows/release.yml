@@ -27,11 +27,10 @@ jobs:
         id: manifests
         run: |
           cp distfiles-out/*.tar.xz /var/cache/distfiles/
-          ebuild --force sci-ml/local-ai/local-ai-*.ebuild manifest
-          ebuild --force app-localai/llama-cpp/llama-cpp-*.ebuild manifest
+          for d in $(dirname $(find . -name '*.ebuild') | sort -u); do ebuild --force $(ls $d/*.ebuild | head -1) manifest; done
           git config user.name "gitea-actions"
           git config user.email "gitea-actions@noreply.ipnmod.org"
-          git add sci-ml/local-ai/Manifest app-localai/llama-cpp/Manifest
+          find . -name Manifest -exec git add {} +
           git diff --cached --quiet || git commit -m "Manifests for ${GITHUB_REF_NAME}"
           git push origin HEAD:master
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
