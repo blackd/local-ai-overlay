@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<!-- Maintainer: Plamen K. Kosseff. No email by choice: GLEP 68 makes <email> mandatory inside <maintainer>, hence no maintainer element. -->
+	<upstream>
+		<remote-id type="github">mudler/LocalAI</remote-id>
+	</upstream>
+	<use>
+		<flag name="system-onnxruntime">Link against <pkg>sci-libs/onnxruntime</pkg> instead of building the pinned onnxruntime from source</flag>
+	</use>
+</pkgmetadata>
