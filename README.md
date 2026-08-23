@@ -7,8 +7,12 @@ against system libraries. See `metadata/docs/specs/` for the design.
 
 ## Enabling the overlay
 
-Needs app-eselect/eselect-repository and dev-vcs/git installed.
+Needs app-eselect/eselect-repository and dev-vcs/git installed. The overlay
+declares the GURU repository as a master (some backends depend on packages
+from it, e.g. sci-libs/onnxruntime), so enable it first:
 
+    eselect repository enable guru
+    emaint sync -r guru
     eselect repository add localai git https://git.ipnmod.org/packages/local-ai-overlay.git
     emaint sync -r localai
 
