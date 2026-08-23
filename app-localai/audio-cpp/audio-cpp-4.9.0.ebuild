@@ -56,10 +56,15 @@ src_unpack() {
 src_prepare() {
 	cmake_src_prepare
 
-	# Same story as llama-cpp: system abseil is C++20 and its headers force
-	# std::*_ordering, so the gRPC glue cannot compile as C++17.
-	sed -i 's/set(CMAKE_CXX_STANDARD 17)/set(CMAKE_CXX_STANDARD 20)/' CMakeLists.txt || die
-	grep -q 'set(CMAKE_CXX_STANDARD 20)' CMakeLists.txt || die "C++ standard bump did not apply"
+	# System abseil (reached via system protobuf headers — the engine
+	# builds its vendored sentencepiece with _USE_EXTERNAL_PROTOBUF)
+	# requires C++20. Bump every C++17 pin in the tree, engine's vendored
+	# subprojects included, not just the wrapper's CMakeLists.
+	local f
+	while IFS= read -r f; do
+		sed -i 's/CMAKE_CXX_STANDARD 17/CMAKE_CXX_STANDARD 20/g' "${f}" || die
+	done < <(grep -rl 'CMAKE_CXX_STANDARD 17' .)
+	grep -rq 'CMAKE_CXX_STANDARD 17' . && die "C++17 pins remain"
 }
 
 src_configure() {
