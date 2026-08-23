@@ -72,6 +72,11 @@ src_configure() {
 		# Compiles the model_specs catalog into the binary so the installed
 		# backend needs no model_specs directory (upstream deployment mode).
 		-DAUDIOCPP_DEPLOYMENT_BUILD=ON
+		# The vendored sentencepiece must use its bundled protobuf-lite:
+		# with the "package" provider, system protobuf drags real abseil
+		# into translation units that also see sentencepiece's mini-absl
+		# shim via -I../third_party, and the two absls collide.
+		-DSPM_PROTOBUF_PROVIDER=internal
 		# One host-targeted build (per CFLAGS) instead of upstream's
 		# dlopen-able per-microarch ggml fan-out for fat container images.
 		-DENGINE_ENABLE_CPU_ALL_VARIANTS=OFF
