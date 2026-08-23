@@ -5,7 +5,9 @@
 # which builds the piper TTS engine with its phonemizer and the rhasspy fork
 # of espeak-ng (vendored deliberately: the fork carries phonemization patches
 # and provides the espeak-ng-data this backend ships). fmt/spdlog come from
-# the system; onnxruntime comes from the system by default (USE flag below).
+# the system; onnxruntime comes from the system by default, or as upstream's
+# prebuilt binary with USE=-system-onnxruntime (a from-source build of the
+# pinned onnxruntime has no offline-buildable upstream source archive).
 
 EAPI=8
 
@@ -30,7 +32,10 @@ SRC_URI="
 	https://github.com/rhasspy/piper/archive/${PIPER_COMMIT}.tar.gz -> piper-${PIPER_COMMIT}.tar.gz
 	https://github.com/rhasspy/piper-phonemize/archive/${PHONEMIZE_COMMIT}.tar.gz -> piper-phonemize-${PHONEMIZE_COMMIT}.tar.gz
 	https://github.com/rhasspy/espeak-ng/archive/${ESPEAK_COMMIT}.tar.gz -> rhasspy-espeak-ng-${ESPEAK_COMMIT}.tar.gz
-	!system-onnxruntime? ( https://git.ipnmod.org/packages/local-ai-overlay/releases/download/thirdparty/onnxruntime-${ONNX_PV}-src-bundle.tar.xz )
+	!system-onnxruntime? (
+		amd64? ( https://github.com/microsoft/onnxruntime/releases/download/v${ONNX_PV}/onnxruntime-linux-x64-${ONNX_PV}.tgz )
+		arm64? ( https://github.com/microsoft/onnxruntime/releases/download/v${ONNX_PV}/onnxruntime-linux-aarch64-${ONNX_PV}.tgz )
+	)
 "
 S="${WORKDIR}/LocalAI-${PV}/backend/go/piper"
 
@@ -43,17 +48,26 @@ RDEPEND="
 	sci-ml/local-ai
 	dev-libs/libfmt:=
 	dev-libs/spdlog:=
-	system-onnxruntime? ( sci-libs/onnxruntime:= )
+	system-onnxruntime? (
+		|| (
+			sci-libs/onnxruntime
+			sci-libs/onnxruntime-bin
+		)
+	)
 "
 DEPEND="${RDEPEND}"
 BDEPEND=">=dev-lang/go-1.26"
+
+# With USE=-system-onnxruntime the upstream prebuilt library is shipped.
+QA_PREBUILT="usr/libexec/local-ai/backends/piper/lib/libonnxruntime.so*"
 
 GOPIPER="${S}/sources/go-piper"
 
 src_unpack() {
 	unpack "local-ai-${PV}.tar.gz" "local-ai-${PV}-deps.tar.xz"
 	if ! use system-onnxruntime; then
-		unpack "onnxruntime-${ONNX_PV}-src-bundle.tar.xz"
+		use amd64 && unpack "onnxruntime-linux-x64-${ONNX_PV}.tgz"
+		use arm64 && unpack "onnxruntime-linux-aarch64-${ONNX_PV}.tgz"
 	fi
 
 	# Assemble the layout upstream's clone targets would produce; the
@@ -91,13 +105,9 @@ setup_onnx_prefix() {
 		ln -s "${ESYSROOT}/usr/include/onnxruntime" "${T}/onnx-prefix/include" || die
 		ln -s "${ESYSROOT}/usr/$(get_libdir)" "${T}/onnx-prefix/lib" || die
 	else
-		local b="${WORKDIR}/onnxruntime-${ONNX_PV}"
-		local bd="${WORKDIR}/onnxruntime_build"
-		# 1.14.x third-party deps are bundled git submodules in the src
-		# bundle, so this configures offline.
-		cmake -S "${b}/cmake" -B "${bd}" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="${T}/onnx-prefix" -Donnxruntime_BUILD_SHARED_LIB=ON -Donnxruntime_BUILD_UNIT_TESTS=OFF || die
-		cmake --build "${bd}" || die
-		cmake --install "${bd}" || die
+		local d=( "${WORKDIR}"/onnxruntime-linux-*-${ONNX_PV} )
+		ln -s "${d[0]}/include" "${T}/onnx-prefix/include" || die
+		ln -s "${d[0]}/lib" "${T}/onnx-prefix/lib" || die
 	fi
 }
 
