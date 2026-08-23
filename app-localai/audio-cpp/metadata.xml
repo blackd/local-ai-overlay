@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<!-- Maintainer: Plamen K. Kosseff. No email by choice: GLEP 68 makes <email> mandatory inside <maintainer>, hence no maintainer element. -->
+	<upstream>
+		<remote-id type="github">mudler/LocalAI</remote-id>
+	</upstream>
+	<use>
+		<flag name="native">Let the bundled ggml library auto-detect the build host's CPU features (-march=native) instead of relying on CFLAGS</flag>
+		<flag name="vulkan">GPU acceleration via Vulkan (works on AMD/Intel/NVIDIA)</flag>
+	</use>
+</pkgmetadata>
