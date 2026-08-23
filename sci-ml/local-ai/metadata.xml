@@ -7,5 +7,7 @@
 	</upstream>
 	<use>
 		<flag name="llama-cpp">Install the llama.cpp text-generation backend (<pkg>app-localai/llama-cpp</pkg>)</flag>
+		<flag name="audio-cpp">Install the audio backend (<pkg>app-localai/audio-cpp</pkg>)</flag>
+		<flag name="piper">Install the piper text-to-speech backend (<pkg>app-localai/piper</pkg>)</flag>
 	</use>
 </pkgmetadata>

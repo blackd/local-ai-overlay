@@ -32,7 +32,7 @@ KEYWORDS="~amd64 ~arm64"
 # Backend flags do not change how the core is built; they only pull in the
 # matching backend package so a plain `emerge local-ai` yields a server that
 # can actually run models.
-IUSE="+llama-cpp"
+IUSE="+llama-cpp audio-cpp piper"
 
 RDEPEND="
 	acct-group/localai
@@ -40,6 +40,8 @@ RDEPEND="
 "
 PDEPEND="
 	llama-cpp? ( app-localai/llama-cpp )
+	audio-cpp? ( app-localai/audio-cpp )
+	piper? ( app-localai/piper )
 "
 # go.mod declares `go 1.26.0`. nodejs[npm] builds the web UI; the UI's
 # dependencies come from the node_modules tarball, not the network.
