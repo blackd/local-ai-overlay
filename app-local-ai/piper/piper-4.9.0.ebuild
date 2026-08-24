@@ -120,10 +120,13 @@ src_prepare() {
 setup_onnx_prefix() {
 	mkdir -p "${T}/onnx-prefix" || die
 	if use system-onnxruntime; then
-		# Gentoo nests the headers under include/onnxruntime/ while
-		# phonemize expects them directly under <dir>/include.
-		ln -s "${ESYSROOT}/usr/include/onnxruntime" "${T}/onnx-prefix/include" || die
-		ln -s "${ESYSROOT}/usr/$(get_libdir)" "${T}/onnx-prefix/lib" || die
+		# Real directories with only the onnxruntime pieces: phonemize's
+		# install() copies both include/ and lib/ of this prefix into its
+		# own tree, so symlinking /usr/include or the system libdir here
+		# would sweep system-wide content into the package staging.
+		mkdir -p "${T}/onnx-prefix/include" "${T}/onnx-prefix/lib" || die
+		cp -rL "${ESYSROOT}/usr/include/onnxruntime/." "${T}/onnx-prefix/include/" || die
+		cp -a "${ESYSROOT}/usr/$(get_libdir)"/libonnxruntime.so* "${T}/onnx-prefix/lib/" || die
 	else
 		local d=( "${WORKDIR}"/onnxruntime-linux-*-${ONNX_PV} )
 		ln -s "${d[0]}/include" "${T}/onnx-prefix/include" || die
@@ -153,11 +156,11 @@ src_install() {
 	doins -r "${S}/espeak-ng-data"
 
 	exeinto "${dest}/lib"
+	# phonemize's install copies the onnxruntime lib into pi/lib; in
+	# system mode the system copy must not be bundled (RDEPEND provides it).
+	use system-onnxruntime && { rm -f "${GOPIPER}"/piper-phonemize/pi/lib/libonnxruntime.so* || die ; }
 	doexe "${GOPIPER}"/piper-phonemize/pi/lib/lib*.so*
 	doexe "${GOPIPER}"/espeak/ei/lib/lib*.so* 2>/dev/null || true
-	if ! use system-onnxruntime; then
-		doexe "${T}"/onnx-prefix/lib/libonnxruntime.so*
-	fi
 
 	dosym -r "${dest}" "${LOCAL_AI_RUNTIME_BACKENDS_DIR}/piper"
 }
