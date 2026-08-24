@@ -13,7 +13,7 @@
 # where backends install, where the maintainer-generated dependency tarballs
 # are hosted, and the install helper that gives every backend the layout the
 # server expects (a directory containing run.sh, discovered by scanning
-# LOCALAI_BACKENDS_PATH at runtime).
+# LOCALAI_BACKENDS_SYSTEM_PATH at runtime).
 
 case ${EAPI} in
 	8) ;;
@@ -40,21 +40,14 @@ DISTFILES_BASE="https://git.ipnmod.org/packages/local-ai-overlay/releases/downlo
 # provides no variable for it, so this eclass is that variable.
 LOCAL_AI_BACKENDS_DIR="${EPREFIX}/usr/libexec/local-ai/backends"
 
-# @ECLASS_VARIABLE: LOCAL_AI_RUNTIME_BACKENDS_DIR
-# @DESCRIPTION:
-# The directory the running server actually scans (its LOCALAI_BACKENDS_PATH,
-# set by the service files of sci-ml/local-ai). Backend packages symlink
-# themselves in here so they appear next to backends the server installs
-# itself at runtime.
-LOCAL_AI_RUNTIME_BACKENDS_DIR="/var/lib/local-ai/backends"
-
 # @FUNCTION: local-ai-backend_install
 # @USAGE: <backend-name> <file>...
 # @DESCRIPTION:
 # Install <file>s into ${LOCAL_AI_BACKENDS_DIR}/<backend-name>/, add run.sh
-# and metadata.json from FILESDIR, and create the discovery symlink in
-# ${LOCAL_AI_RUNTIME_BACKENDS_DIR}. Executables keep their exec bits via
-# doexe; run.sh is always installed executable.
+# and metadata.json from FILESDIR. The server discovers this directory via
+# LOCALAI_BACKENDS_SYSTEM_PATH (set in sci-ml/local-ai's service config);
+# symlinking into /var/lib is neither needed nor seen by discovery, which
+# skips symlinked entries.
 local-ai-backend_install() {
 	local name=$1; shift
 	local dest="${LOCAL_AI_BACKENDS_DIR#${EPREFIX}}/${name}"
@@ -65,8 +58,6 @@ local-ai-backend_install() {
 
 	insinto "${dest}"
 	doins "${FILESDIR}"/metadata.json
-
-	dosym -r "${dest}" "${LOCAL_AI_RUNTIME_BACKENDS_DIR}/${name}"
 }
 
 fi

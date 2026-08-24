@@ -1,6 +1,19 @@
 #!/sbin/openrc-run
 # OpenRC service for the LocalAI server.
 
+# conf.d is sourced by OpenRC as plain shell variables; the daemon needs
+# them in its environment, so re-source with auto-export, following
+# openrc-run(8)'s own lookup (runlevel-suffixed file wins).
+set -a
+_confd="$(dirname "${RC_SERVICE}")/../conf.d/${RC_SVCNAME}"
+if [ -r "${_confd}.${RC_RUNLEVEL}" ]; then
+	. "${_confd}.${RC_RUNLEVEL}"
+elif [ -r "${_confd}" ]; then
+	. "${_confd}"
+fi
+set +a
+unset _confd
+
 description="Self-hosted, OpenAI-compatible AI server"
 command="/usr/bin/local-ai"
 command_args="run"

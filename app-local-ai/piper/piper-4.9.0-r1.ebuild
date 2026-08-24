@@ -167,6 +167,4 @@ src_install() {
 	use system-onnxruntime && { rm -f "${GOPIPER}"/piper-phonemize/pi/lib/libonnxruntime.so* || die ; }
 	doexe "${GOPIPER}"/piper-phonemize/pi/lib/lib*.so*
 	doexe "${GOPIPER}"/espeak/ei/lib/lib*.so* 2>/dev/null || true
-
-	dosym -r "${dest}" "${LOCAL_AI_RUNTIME_BACKENDS_DIR}/piper"
 }
