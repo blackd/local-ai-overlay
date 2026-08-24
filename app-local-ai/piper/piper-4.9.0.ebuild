@@ -92,6 +92,16 @@ src_prepare() {
 	# The phonemize cmake invocation in go-piper's Makefile takes no
 	# argument passthrough; inject the onnxruntime location so its
 	# download-if-missing logic never triggers.
+	# go-piper's Makefile assigns its own CFLAGS/CXXFLAGS/LDFLAGS (include
+	# paths, -lucd, ...). Because Portage exports those names, make
+	# re-exports the reassigned values to the espeak/phonemize/piper cmake
+	# children — whose compiler sanity checks then link -lucd before it is
+	# built. Rename go-piper's private copies so the children inherit the
+	# real Portage flags and the recipes keep their own values.
+	einfo "Renaming go-piper's private *FLAGS so Portage flags reach the cmake sub-builds"
+	sed -i 's/\bCFLAGS\b/GP_CFLAGS/g; s/\bCXXFLAGS\b/GP_CXXFLAGS/g; s/\bLDFLAGS\b/GP_LDFLAGS/g' "${GOPIPER}/Makefile" || die
+	grep -q 'GP_LDFLAGS' "${GOPIPER}/Makefile" || die "flags rename did not apply"
+
 	einfo "Injecting ONNXRUNTIME_DIR into go-piper's phonemize cmake invocation"
 	sed -i "s|cd piper-phonemize/pi && cmake .. --debug-output|cd piper-phonemize/pi \&\& cmake .. --debug-output -DONNXRUNTIME_DIR=${T}/onnx-prefix|" "${GOPIPER}/Makefile" || die
 	grep -q "onnx-prefix" "${GOPIPER}/Makefile" || die "onnxruntime injection did not apply"
