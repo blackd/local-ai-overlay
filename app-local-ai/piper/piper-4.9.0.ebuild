@@ -22,6 +22,9 @@ PHONEMIZE_COMMIT="fccd4f335aa68ac0b72600822f34d84363daa2bf"
 ESPEAK_COMMIT="8593723f10cfd9befd50de447f14bf0a9d2a14a4"
 # piper-phonemize's onnxruntime pin (ONNXRUNTIME_VERSION in its CMakeLists).
 ONNX_PV="1.14.1"
+# The rhasspy espeak-ng fork FetchContents sonic at configure time
+# (cmake/deps.cmake); pinned commit from there.
+SONIC_COMMIT="fbf75c3d6d846bad3bb3d456cbc5d07d9fd8c104"
 
 DESCRIPTION="LocalAI text-to-speech backend (piper gRPC server)"
 HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"
@@ -32,6 +35,7 @@ SRC_URI="
 	https://github.com/rhasspy/piper/archive/${PIPER_COMMIT}.tar.gz -> piper-${PIPER_COMMIT}.tar.gz
 	https://github.com/rhasspy/piper-phonemize/archive/${PHONEMIZE_COMMIT}.tar.gz -> piper-phonemize-${PHONEMIZE_COMMIT}.tar.gz
 	https://github.com/rhasspy/espeak-ng/archive/${ESPEAK_COMMIT}.tar.gz -> rhasspy-espeak-ng-${ESPEAK_COMMIT}.tar.gz
+	https://github.com/waywardgeek/sonic/archive/${SONIC_COMMIT}.tar.gz -> sonic-${SONIC_COMMIT}.tar.gz
 	!system-onnxruntime? (
 		amd64? ( https://github.com/microsoft/onnxruntime/releases/download/v${ONNX_PV}/onnxruntime-linux-x64-${ONNX_PV}.tgz )
 		arm64? ( https://github.com/microsoft/onnxruntime/releases/download/v${ONNX_PV}/onnxruntime-linux-aarch64-${ONNX_PV}.tgz )
@@ -78,6 +82,7 @@ src_unpack() {
 	unpack "piper-${PIPER_COMMIT}.tar.gz"
 	unpack "piper-phonemize-${PHONEMIZE_COMMIT}.tar.gz"
 	unpack "rhasspy-espeak-ng-${ESPEAK_COMMIT}.tar.gz"
+	unpack "sonic-${SONIC_COMMIT}.tar.gz"
 	mkdir -p "${S}/sources" || die
 	mv "go-piper-${GOPIPER_COMMIT}" "${GOPIPER}" || die
 	rmdir "${GOPIPER}/piper" "${GOPIPER}/piper-phonemize" "${GOPIPER}/espeak" 2>/dev/null
@@ -101,6 +106,10 @@ src_prepare() {
 	einfo "Renaming go-piper's private *FLAGS so Portage flags reach the cmake sub-builds"
 	sed -i 's/\bCFLAGS\b/GP_CFLAGS/g; s/\bCXXFLAGS\b/GP_CXXFLAGS/g; s/\bLDFLAGS\b/GP_LDFLAGS/g' "${GOPIPER}/Makefile" || die
 	grep -q 'GP_LDFLAGS' "${GOPIPER}/Makefile" || die "flags rename did not apply"
+
+	einfo "Pointing espeak's sonic FetchContent at the unpacked source"
+	sed -i "s|cd espeak/ei && cmake ..|cd espeak/ei \&\& cmake .. -DFETCHCONTENT_SOURCE_DIR_SONIC-GIT=${WORKDIR}/sonic-${SONIC_COMMIT}|" "${GOPIPER}/Makefile" || die
+	grep -q 'FETCHCONTENT_SOURCE_DIR_SONIC-GIT' "${GOPIPER}/Makefile" || die "sonic redirect did not apply"
 
 	einfo "Injecting ONNXRUNTIME_DIR into go-piper's phonemize cmake invocation"
 	sed -i "s|cd piper-phonemize/pi && cmake .. --debug-output|cd piper-phonemize/pi \&\& cmake .. --debug-output -DONNXRUNTIME_DIR=${T}/onnx-prefix|" "${GOPIPER}/Makefile" || die
