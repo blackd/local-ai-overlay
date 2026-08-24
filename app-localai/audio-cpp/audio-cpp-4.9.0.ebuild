@@ -56,15 +56,17 @@ src_unpack() {
 src_prepare() {
 	cmake_src_prepare
 
-	# System abseil (reached via system protobuf headers — the engine
-	# builds its vendored sentencepiece with _USE_EXTERNAL_PROTOBUF)
-	# requires C++20. Bump every C++17 pin in the tree, engine's vendored
-	# subprojects included, not just the wrapper's CMakeLists.
+	# System abseil requires C++20, but only where its headers actually
+	# reach: the gRPC glue (this directory's CMakeLists) and sentencepiece
+	# (whose absl shim gets replaced by the real headers via
+	# SPM_ABSL_PROVIDER=package). The engine itself stays C++17 — its
+	# sources use C++17-isms (u8 string literals as const char*) that
+	# C++20 broke.
 	local f
-	while IFS= read -r f; do
-		sed -i 's/CMAKE_CXX_STANDARD 17/CMAKE_CXX_STANDARD 20/g' "${f}" || die
-	done < <(grep -rl 'CMAKE_CXX_STANDARD 17' .)
-	grep -rq 'CMAKE_CXX_STANDARD 17' . && die "C++17 pins remain"
+	for f in CMakeLists.txt audio.cpp/external/sentencepiece/CMakeLists.txt; do
+		sed -i 's/CMAKE_CXX_STANDARD 17/CMAKE_CXX_STANDARD 20/g' "${S}/${f}" || die
+		grep -q 'CMAKE_CXX_STANDARD 20' "${S}/${f}" || die "C++ standard bump did not apply: ${f}"
+	done
 }
 
 src_configure() {
