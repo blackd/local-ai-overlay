@@ -56,18 +56,18 @@ src_unpack() {
 src_prepare() {
 	cmake_src_prepare
 
-	# System abseil requires C++20, but only where its headers actually
-	# reach. CMAKE_CXX_STANDARD flows into add_subdirectory, so bumping
-	# the wrapper's global would drag the C++17 engine sources (u8
-	# literals as const char*) to C++20 — instead: sentencepiece gets 20
-	# in its own scope (its absl shim is replaced by real abseil via
-	# SPM_ABSL_PROVIDER=package), and the wrapper's gRPC targets get 20
-	# as a target property, leaving the global at 17 for the engine.
-	sed -i 's/CMAKE_CXX_STANDARD 17/CMAKE_CXX_STANDARD 20/g' "${S}/audio.cpp/external/sentencepiece/CMakeLists.txt" || die
-	grep -q 'CMAKE_CXX_STANDARD 20' "${S}/audio.cpp/external/sentencepiece/CMakeLists.txt" || die "sentencepiece C++ bump did not apply"
-	cat >> "${S}/CMakeLists.txt" <<-EOF || die
-		set_target_properties(hw_grpc_proto grpc-server PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
-	EOF
+	# System abseil requires C++20 (and exports cxx_std_20 as an INTERFACE
+	# compile feature that propagates through sentencepiece regardless),
+	# so build the whole tree as C++20. The engine's sources are
+	# C++17-clean except for u8 string literals (char8_t* since C++20);
+	# stripping the prefix yields byte-identical plain UTF-8 literals in
+	# either standard.
+	local f
+	while IFS= read -r f; do
+		sed -i 's/CMAKE_CXX_STANDARD 17/CMAKE_CXX_STANDARD 20/g' "${f}" || die
+	done < <(grep -rl 'CMAKE_CXX_STANDARD 17' .)
+	grep -rq 'CMAKE_CXX_STANDARD 17' . && die "C++17 pins remain"
+	find "${S}/audio.cpp/src" \( -name '*.cpp' -o -name '*.h' \) -exec sed -i 's/\bu8"/"/g' {} + || die
 }
 
 src_configure() {
