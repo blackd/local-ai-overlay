@@ -57,16 +57,17 @@ src_prepare() {
 	cmake_src_prepare
 
 	# System abseil requires C++20, but only where its headers actually
-	# reach: the gRPC glue (this directory's CMakeLists) and sentencepiece
-	# (whose absl shim gets replaced by the real headers via
-	# SPM_ABSL_PROVIDER=package). The engine itself stays C++17 — its
-	# sources use C++17-isms (u8 string literals as const char*) that
-	# C++20 broke.
-	local f
-	for f in CMakeLists.txt audio.cpp/external/sentencepiece/CMakeLists.txt; do
-		sed -i 's/CMAKE_CXX_STANDARD 17/CMAKE_CXX_STANDARD 20/g' "${S}/${f}" || die
-		grep -q 'CMAKE_CXX_STANDARD 20' "${S}/${f}" || die "C++ standard bump did not apply: ${f}"
-	done
+	# reach. CMAKE_CXX_STANDARD flows into add_subdirectory, so bumping
+	# the wrapper's global would drag the C++17 engine sources (u8
+	# literals as const char*) to C++20 — instead: sentencepiece gets 20
+	# in its own scope (its absl shim is replaced by real abseil via
+	# SPM_ABSL_PROVIDER=package), and the wrapper's gRPC targets get 20
+	# as a target property, leaving the global at 17 for the engine.
+	sed -i 's/CMAKE_CXX_STANDARD 17/CMAKE_CXX_STANDARD 20/g' "${S}/audio.cpp/external/sentencepiece/CMakeLists.txt" || die
+	grep -q 'CMAKE_CXX_STANDARD 20' "${S}/audio.cpp/external/sentencepiece/CMakeLists.txt" || die "sentencepiece C++ bump did not apply"
+	cat >> "${S}/CMakeLists.txt" <<-EOF || die
+		set_target_properties(hw_grpc_proto grpc-server PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
+	EOF
 }
 
 src_configure() {
