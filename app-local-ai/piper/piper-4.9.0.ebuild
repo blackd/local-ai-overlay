@@ -31,6 +31,7 @@ HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"
 SRC_URI="
 	https://github.com/mudler/LocalAI/archive/refs/tags/v${PV}.tar.gz -> local-ai-${PV}.tar.gz
 	${DISTFILES_BASE}/local-ai-${PV}-deps.tar.xz
+	${DISTFILES_BASE}/local-ai-${PV}-prebuilt.tar.xz
 	https://github.com/mudler/go-piper/archive/${GOPIPER_COMMIT}.tar.gz -> go-piper-${GOPIPER_COMMIT}.tar.gz
 	https://github.com/rhasspy/piper/archive/${PIPER_COMMIT}.tar.gz -> piper-${PIPER_COMMIT}.tar.gz
 	https://github.com/rhasspy/piper-phonemize/archive/${PHONEMIZE_COMMIT}.tar.gz -> piper-phonemize-${PHONEMIZE_COMMIT}.tar.gz
@@ -69,6 +70,11 @@ GOPIPER="${S}/sources/go-piper"
 
 src_unpack() {
 	unpack "local-ai-${PV}.tar.gz" "local-ai-${PV}-deps.tar.xz"
+
+	# The wrapper imports the generated protobuf package pkg/grpc/proto,
+	# shipped in the -prebuilt tarball (rooted at the repo top level).
+	cd "${WORKDIR}/LocalAI-${PV}" || die
+	unpack "local-ai-${PV}-prebuilt.tar.xz"
 	if ! use system-onnxruntime; then
 		use amd64 && unpack "onnxruntime-linux-x64-${ONNX_PV}.tgz"
 		use arm64 && unpack "onnxruntime-linux-aarch64-${ONNX_PV}.tgz"
