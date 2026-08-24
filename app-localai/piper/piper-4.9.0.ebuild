@@ -92,6 +92,7 @@ src_prepare() {
 	# The phonemize cmake invocation in go-piper's Makefile takes no
 	# argument passthrough; inject the onnxruntime location so its
 	# download-if-missing logic never triggers.
+	einfo "Injecting ONNXRUNTIME_DIR into go-piper's phonemize cmake invocation"
 	sed -i "s|cd piper-phonemize/pi && cmake .. --debug-output|cd piper-phonemize/pi \&\& cmake .. --debug-output -DONNXRUNTIME_DIR=${T}/onnx-prefix|" "${GOPIPER}/Makefile" || die
 	grep -q "onnx-prefix" "${GOPIPER}/Makefile" || die "onnxruntime injection did not apply"
 }

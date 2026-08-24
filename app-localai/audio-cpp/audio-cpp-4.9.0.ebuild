@@ -64,9 +64,11 @@ src_prepare() {
 	# either standard.
 	local f
 	while IFS= read -r f; do
+		einfo "Bumping C++ standard to 20 in ${f#./}"
 		sed -i 's/CMAKE_CXX_STANDARD 17/CMAKE_CXX_STANDARD 20/g' "${f}" || die
 	done < <(grep -rl 'CMAKE_CXX_STANDARD 17' .)
 	grep -rq 'CMAKE_CXX_STANDARD 17' . && die "C++17 pins remain"
+	einfo "Stripping u8 string literal prefixes from engine sources"
 	find "${S}/audio.cpp/src" \( -name '*.cpp' -o -name '*.h' \) -exec sed -i 's/\bu8"/"/g' {} + || die
 }
 

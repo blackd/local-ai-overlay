@@ -96,6 +96,7 @@ src_prepare() {
 	# std::*_ordering), so the gRPC glue must compile as C++20 too;
 	# upstream's C++17 setting only works against its vendored,
 	# C++17-configured gRPC/absl stack.
+	einfo "Bumping gRPC glue to C++20 (system abseil requires it)"
 	sed -i 's/set(CMAKE_CXX_STANDARD 17)/set(CMAKE_CXX_STANDARD 20)/' "${S}/tools/grpc-server/CMakeLists.txt" || die
 	grep -q 'set(CMAKE_CXX_STANDARD 20)' "${S}/tools/grpc-server/CMakeLists.txt" || die "C++ standard bump did not apply"
 
