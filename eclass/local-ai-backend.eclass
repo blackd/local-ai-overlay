@@ -1,7 +1,7 @@
 # Copyright 2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-# @ECLASS: localai-backend.eclass
+# @ECLASS: local-ai-backend.eclass
 # @MAINTAINER:
 # Plamen K. Kosseff
 # @SUPPORTED_EAPIS: 8
@@ -9,7 +9,7 @@
 # @DESCRIPTION:
 # LocalAI is a self-hosted AI server whose model inference runs in separate
 # backend programs. This eclass is shared by the core server package
-# (sci-ml/local-ai) and every backend package (app-localai/*). It defines
+# (sci-ml/local-ai) and every backend package (app-local-ai/*). It defines
 # where backends install, where the maintainer-generated dependency tarballs
 # are hosted, and the install helper that gives every backend the layout the
 # server expects (a directory containing run.sh, discovered by scanning
@@ -20,8 +20,8 @@ case ${EAPI} in
 	*) die "${ECLASS}: EAPI ${EAPI:-0} not supported" ;;
 esac
 
-if [[ -z ${_LOCALAI_BACKEND_ECLASS} ]]; then
-_LOCALAI_BACKEND_ECLASS=1
+if [[ -z ${_LOCAL_AI_BACKEND_ECLASS} ]]; then
+_LOCAL_AI_BACKEND_ECLASS=1
 
 # @ECLASS_VARIABLE: DISTFILES_BASE
 # @DESCRIPTION:
@@ -32,32 +32,32 @@ _LOCALAI_BACKEND_ECLASS=1
 # holding that version's three tarballs.
 DISTFILES_BASE="https://git.ipnmod.org/packages/local-ai-overlay/releases/download/v${PV}"
 
-# @ECLASS_VARIABLE: LOCALAI_BACKENDS_DIR
+# @ECLASS_VARIABLE: LOCAL_AI_BACKENDS_DIR
 # @DESCRIPTION:
 # Install root for backend packages. /usr/libexec is the filesystem-standard
 # location for internal executables that must not appear in $PATH; it is not
 # split per ABI, so the path is identical on every architecture. Portage
 # provides no variable for it, so this eclass is that variable.
-LOCALAI_BACKENDS_DIR="${EPREFIX}/usr/libexec/local-ai/backends"
+LOCAL_AI_BACKENDS_DIR="${EPREFIX}/usr/libexec/local-ai/backends"
 
-# @ECLASS_VARIABLE: LOCALAI_RUNTIME_BACKENDS_DIR
+# @ECLASS_VARIABLE: LOCAL_AI_RUNTIME_BACKENDS_DIR
 # @DESCRIPTION:
 # The directory the running server actually scans (its LOCALAI_BACKENDS_PATH,
 # set by the service files of sci-ml/local-ai). Backend packages symlink
 # themselves in here so they appear next to backends the server installs
 # itself at runtime.
-LOCALAI_RUNTIME_BACKENDS_DIR="/var/lib/localai/backends"
+LOCAL_AI_RUNTIME_BACKENDS_DIR="/var/lib/local-ai/backends"
 
-# @FUNCTION: localai-backend_install
+# @FUNCTION: local-ai-backend_install
 # @USAGE: <backend-name> <file>...
 # @DESCRIPTION:
-# Install <file>s into ${LOCALAI_BACKENDS_DIR}/<backend-name>/, add run.sh
+# Install <file>s into ${LOCAL_AI_BACKENDS_DIR}/<backend-name>/, add run.sh
 # and metadata.json from FILESDIR, and create the discovery symlink in
-# ${LOCALAI_RUNTIME_BACKENDS_DIR}. Executables keep their exec bits via
+# ${LOCAL_AI_RUNTIME_BACKENDS_DIR}. Executables keep their exec bits via
 # doexe; run.sh is always installed executable.
-localai-backend_install() {
+local-ai-backend_install() {
 	local name=$1; shift
-	local dest="${LOCALAI_BACKENDS_DIR#${EPREFIX}}/${name}"
+	local dest="${LOCAL_AI_BACKENDS_DIR#${EPREFIX}}/${name}"
 
 	exeinto "${dest}"
 	doexe "$@"
@@ -66,7 +66,7 @@ localai-backend_install() {
 	insinto "${dest}"
 	doins "${FILESDIR}"/metadata.json
 
-	dosym -r "${dest}" "${LOCALAI_RUNTIME_BACKENDS_DIR}/${name}"
+	dosym -r "${dest}" "${LOCAL_AI_RUNTIME_BACKENDS_DIR}/${name}"
 }
 
 fi

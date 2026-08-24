@@ -6,6 +6,6 @@ LOCALAI_ADDRESS=:8080
 
 # Where models live and where runtime-installed backends go. The backends
 # directory also receives symlinks from Portage-installed backend packages
-# (app-localai/*).
-LOCALAI_MODELS_PATH=/var/lib/localai/models
-LOCALAI_BACKENDS_PATH=/var/lib/localai/backends
+# (app-local-ai/*).
+LOCALAI_MODELS_PATH=/var/lib/local-ai/models
+LOCALAI_BACKENDS_PATH=/var/lib/local-ai/backends

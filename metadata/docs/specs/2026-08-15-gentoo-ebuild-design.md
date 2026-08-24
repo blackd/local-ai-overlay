@@ -45,8 +45,8 @@ independently.
 ## Decisions (agreed)
 
 - **Structure**: separate ebuild per backend, not USE flags on a monolith.
-  Core: `sci-ml/local-ai`. Backends: `app-localai/<name>` (e.g.
-  `app-localai/llama-cpp`).
+  Core: `sci-ml/local-ai`. Backends: `app-local-ai/<name>` (e.g.
+  `app-local-ai/llama-cpp`).
 - **First iteration**: core + the llama-cpp backend. Other cpp/go backends
   follow the same template later. Python backends stay out of scope (pip
   dependency trees cannot come from Portage); they remain available via
@@ -74,7 +74,7 @@ independently.
   regenerates the Manifests in CI, and creates the release under a
   `v<version>` tag pointing at the Manifest commit. GitHub-fetchable sources (LocalAI release
   tarball, llama.cpp commit tarball) are referenced directly in `SRC_URI`.
-- **Coexistence**: `app-localai/llama-cpp` must be co-installable with
+- **Coexistence**: `app-local-ai/llama-cpp` must be co-installable with
   Portage's `llama-cpp`. Achieved by construction: backends install under
   `${EPREFIX}/usr/libexec/local-ai/backends/<name>/` (`/usr/libexec` is the
   filesystem-standard home for internal executables not meant for the user's
@@ -87,18 +87,18 @@ independently.
 local-ai-overlay/                     (git repo)
 ├── metadata/layout.conf              masters = gentoo, thin-manifests = false
 ├── profiles/
-│   ├── repo_name                     "localai"
-│   └── categories                    app-localai (sci-ml is official, not re-declared)
-├── acct-user/localai/                service user (dynamic UID: ACCT_USER_ID=-1, per overlay policy)
-├── acct-group/localai/
+│   ├── repo_name                     "local-ai"
+│   └── categories                    app-local-ai (sci-ml is official, not re-declared)
+├── acct-user/local-ai/                service user (dynamic UID: ACCT_USER_ID=-1, per overlay policy)
+├── acct-group/local-ai/
 ├── eclass/
-│   └── localai-backend.eclass        shared backend logic (see "Eclass" below)
+│   └── local-ai-backend.eclass        shared backend logic (see "Eclass" below)
 ├── sci-ml/local-ai/
 │   ├── local-ai-4.8.2.ebuild
 │   ├── files/                        OpenRC init.d + conf.d, systemd unit + env file
 │   ├── metadata.xml
 │   └── Manifest
-├── app-localai/llama-cpp/
+├── app-local-ai/llama-cpp/
 │   ├── llama-cpp-4.8.2.ebuild        version tracks the LocalAI release it ships with
 │   ├── files/                        run.sh, metadata.json template
 │   ├── metadata.xml
@@ -168,17 +168,17 @@ pinned upstream, so output is deterministic per release.
   sandbox.
 - **Install**:
   - `/usr/bin/local-ai`.
-  - `localai` user/group via `acct-user`/`acct-group` packages; home
-    `/var/lib/localai` (`keepdir`), which holds models, generated configs and
+  - `local-ai` user/group via `acct-user`/`acct-group` packages; home
+    `/var/lib/local-ai` (`keepdir`), which holds models, generated configs and
     runtime-installed (OCI gallery) backends.
   - OpenRC: `files/local-ai.initd` + `files/local-ai.confd`. systemd:
     `files/local-ai.service` + environment file. Both set
-    `LOCALAI_BACKENDS_PATH=/var/lib/localai/backends` and run as
-    `localai:localai`.
+    `LOCALAI_BACKENDS_PATH=/var/lib/local-ai/backends` and run as
+    `local-ai:local-ai`.
 - **USE flags**: one convenience flag per packaged backend, `PDEPEND`ing on the
-  matching `app-localai/` package. Initially: `+llama-cpp`.
+  matching `app-local-ai/` package. Initially: `+llama-cpp`.
 
-## app-localai/llama-cpp (backend)
+## app-local-ai/llama-cpp (backend)
 
 - **Sources**:
   - LocalAI release tarball (provides `backend/cpp/llama-cpp/`:
@@ -223,13 +223,13 @@ pinned upstream, so output is deterministic per release.
 - **Install** (collision-free with Portage's `llama-cpp` by construction —
   LocalAI discovers backends by scanning `LOCALAI_BACKENDS_PATH` for
   subdirectories containing `run.sh`, not via `$PATH`):
-  - `${LOCALAI_BACKENDS_DIR}/llama-cpp/` (see the eclass section; expands to
+  - `${LOCAL_AI_BACKENDS_DIR}/llama-cpp/` (see the eclass section; expands to
     `${EPREFIX}/usr/libexec/local-ai/backends/llama-cpp/`): `grpc-server`,
     `run.sh`
     (`exec` of the binary, `LD_LIBRARY_PATH` prelude only if shared libs
     exist), minimal `metadata.json` (name, capabilities).
-  - Symlink `/var/lib/localai/backends/llama-cpp` → the install dir, so the
-    service (BACKENDS_PATH=/var/lib/localai/backends) sees Portage-installed
+  - Symlink `/var/lib/local-ai/backends/llama-cpp` → the install dir, so the
+    service (BACKENDS_PATH=/var/lib/local-ai/backends) sees Portage-installed
     and runtime-downloaded backends side by side. Portage-owned backends are
     root-owned; the gallery UI cannot modify them (correct: Portage owns them).
 - **src_test** (`FEATURES=test`): configure with
@@ -237,20 +237,20 @@ pinned upstream, so output is deterministic per release.
 
 ## Eclass
 
-A `localai-backend.eclass` (overlay `eclass/` dir) is created from the start —
+A `local-ai-backend.eclass` (overlay `eclass/` dir) is created from the start —
 even though the first version is small, starting with it is easier than
 extracting shared logic from several ebuilds later. Initial contents:
 
-- `LOCALAI_BACKENDS_DIR="${EPREFIX}/usr/libexec/local-ai/backends"` — the
+- `LOCAL_AI_BACKENDS_DIR="${EPREFIX}/usr/libexec/local-ai/backends"` — the
   single definition of the backend install location (`/usr/libexec` is the
   filesystem-standard home for internal executables; there is no
   Portage-provided variable for it, so the eclass is that variable).
 - `DISTFILES_BASE` — base URL of the maintainer-hosted distfiles.
 - The default `SRC_URI` entry for the LocalAI release tarball and the
   matching unpack conventions.
-- A `localai-backend_src_install` helper: installs the backend binary,
-  `run.sh` and `metadata.json` into `${LOCALAI_BACKENDS_DIR}/<name>/` and
-  creates the discovery symlink in `/var/lib/localai/backends/`.
+- A `local-ai-backend_src_install` helper: installs the backend binary,
+  `run.sh` and `metadata.json` into `${LOCAL_AI_BACKENDS_DIR}/<name>/` and
+  creates the discovery symlink in `/var/lib/local-ai/backends/`.
 
 As more backends are packaged, whatever they share migrates into the eclass
 rather than being copied between ebuilds.
@@ -261,7 +261,7 @@ Checklist (goes in overlay README):
 
 1. Copy ebuilds to the new version.
 2. Update `COMMIT` (tag sha) in `sci-ml/local-ai` and `LLAMA_COMMIT` in
-   `app-localai/llama-cpp` (from `backend/cpp/llama-cpp/Makefile` of the new
+   `app-local-ai/llama-cpp` (from `backend/cpp/llama-cpp/Makefile` of the new
    tag).
 3. Run `scripts/gen-distfiles.sh <new-version>`; upload the resulting
    tarballs to the hosting server yourself.
@@ -270,7 +270,7 @@ Checklist (goes in overlay README):
 
 ## Acceptance / smoke test
 
-1. `emerge sci-ml/local-ai app-localai/llama-cpp` completes with
+1. `emerge sci-ml/local-ai app-local-ai/llama-cpp` completes with
    `FEATURES="network-sandbox"`.
 2. `local-ai backends list` shows `llama-cpp` as an installed system backend.
 3. Start the service (OpenRC or systemd), download a small GGUF model via the
@@ -287,7 +287,7 @@ Checklist (goes in overlay README):
 ## Out of scope (this iteration)
 
 - Other backends (whisper, piper, silero-vad, stablediffusion-ggml, …) —
-  follow-ups using the `app-localai/llama-cpp` template.
+  follow-ups using the `app-local-ai/llama-cpp` template.
 - Python backends (pip trees can't come from Portage).
 - The desktop launcher.
 - A -9999 live ebuild.

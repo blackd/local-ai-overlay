@@ -11,7 +11,7 @@
 
 EAPI=8
 
-inherit go-module localai-backend multilib
+inherit go-module local-ai-backend multilib
 
 # Pins. Source of truth: backend/go/piper/Makefile (PIPER_VERSION) at the
 # LocalAI release tag; the three below it are go-piper's submodule gitlinks
@@ -123,7 +123,7 @@ src_compile() {
 }
 
 src_install() {
-	local dest="${LOCALAI_BACKENDS_DIR#${EPREFIX}}/piper"
+	local dest="${LOCAL_AI_BACKENDS_DIR#${EPREFIX}}/piper"
 
 	exeinto "${dest}"
 	doexe "${S}/piper"
@@ -140,5 +140,5 @@ src_install() {
 		doexe "${T}"/onnx-prefix/lib/libonnxruntime.so*
 	fi
 
-	dosym -r "${dest}" "${LOCALAI_RUNTIME_BACKENDS_DIR}/piper"
+	dosym -r "${dest}" "${LOCAL_AI_RUNTIME_BACKENDS_DIR}/piper"
 }

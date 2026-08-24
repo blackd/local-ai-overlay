@@ -4,14 +4,14 @@ Documentation=https://localai.io
 After=network.target
 
 [Service]
-User=localai
-Group=localai
+User=local-ai
+Group=local-ai
 EnvironmentFile=/etc/conf.d/local-ai
 ExecStart=/usr/bin/local-ai run
-WorkingDirectory=/var/lib/localai
+WorkingDirectory=/var/lib/local-ai
 Restart=on-failure
 ProtectSystem=strict
-ReadWritePaths=/var/lib/localai
+ReadWritePaths=/var/lib/local-ai
 ProtectHome=true
 PrivateTmp=true
 

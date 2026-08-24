@@ -4,16 +4,16 @@
 # LocalAI is a self-hosted, OpenAI-API-compatible AI server. This package
 # builds the core server only: the HTTP API, the web UI and the
 # model/backend manager. Model inference happens in backend programs
-# packaged separately under the app-localai/ category.
+# packaged separately under the app-local-ai/ category.
 
 EAPI=8
 
-inherit go-module localai-backend systemd
+inherit go-module local-ai-backend systemd
 
 # Commit hash the upstream v4.8.2 release tag points at. Embedded into the
 # binary (internal.Commit) so `local-ai --version` reports the same build
 # metadata as upstream's official builds.
-LOCALAI_COMMIT="5ff25d9d145e0a03a5b9a3559c620f1e1204ca6d"
+LOCAL_AI_COMMIT="5ff25d9d145e0a03a5b9a3559c620f1e1204ca6d"
 
 DESCRIPTION="Self-hosted, OpenAI-compatible AI server (core, without inference backends)"
 HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"
@@ -35,11 +35,11 @@ KEYWORDS="~amd64 ~arm64"
 IUSE="+llama-cpp"
 
 RDEPEND="
-	acct-group/localai
-	acct-user/localai
+	acct-group/local-ai
+	acct-user/local-ai
 "
 PDEPEND="
-	llama-cpp? ( app-localai/llama-cpp )
+	llama-cpp? ( app-local-ai/llama-cpp )
 "
 # go.mod declares `go 1.26.0`. nodejs[npm] builds the web UI; the UI's
 # dependencies come from the node_modules tarball, not the network.
@@ -81,7 +81,7 @@ src_compile() {
 	local ldflags=(
 		-s -w
 		-X "github.com/mudler/LocalAI/internal.Version=v${PV}"
-		-X "github.com/mudler/LocalAI/internal.Commit=${LOCALAI_COMMIT}"
+		-X "github.com/mudler/LocalAI/internal.Commit=${LOCAL_AI_COMMIT}"
 	)
 	ego build -ldflags "${ldflags[*]}" -o local-ai ./cmd/local-ai
 }
@@ -96,16 +96,16 @@ src_install() {
 	# All mutable state (models, runtime-installed backends, generated
 	# configuration) lives here; the service files above point the server
 	# at it. Backend packages symlink themselves into backends/.
-	keepdir /var/lib/localai /var/lib/localai/backends /var/lib/localai/models
-	fowners -R localai:localai /var/lib/localai
+	keepdir /var/lib/local-ai /var/lib/local-ai/backends /var/lib/local-ai/models
+	fowners -R local-ai:local-ai /var/lib/local-ai
 
 	einstalldocs
 }
 
 pkg_postinst() {
 	elog "The LocalAI core server is installed. Inference backends are separate"
-	elog "packages: app-localai/llama-cpp provides text generation (GGUF models)."
-	elog "Mutable state lives in /var/lib/localai."
+	elog "packages: app-local-ai/llama-cpp provides text generation (GGUF models)."
+	elog "Mutable state lives in /var/lib/local-ai."
 	elog "Start via: rc-service local-ai start   (OpenRC)"
 	elog "       or: systemctl start local-ai    (systemd)"
 }

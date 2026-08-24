@@ -7,7 +7,7 @@
 
 EAPI=8
 
-inherit cmake localai-backend
+inherit cmake local-ai-backend
 
 # The audio.cpp commit LocalAI v4.9.0 builds against. Source of truth:
 # backend/cpp/audio-cpp/Makefile (AUDIO_CPP_VERSION) at the release tag.
@@ -106,5 +106,5 @@ src_test() {
 }
 
 src_install() {
-	localai-backend_install audio-cpp "${BUILD_DIR}"/grpc-server
+	local-ai-backend_install audio-cpp "${BUILD_DIR}"/grpc-server
 }

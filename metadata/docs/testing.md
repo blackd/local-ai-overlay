@@ -2,7 +2,7 @@
 
 This overlay (a third-party Gentoo package repository) provides
 `sci-ml/local-ai` — LocalAI, a self-hosted AI server with an
-OpenAI-compatible API — and `app-localai/llama-cpp`, its text-generation
+OpenAI-compatible API — and `app-local-ai/llama-cpp`, its text-generation
 backend (a gRPC server embedding the llama.cpp inference library). The
 packages were authored and manifested on a machine that cannot compile them
 (binary-package-only host), so the checks below must run once on a normal
@@ -32,9 +32,9 @@ be asserted by reading code, not by building it.
    extend the ebuild's `LICENSE="MIT"` with the licenses of statically
    linked Go dependencies it reports.
 
-## 2. Backend (app-localai/llama-cpp)
+## 2. Backend (app-local-ai/llama-cpp)
 
-1. `emerge -1v app-localai/llama-cpp`
+1. `emerge -1v app-local-ai/llama-cpp`
    - This is the verdict on the "system gRPC only" decision: CMake must
      resolve gRPC/Protobuf/absl from Portage and build the `grpc-server`
      target. If `find_package(gRPC CONFIG)` fails or version skew breaks
@@ -46,9 +46,9 @@ be asserted by reading code, not by building it.
      generated the C++ stubs.
 2. Files land in `/usr/libexec/local-ai/backends/llama-cpp/`
    (`grpc-server`, `run.sh`, `metadata.json`) plus the symlink
-   `/var/lib/localai/backends/llama-cpp`.
+   `/var/lib/local-ai/backends/llama-cpp`.
 3. Collision-freedom: `qlist llama-cpp | grep -v ^/usr/libexec/local-ai |
-   grep -v ^/var/lib/localai` → no output. With Portage's `llama-cpp` also
+   grep -v ^/var/lib/local-ai` → no output. With Portage's `llama-cpp` also
    installed, `qcheck` both packages.
 4. GPU variants when hardware allows: `USE=vulkan`, `USE=cuda`,
    `USE="rocm amdgpu_targets_gfx<yours>"` (ROCm switches the compiler to
@@ -62,7 +62,7 @@ be asserted by reading code, not by building it.
 1. Start the service: `rc-service local-ai start` (OpenRC) or
    `systemctl start local-ai` (systemd); `curl -s localhost:8080/v1/models`
    answers.
-2. `local-ai backends list --backends-path /var/lib/localai/backends` (or
+2. `local-ai backends list --backends-path /var/lib/local-ai/backends` (or
    the web UI's backends page) shows `llama-cpp` as installed.
 3. Install a small GGUF model via the web UI gallery, then:
 

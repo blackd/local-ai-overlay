@@ -11,11 +11,11 @@ EAPI=8
 
 ROCM_VERSION=7.2
 
-inherit cmake cuda localai-backend rocm
+inherit cmake cuda local-ai-backend rocm
 
-# The llama.cpp commit LocalAI v4.8.2 builds against. Source of truth:
+# The llama.cpp commit LocalAI v4.9.0 builds against. Source of truth:
 # backend/cpp/llama-cpp/Makefile (LLAMA_VERSION) at the upstream release tag.
-LLAMA_COMMIT="221f0f6356efe2260023208365705ec5d5a7c8f5"
+LLAMA_COMMIT="60addddf3c567c43ec3caf70fc953fba3572d96f"
 
 DESCRIPTION="LocalAI text-generation backend (llama.cpp gRPC server)"
 HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"
@@ -45,7 +45,7 @@ REQUIRED_USE="?? ( cuda rocm ) rocm? ( ${ROCM_REQUIRED_USE} ) ${_amdgpu_implies_
 unset _amdgpu_implies_rocm _f
 RESTRICT="!test? ( test )"
 
-# The server package provides the localai user and the runtime backends
+# The server package provides the local-ai user and the runtime backends
 # directory this backend symlinks into. (sci-ml/local-ai's llama-cpp USE
 # flag PDEPENDs back on this package; PDEPEND exists precisely to make such
 # cycles installable.)
@@ -96,6 +96,7 @@ src_prepare() {
 	# std::*_ordering), so the gRPC glue must compile as C++20 too;
 	# upstream's C++17 setting only works against its vendored,
 	# C++17-configured gRPC/absl stack.
+	einfo "Bumping gRPC glue to C++20 (system abseil requires it)"
 	sed -i 's/set(CMAKE_CXX_STANDARD 17)/set(CMAKE_CXX_STANDARD 20)/' "${S}/tools/grpc-server/CMakeLists.txt" || die
 	grep -q 'set(CMAKE_CXX_STANDARD 20)' "${S}/tools/grpc-server/CMakeLists.txt" || die "C++ standard bump did not apply"
 
@@ -157,5 +158,5 @@ src_install() {
 	# LocalAI discovers backends by scanning its backends directory for
 	# subdirectories containing run.sh; nothing goes into PATH or the
 	# library directories — hence no collision with a system llama-cpp.
-	localai-backend_install llama-cpp "${BUILD_DIR}"/bin/grpc-server
+	local-ai-backend_install llama-cpp "${BUILD_DIR}"/bin/grpc-server
 }

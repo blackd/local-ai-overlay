@@ -6,7 +6,7 @@ EAPI=8
 inherit acct-user
 
 ACCT_USER_ID=-1
-ACCT_USER_GROUPS=( localai video render )
-ACCT_USER_HOME=/var/lib/localai
+ACCT_USER_GROUPS=( local-ai video render )
+ACCT_USER_HOME=/var/lib/local-ai
 
 acct-user_add_deps

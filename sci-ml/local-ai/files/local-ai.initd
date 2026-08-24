@@ -4,10 +4,10 @@
 description="Self-hosted, OpenAI-compatible AI server"
 command="/usr/bin/local-ai"
 command_args="run"
-command_user="localai:localai"
+command_user="local-ai:local-ai"
 command_background="yes"
 pidfile="/run/${RC_SVCNAME}.pid"
-directory="/var/lib/localai"
+directory="/var/lib/local-ai"
 output_log="/var/log/local-ai.log"
 error_log="/var/log/local-ai.log"
 
@@ -16,5 +16,5 @@ depend() {
 }
 
 start_pre() {
-	checkpath -f -o localai:localai "${output_log}"
+	checkpath -f -o local-ai:local-ai "${output_log}"
 }

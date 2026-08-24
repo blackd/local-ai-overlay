@@ -14,11 +14,11 @@
 # deps tarball is rooted at go-mod/ as go-module.eclass expects. Upload the
 # results manually.
 #
-# Usage: gen-distfiles.sh <localai-version>
+# Usage: gen-distfiles.sh <local-ai-version>
 # Example: gen-distfiles.sh 4.8.2
 set -euo pipefail
 
-VERSION=${1:?usage: gen-distfiles.sh <localai-version>}
+VERSION=${1:?usage: gen-distfiles.sh <local-ai-version>}
 
 OUT=$(pwd)/distfiles-out
 WORK=$(mktemp -d)
