@@ -59,7 +59,7 @@ RDEPEND="
 	)
 "
 DEPEND="${RDEPEND}"
-BDEPEND=">=dev-lang/go-1.26"
+BDEPEND=">=dev-lang/go-1.26.0"
 
 # With USE=-system-onnxruntime the upstream prebuilt library is shipped.
 QA_PREBUILT="usr/libexec/local-ai/backends/piper/lib/libonnxruntime.so*"

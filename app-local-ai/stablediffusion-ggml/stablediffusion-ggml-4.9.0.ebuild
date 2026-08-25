@@ -59,7 +59,7 @@ DEPEND="${RDEPEND}
 	vulkan? ( dev-util/vulkan-headers )
 "
 BDEPEND="
-	>=dev-lang/go-1.26
+	>=dev-lang/go-1.26.0
 	vulkan? ( media-libs/shaderc )
 "
 

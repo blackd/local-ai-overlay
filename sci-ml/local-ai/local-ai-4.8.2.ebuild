@@ -44,7 +44,7 @@ PDEPEND="
 # go.mod declares `go 1.26.0`. nodejs[npm] builds the web UI; the UI's
 # dependencies come from the node_modules tarball, not the network.
 BDEPEND="
-	>=dev-lang/go-1.26
+	>=dev-lang/go-1.26.0
 	net-libs/nodejs[npm]
 "
 

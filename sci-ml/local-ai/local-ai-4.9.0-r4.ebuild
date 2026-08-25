@@ -48,7 +48,7 @@ PDEPEND="
 # go.mod declares `go 1.26.0`. nodejs[npm] builds the web UI; the UI's
 # dependencies come from the node_modules tarball, not the network.
 BDEPEND="
-	>=dev-lang/go-1.26
+	>=dev-lang/go-1.26.0
 	net-libs/nodejs[npm]
 "
 
@@ -108,7 +108,14 @@ src_install() {
 
 pkg_postinst() {
 	elog "The LocalAI core server is installed. Inference backends are separate"
-	elog "packages: app-local-ai/llama-cpp provides text generation (GGUF models)."
+	elog "packages; you may need to emerge one or more of them for the model"
+	elog "types you plan to run:"
+	elog "  app-local-ai/llama-cpp            text generation (GGUF models)"
+	elog "  app-local-ai/stablediffusion-ggml image generation (GGUF models)"
+	elog "  app-local-ai/audio-cpp            audio models (audio.cpp engine)"
+	elog "  app-local-ai/piper                text-to-speech"
+	elog "  app-local-ai/vibevoice-cpp        text-to-speech (VibeVoice)"
+	elog "This package's USE flags of the same names pull them in as well."
 	elog "Mutable state lives in /var/lib/local-ai."
 	elog "Start via: rc-service local-ai start   (OpenRC)"
 	elog "       or: systemctl start local-ai    (systemd)"
