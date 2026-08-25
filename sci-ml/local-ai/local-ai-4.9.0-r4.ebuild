@@ -115,6 +115,7 @@ pkg_postinst() {
 	elog "  app-local-ai/audio-cpp            audio models (audio.cpp engine)"
 	elog "  app-local-ai/piper                text-to-speech"
 	elog "  app-local-ai/vibevoice-cpp        text-to-speech (VibeVoice)"
+	elog "  app-local-ai/whisper              speech-to-text (whisper.cpp)"
 	elog "This package's USE flags of the same names pull them in as well."
 	elog "Mutable state lives in /var/lib/local-ai."
 	elog "Start via: rc-service local-ai start   (OpenRC)"
