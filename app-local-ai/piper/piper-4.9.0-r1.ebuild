@@ -29,9 +29,7 @@ SONIC_COMMIT="fbf75c3d6d846bad3bb3d456cbc5d07d9fd8c104"
 DESCRIPTION="LocalAI text-to-speech backend (piper gRPC server)"
 HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"
 SRC_URI="
-	https://github.com/mudler/LocalAI/archive/refs/tags/v${PV}.tar.gz -> local-ai-${PV}.tar.gz
-	${DISTFILES_BASE}/local-ai-${PV}-deps.tar.xz
-	${DISTFILES_BASE}/local-ai-${PV}-prebuilt.tar.xz
+	${LOCAL_AI_GO_SRC_URI}
 	https://github.com/mudler/go-piper/archive/${GOPIPER_COMMIT}.tar.gz -> go-piper-${GOPIPER_COMMIT}.tar.gz
 	https://github.com/rhasspy/piper/archive/${PIPER_COMMIT}.tar.gz -> piper-${PIPER_COMMIT}.tar.gz
 	https://github.com/rhasspy/piper-phonemize/archive/${PHONEMIZE_COMMIT}.tar.gz -> piper-phonemize-${PHONEMIZE_COMMIT}.tar.gz
@@ -69,32 +67,25 @@ QA_PREBUILT="usr/libexec/local-ai/backends/piper/lib/libonnxruntime.so*"
 GOPIPER="${S}/sources/go-piper"
 
 src_unpack() {
-	unpack "local-ai-${PV}.tar.gz" "local-ai-${PV}-deps.tar.xz"
-
-	# The wrapper imports the generated protobuf package pkg/grpc/proto,
-	# shipped in the -prebuilt tarball (rooted at the repo top level).
-	cd "${WORKDIR}/LocalAI-${PV}" || die
-	unpack "local-ai-${PV}-prebuilt.tar.xz"
+	local-ai-backend_go_unpack
 	if ! use system-onnxruntime; then
 		use amd64 && unpack "onnxruntime-linux-x64-${ONNX_PV}.tgz"
 		use arm64 && unpack "onnxruntime-linux-aarch64-${ONNX_PV}.tgz"
 	fi
 
-	# Assemble the layout upstream's clone targets would produce; the
-	# Makefile's network-using targets are then skipped because their
-	# directories already exist.
-	cd "${WORKDIR}" || die
-	unpack "go-piper-${GOPIPER_COMMIT}.tar.gz"
-	unpack "piper-${PIPER_COMMIT}.tar.gz"
-	unpack "piper-phonemize-${PHONEMIZE_COMMIT}.tar.gz"
-	unpack "rhasspy-espeak-ng-${ESPEAK_COMMIT}.tar.gz"
+	# sonic stays in WORKDIR: src_prepare points espeak's FetchContent
+	# at it there.
 	unpack "sonic-${SONIC_COMMIT}.tar.gz"
-	mkdir -p "${S}/sources" || die
-	mv "go-piper-${GOPIPER_COMMIT}" "${GOPIPER}" || die
-	rmdir "${GOPIPER}/piper" "${GOPIPER}/piper-phonemize" "${GOPIPER}/espeak" 2>/dev/null
-	mv "piper-${PIPER_COMMIT}" "${GOPIPER}/piper" || die
-	mv "piper-phonemize-${PHONEMIZE_COMMIT}" "${GOPIPER}/piper-phonemize" || die
-	mv "espeak-ng-${ESPEAK_COMMIT}" "${GOPIPER}/espeak" || die
+
+	# go-piper with its submodule checkouts, as upstream's clone targets
+	# would lay them out; the Makefile's network-using targets are then
+	# skipped because their directories already exist.
+	local subs=(
+		"piper-${PIPER_COMMIT}.tar.gz" "piper-${PIPER_COMMIT}" piper
+		"piper-phonemize-${PHONEMIZE_COMMIT}.tar.gz" "piper-phonemize-${PHONEMIZE_COMMIT}" piper-phonemize
+		"rhasspy-espeak-ng-${ESPEAK_COMMIT}.tar.gz" "espeak-ng-${ESPEAK_COMMIT}" espeak
+	)
+	local-ai-backend_engine_unpack "go-piper-${GOPIPER_COMMIT}.tar.gz" go-piper "${subs[@]}"
 }
 
 src_prepare() {

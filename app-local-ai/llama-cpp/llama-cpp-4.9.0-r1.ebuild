@@ -20,7 +20,7 @@ LLAMA_COMMIT="60addddf3c567c43ec3caf70fc953fba3572d96f"
 DESCRIPTION="LocalAI text-generation backend (llama.cpp gRPC server)"
 HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"
 SRC_URI="
-	https://github.com/mudler/LocalAI/archive/refs/tags/v${PV}.tar.gz -> local-ai-${PV}.tar.gz
+	${LOCAL_AI_SRC_URI}
 	https://github.com/ggerganov/llama.cpp/archive/${LLAMA_COMMIT}.tar.gz -> llama.cpp-${LLAMA_COMMIT}.tar.gz
 "
 

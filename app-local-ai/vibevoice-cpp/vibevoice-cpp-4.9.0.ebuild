@@ -1,11 +1,10 @@
 # Copyright 2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-# LocalAI image-generation backend for GGUF-format diffusion models: a
-# CGO-free Go gRPC server that dlopens a compute library (libgosd.so) built
-# from stable-diffusion.cpp at the exact commit this LocalAI release pins.
-# Upstream publishes CPU, CUDA, Vulkan, and SYCL variants of this backend
-# but no ROCm build at all; USE=rocm here fills that gap.
+# LocalAI text-to-speech backend for Microsoft's VibeVoice model in GGUF
+# format: a CGO-free Go gRPC server that dlopens a compute library
+# (libgovibevoicecpp.so) built from mudler's vibevoice.cpp at the exact
+# commit this LocalAI release pins.
 
 EAPI=8
 
@@ -13,21 +12,21 @@ ROCM_VERSION=7.2
 
 inherit cmake cuda go-module local-ai-backend rocm
 
-# The stable-diffusion.cpp commit LocalAI v4.9.0 builds against. Source of
-# truth: backend/go/stablediffusion-ggml/Makefile
-# (STABLEDIFFUSION_GGML_VERSION) at the upstream release tag; the ggml pin
-# is that commit's submodule gitlink (leejet's ggml fork).
-SD_COMMIT="de298c225bed97c3f9026b73cd7b71e7879bd41b"
-GGML_COMMIT="8e800cef2948046cc47f9db6090491c6128ca42c"
+# The vibevoice.cpp commit LocalAI v4.9.0 builds against. Source of truth:
+# backend/go/vibevoice-cpp/Makefile (VIBEVOICE_CPP_VERSION) at the upstream
+# release tag; the ggml pin is that commit's third_party/ggml submodule
+# gitlink (ggml-org's mainline ggml).
+VIBEVOICE_COMMIT="000e37282bc5bb09edc20f7047a47924122ba3a0"
+GGML_COMMIT="8be60f83ec124c31f3a427053c29022e3072f8a4"
 
-DESCRIPTION="LocalAI image-generation backend (stable-diffusion.cpp gRPC server)"
+DESCRIPTION="LocalAI text-to-speech backend (vibevoice.cpp gRPC server)"
 HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"
 SRC_URI="
 	${LOCAL_AI_GO_SRC_URI}
-	https://github.com/leejet/stable-diffusion.cpp/archive/${SD_COMMIT}.tar.gz -> stable-diffusion.cpp-${SD_COMMIT}.tar.gz
-	https://github.com/leejet/ggml/archive/${GGML_COMMIT}.tar.gz -> leejet-ggml-${GGML_COMMIT}.tar.gz
+	https://github.com/mudler/vibevoice.cpp/archive/${VIBEVOICE_COMMIT}.tar.gz -> vibevoice.cpp-${VIBEVOICE_COMMIT}.tar.gz
+	https://github.com/ggml-org/ggml/archive/${GGML_COMMIT}.tar.gz -> ggml-org-ggml-${GGML_COMMIT}.tar.gz
 "
-S="${WORKDIR}/LocalAI-${PV}/backend/go/stablediffusion-ggml"
+S="${WORKDIR}/LocalAI-${PV}/backend/go/vibevoice-cpp"
 
 LICENSE="MIT"
 SLOT="0"
@@ -66,10 +65,8 @@ BDEPEND="
 src_unpack() {
 	local-ai-backend_go_unpack
 
-	# The unused thirdparty submodules (libwebp/libwebm, web frontend)
-	# stay empty and sd.cpp's cmake correctly treats them as unavailable.
-	local ggml=( "leejet-ggml-${GGML_COMMIT}.tar.gz" "ggml-${GGML_COMMIT}" ggml )
-	local-ai-backend_engine_unpack "stable-diffusion.cpp-${SD_COMMIT}.tar.gz" stablediffusion-ggml.cpp "${ggml[@]}"
+	local ggml=( "ggml-org-ggml-${GGML_COMMIT}.tar.gz" "ggml-${GGML_COMMIT}" third_party/ggml )
+	local-ai-backend_engine_unpack "vibevoice.cpp-${VIBEVOICE_COMMIT}.tar.gz" vibevoice.cpp "${ggml[@]}"
 }
 
 src_prepare() {
@@ -79,17 +76,20 @@ src_prepare() {
 
 src_configure() {
 	local mycmakeargs=(
-		# ggml RPC backend on, as upstream builds it: generation can be
-		# sharded across the same rpc-server workers the llama.cpp
-		# backend uses.
-		-DSD_RPC=ON
+		# Static libvibevoice/ggml whole-archived into one self-contained
+		# module library (upstream's default backend build).
+		-DBUILD_SHARED_LIBS=OFF
 		# Respect the user's CFLAGS instead of -march=native probing,
 		# unless they opt in via USE=native.
 		-DGGML_NATIVE=$(usex native)
 		-DGGML_BLAS=$(usex openblas)
-		-DSD_VULKAN=$(usex vulkan)
-		-DSD_CUDA=$(usex cuda)
-		-DSD_HIPBLAS=$(usex rocm)
+		-DGGML_VULKAN=$(usex vulkan)
+		-DVIBEVOICE_GGML_VULKAN=$(usex vulkan)
+		-DGGML_CUDA=$(usex cuda)
+		-DVIBEVOICE_GGML_CUDA=$(usex cuda)
+		# This ggml only understands GGML_HIP (GGML_HIPBLAS was removed
+		# upstream and silently produced CPU-only builds).
+		-DGGML_HIP=$(usex rocm)
 	)
 	use openblas && mycmakeargs+=( -DGGML_BLAS_VENDOR=OpenBLAS )
 
@@ -115,15 +115,18 @@ src_configure() {
 }
 
 src_compile() {
-	cmake_src_compile
+	# The engine subdirectory is EXCLUDE_FROM_ALL; the govibevoicecpp
+	# target pulls libvibevoice in as its link dependency.
+	cmake_src_compile govibevoicecpp
 
 	# The gRPC server itself: a CGO-free Go binary that dlopens the
-	# library built above (its path arrives via SD_LIBRARY from run.sh, so
-	# only one compute variant is needed instead of upstream's four).
+	# library built above (its path arrives via VIBEVOICECPP_LIBRARY from
+	# run.sh, so only one compute variant is needed instead of upstream's
+	# four).
 	cd "${S}" || die
-	CGO_ENABLED=0 ego build -o stablediffusion-ggml ./
+	CGO_ENABLED=0 ego build -o vibevoice-cpp ./
 }
 
 src_install() {
-	local-ai-backend_install stablediffusion-ggml "${BUILD_DIR}"/libgosd.so "${S}"/stablediffusion-ggml
+	local-ai-backend_install vibevoice-cpp "${BUILD_DIR}"/libgovibevoicecpp.so "${S}"/vibevoice-cpp
 }

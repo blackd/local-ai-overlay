@@ -16,7 +16,7 @@ AUDIOCPP_COMMIT="a61da671b6a81c79071500954eea3c91c1a383dd"
 DESCRIPTION="LocalAI audio backend (audio.cpp gRPC server)"
 HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"
 SRC_URI="
-	https://github.com/mudler/LocalAI/archive/refs/tags/v${PV}.tar.gz -> local-ai-${PV}.tar.gz
+	${LOCAL_AI_SRC_URI}
 	https://github.com/0xShug0/audio.cpp/archive/${AUDIOCPP_COMMIT}.tar.gz -> audio.cpp-${AUDIOCPP_COMMIT}.tar.gz
 "
 

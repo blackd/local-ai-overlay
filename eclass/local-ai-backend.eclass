@@ -32,6 +32,65 @@ _LOCAL_AI_BACKEND_ECLASS=1
 # holding that version's three tarballs.
 DISTFILES_BASE="https://git.ipnmod.org/packages/local-ai-overlay/releases/download/v${PV}"
 
+# @ECLASS_VARIABLE: LOCAL_AI_SRC_URI
+# @DESCRIPTION:
+# SRC_URI fragment fetching the LocalAI source tree at this version.
+LOCAL_AI_SRC_URI="https://github.com/mudler/LocalAI/archive/refs/tags/v${PV}.tar.gz -> local-ai-${PV}.tar.gz"
+
+# @ECLASS_VARIABLE: LOCAL_AI_GO_SRC_URI
+# @DESCRIPTION:
+# SRC_URI fragment for backends compiled from LocalAI's Go module: the
+# source tree plus the Go module cache (-deps) and the pre-generated
+# protobuf Go code (-prebuilt) that module needs to build offline.
+LOCAL_AI_GO_SRC_URI="
+	${LOCAL_AI_SRC_URI}
+	${DISTFILES_BASE}/local-ai-${PV}-deps.tar.xz
+	${DISTFILES_BASE}/local-ai-${PV}-prebuilt.tar.xz
+"
+
+# @FUNCTION: local-ai-backend_go_unpack
+# @DESCRIPTION:
+# Unpack what LOCAL_AI_GO_SRC_URI fetches: the LocalAI tree, the Go module
+# cache (to ${WORKDIR}/go-mod, where go-module.eclass points GOMODCACHE),
+# and the prebuilt pkg/grpc/proto package into the tree. Returns with
+# ${WORKDIR} as the working directory; engine sources stay the ebuild's
+# job.
+local-ai-backend_go_unpack() {
+	unpack "local-ai-${PV}.tar.gz" "local-ai-${PV}-deps.tar.xz"
+	cd "${WORKDIR}/LocalAI-${PV}" || die
+	unpack "local-ai-${PV}-prebuilt.tar.xz"
+	cd "${WORKDIR}" || die
+}
+
+# @FUNCTION: local-ai-backend_engine_unpack
+# @USAGE: <engine-tarball> <engine-name> [<sub-tarball> <sub-dir> <sub-path>]...
+# @DESCRIPTION:
+# Unpack a backend's engine tarball to ${S}/sources/<engine-name>, then any
+# number of submodule triples: unpack <sub-tarball>, drop the empty
+# placeholder directory the engine archive carries at <sub-path> (relative
+# to the engine root; GitHub archives omit submodule content but keep the
+# directory), and move the extracted <sub-dir> there. The engine archive is
+# assumed to extract to its tarball name minus .tar.gz (true for GitHub
+# commit archives); submodule distfiles are often renamed against
+# collisions (e.g. leejet-ggml-*.tar.gz extracting to ggml-*), hence the
+# explicit extracted-directory argument.
+local-ai-backend_engine_unpack() {
+	local engine_tarball=$1 engine_name=$2; shift 2
+	local engine_root="${S}/sources/${engine_name}"
+
+	cd "${WORKDIR}" || die
+	unpack "${engine_tarball}"
+	mkdir -p "${S}/sources" || die
+	mv "${engine_tarball%.tar.gz}" "${engine_root}" || die
+
+	while [[ $# -gt 0 ]]; do
+		unpack "$1"
+		rmdir "${engine_root}/$3" 2>/dev/null
+		mv "$2" "${engine_root}/$3" || die
+		shift 3
+	done
+}
+
 # @ECLASS_VARIABLE: LOCAL_AI_BACKENDS_DIR
 # @DESCRIPTION:
 # Install root for backend packages. /usr/libexec is the filesystem-standard
