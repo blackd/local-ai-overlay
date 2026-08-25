@@ -9,5 +9,6 @@
 		<flag name="llama-cpp">Install the llama.cpp text-generation backend (<pkg>app-local-ai/llama-cpp</pkg>)</flag>
 		<flag name="audio-cpp">Install the audio backend (<pkg>app-local-ai/audio-cpp</pkg>)</flag>
 		<flag name="piper">Install the piper text-to-speech backend (<pkg>app-local-ai/piper</pkg>)</flag>
+		<flag name="stablediffusion-ggml">Install the stable-diffusion.cpp image-generation backend (<pkg>app-local-ai/stablediffusion-ggml</pkg>)</flag>
 	</use>
 </pkgmetadata>
