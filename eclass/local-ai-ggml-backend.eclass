@@ -128,9 +128,12 @@ local-ai-ggml-backend_src_configure() {
 		# Switch to hipcc and strip flags it can't digest; build for the
 		# GPU architectures selected via AMDGPU_TARGETS USE_EXPAND flags
 		# (rocm.eclass) instead of autodetecting the build host's GPU.
+		# GPU_TARGETS is ROCm >=6's name for AMDGPU_TARGETS; pass both so
+		# the build survives when the legacy name is dropped.
 		rocm_use_hipcc
 		mycmakeargs+=(
 			-DAMDGPU_TARGETS="$(get_amdgpu_flags)"
+			-DGPU_TARGETS="$(get_amdgpu_flags)"
 			-DCMAKE_HIP_ARCHITECTURES="$(get_amdgpu_flags)"
 		)
 	fi
