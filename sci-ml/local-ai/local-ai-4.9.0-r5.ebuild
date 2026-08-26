@@ -54,6 +54,10 @@ BDEPEND="
 
 DOCS=( README.md )
 
+# Adds a persistent "Focus mode" toggle to the chat settings drawer so the
+# sidebar auto-collapse can be switched off; proposed upstream.
+PATCHES=( "${FILESDIR}/local-ai-4.9.0-focus-mode-toggle.patch" )
+
 src_unpack() {
 	# ${P}-deps.tar.xz unpacks to ${WORKDIR}/go-mod — exactly where
 	# go-module.eclass points GOMODCACHE, so Go finds every dependency
