@@ -20,7 +20,7 @@ LOCAL_AI_EXTRA_CMAKE_ARGS=(
 # silently build CPU-only — presumably why no ROCm variant is published).
 LOCAL_AI_HIP_CMAKE_VARS="GGML_HIPBLAS"
 
-inherit local-ai-ggml
+inherit flag-o-matic local-ai-ggml
 
 # The ik_llama.cpp commit LocalAI v4.9.0 builds against. Source of truth:
 # backend/cpp/ik-llama-cpp/Makefile (IK_LLAMA_VERSION) at the upstream
@@ -80,6 +80,17 @@ src_prepare() {
 	local-ai-backend_bump_cxx20 "${S}/examples/grpc-server/CMakeLists.txt"
 
 	local-ai-ggml_src_prepare
+}
+
+src_configure() {
+	if use rocm; then
+		# The fork's HIPBLAS branch compiles the CUDA sources but omits
+		# the two tunable defines its CUDA branch adds via
+		# add_compile_definitions (ggml/src/CMakeLists.txt); supply their
+		# defaults by hand.
+		append-cxxflags -DGGML_CUDA_FUSION=1 -DGGML_CUDA_MIN_BATCH_OFFLOAD=32
+	fi
+	local-ai-ggml_src_configure
 }
 
 src_install() {
