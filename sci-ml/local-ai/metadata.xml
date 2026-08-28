@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
-	<!-- Maintainer: Plamen K. Kosseff. No email by choice: GLEP 68 makes <email> mandatory inside <maintainer>, hence no maintainer element. -->
+	<maintainer type="person">
+		<email>plamen [at] ipnmod.org</email>
+		<name>Plamen K. Kosseff</name>
+	</maintainer>
 	<upstream>
 		<remote-id type="github">mudler/LocalAI</remote-id>
 	</upstream>
 	<use>
-		<flag name="llama-cpp">Install the llama.cpp text-generation backend (<pkg>app-local-ai/llama-cpp</pkg>)</flag>
-		<flag name="audio-cpp">Install the audio backend (<pkg>app-local-ai/audio-cpp</pkg>)</flag>
-		<flag name="piper">Install the piper text-to-speech backend (<pkg>app-local-ai/piper</pkg>)</flag>
-		<flag name="stablediffusion-ggml">Install the stable-diffusion.cpp image-generation backend (<pkg>app-local-ai/stablediffusion-ggml</pkg>)</flag>
-		<flag name="vibevoice-cpp">Install the vibevoice.cpp text-to-speech backend (<pkg>app-local-ai/vibevoice-cpp</pkg>)</flag>
+		<flag name="backends">Pull in the <pkg>app-local-ai/backends-meta</pkg> meta package selecting inference backends</flag>
 	</use>
 </pkgmetadata>

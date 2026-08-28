@@ -1,30 +1,27 @@
 # Copyright 2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-# @ECLASS: local-ai-ggml-backend.eclass
+# @ECLASS: local-ai-ggml.eclass
 # @MAINTAINER:
 # Plamen K. Kosseff
 # @SUPPORTED_EAPIS: 8
-# @PROVIDES: local-ai-backend
-# @BLURB: Build scaffolding for LocalAI's ggml-engine Go backends
+# @PROVIDES: cmake cuda local-ai-backend rocm
+# @BLURB: Shared flags, dependencies and CMake phases for ggml-engine backends
 # @DESCRIPTION:
-# Several LocalAI backends share one shape: a C/C++ inference engine built
-# on ggml (whisper.cpp, stable-diffusion.cpp, vibevoice.cpp, ...) compiled
-# by CMake into a single dlopen-able module library, plus a CGO-free Go
-# gRPC server from LocalAI's own Go module that loads it at runtime (the
-# library path travels through an engine-specific environment variable set
-# in the package's run.sh). This eclass provides the shared USE flags,
-# dependencies, and all build phases; the ebuild supplies the engine
-# sources (src_unpack, typically via local-ai-backend_engine_unpack) and
-# the knobs below.
+# Every LocalAI backend that embeds a ggml-based inference engine shares
+# the same acceleration surface: the cuda/native/openblas/rocm/vulkan USE
+# flags, their dependencies, and a CMake configuration driving the GGML_*
+# toggles plus the ROCm/CUDA toolchain setup. This eclass provides all of
+# it; the family-specific eclasses/ebuilds add how the engine is obtained,
+# compiled into its final artifact, and installed.
 
 case ${EAPI} in
 	8) ;;
 	*) die "${ECLASS}: EAPI ${EAPI:-0} not supported" ;;
 esac
 
-if [[ -z ${_LOCAL_AI_GGML_BACKEND_ECLASS} ]]; then
-_LOCAL_AI_GGML_BACKEND_ECLASS=1
+if [[ -z ${_LOCAL_AI_GGML_ECLASS} ]]; then
+_LOCAL_AI_GGML_ECLASS=1
 
 # @ECLASS_VARIABLE: ROCM_VERSION
 # @DESCRIPTION:
@@ -32,19 +29,12 @@ _LOCAL_AI_GGML_BACKEND_ECLASS=1
 # HIP/BLAS runtime dependencies.
 ROCM_VERSION=7.2
 
-inherit cmake cuda go-module local-ai-backend rocm
-
-# @ECLASS_VARIABLE: LOCAL_AI_ENGINE_LIB
-# @REQUIRED
-# @DESCRIPTION:
-# File name of the compute module library the wrapper CMake project
-# emits, e.g. libgowhisper.so.
+inherit cmake cuda local-ai-backend rocm
 
 # @ECLASS_VARIABLE: LOCAL_AI_CMAKE_TARGET
 # @DEFAULT_UNSET
 # @DESCRIPTION:
-# CMake target to build instead of the default "all" (needed when the
-# engine subdirectory is EXCLUDE_FROM_ALL).
+# CMake target to build instead of the default "all".
 
 # @ECLASS_VARIABLE: LOCAL_AI_CUDA_CMAKE_VARS
 # @DESCRIPTION:
@@ -58,7 +48,8 @@ inherit cmake cuda go-module local-ai-backend rocm
 # @DEFAULT_UNSET
 # @DESCRIPTION:
 # Array of engine-specific CMake arguments appended verbatim, e.g.
-# ( -DSD_RPC=ON ).
+# ( -DSD_RPC=ON ). May also be extended inside src_configure before
+# calling local-ai-ggml_src_configure (e.g. for usex-derived values).
 
 HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"
 LICENSE="MIT"
@@ -76,6 +67,8 @@ done
 REQUIRED_USE="?? ( cuda rocm ) rocm? ( ${ROCM_REQUIRED_USE} ) ${_amdgpu_implies_rocm}"
 unset _amdgpu_implies_rocm _f
 
+# The server package provides the local-ai user and discovers backends
+# installed under /usr/libexec via LOCALAI_BACKENDS_SYSTEM_PATH.
 RDEPEND="
 	sci-ml/local-ai
 	openblas? ( sci-libs/openblas )
@@ -91,20 +84,19 @@ DEPEND="${RDEPEND}
 	vulkan? ( dev-util/vulkan-headers )
 "
 BDEPEND="
-	>=dev-lang/go-1.26.0
 	vulkan? ( media-libs/shaderc )
 "
 
-local-ai-ggml-backend_src_prepare() {
+local-ai-ggml_src_prepare() {
 	cmake_src_prepare
 	use cuda && cuda_src_prepare
 }
 
-local-ai-ggml-backend_src_configure() {
+local-ai-ggml_src_configure() {
 	local mycmakeargs=(
-		# Static engine/ggml linked into one self-contained module
-		# library (upstream's default backend build; a no-op where the
-		# engine already defaults to static).
+		# Static engine/ggml linked into one self-contained artifact
+		# (upstream's default backend build; a no-op where the engine
+		# already defaults to static).
 		-DBUILD_SHARED_LIBS=OFF
 		# Respect the user's CFLAGS instead of -march=native probing,
 		# unless they opt in via USE=native.
@@ -148,20 +140,10 @@ local-ai-ggml-backend_src_configure() {
 	cmake_src_configure
 }
 
-local-ai-ggml-backend_src_compile() {
+local-ai-ggml_src_compile() {
 	cmake_src_compile ${LOCAL_AI_CMAKE_TARGET}
-
-	# The gRPC server itself: a CGO-free Go binary, named after the
-	# package, that dlopens the library built above (only one compute
-	# variant is needed instead of upstream's four — run.sh names it).
-	cd "${S}" || die
-	CGO_ENABLED=0 ego build -o "${PN}" ./
 }
 
-local-ai-ggml-backend_src_install() {
-	local-ai-backend_install "${PN}" "${BUILD_DIR}/${LOCAL_AI_ENGINE_LIB}" "${S}/${PN}"
-}
-
-EXPORT_FUNCTIONS src_prepare src_configure src_compile src_install
+EXPORT_FUNCTIONS src_prepare src_configure src_compile
 
 fi

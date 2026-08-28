@@ -11,7 +11,7 @@ EAPI=8
 
 LOCAL_AI_ENGINE_LIB="libgowhisper.so"
 
-inherit local-ai-ggml-backend
+inherit local-ai-ggml-go
 
 # The whisper.cpp commit LocalAI v4.9.0 builds against. Source of truth:
 # backend/go/whisper/Makefile (WHISPER_CPP_VERSION) at the upstream

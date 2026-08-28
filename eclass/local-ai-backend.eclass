@@ -91,6 +91,26 @@ local-ai-backend_engine_unpack() {
 	done
 }
 
+# @FUNCTION: local-ai-backend_bump_cxx20
+# @USAGE: <file>...
+# @DESCRIPTION:
+# Rewrite CMAKE_CXX_STANDARD 17 to 20 in the given files. System abseil is
+# built for C++20 — its installed headers force std::*_ordering, and it
+# exports cxx_std_20 as an INTERFACE compile feature that propagates to
+# everything linking it — so C++ sources built against the system
+# gRPC/absl/protobuf stack must compile as C++20; upstream's C++17
+# settings only work against its vendored, C++17-configured stack.
+local-ai-backend_bump_cxx20() {
+	local f
+	for f in "$@"; do
+		einfo "Bumping C++ standard to 20 in ${f#./}"
+		sed -i 's/CMAKE_CXX_STANDARD 17/CMAKE_CXX_STANDARD 20/g' "${f}" || die
+		if grep -q 'CMAKE_CXX_STANDARD 17' "${f}"; then
+			die "C++17 pin remains in ${f}"
+		fi
+	done
+}
+
 # @ECLASS_VARIABLE: LOCAL_AI_BACKENDS_DIR
 # @DESCRIPTION:
 # Install root for backend packages. /usr/libexec is the filesystem-standard
@@ -99,11 +119,28 @@ local-ai-backend_engine_unpack() {
 # provides no variable for it, so this eclass is that variable.
 LOCAL_AI_BACKENDS_DIR="${EPREFIX}/usr/libexec/local-ai/backends"
 
+# @FUNCTION: local-ai-backend_install_meta
+# @USAGE: <backend-name>
+# @DESCRIPTION:
+# Install the pieces every backend directory needs for discovery: run.sh
+# from FILESDIR and a generated metadata.json naming the backend.
+local-ai-backend_install_meta() {
+	local name=$1
+	local dest="${LOCAL_AI_BACKENDS_DIR#${EPREFIX}}/${name}"
+
+	exeinto "${dest}"
+	doexe "${FILESDIR}"/run.sh
+
+	printf '{\n\t"name": "%s"\n}\n' "${name}" > "${T}"/metadata.json || die
+	insinto "${dest}"
+	doins "${T}"/metadata.json
+}
+
 # @FUNCTION: local-ai-backend_install
 # @USAGE: <backend-name> <file>...
 # @DESCRIPTION:
-# Install <file>s into ${LOCAL_AI_BACKENDS_DIR}/<backend-name>/, add run.sh
-# and metadata.json from FILESDIR. The server discovers this directory via
+# Install <file>s into ${LOCAL_AI_BACKENDS_DIR}/<backend-name>/ together
+# with run.sh and metadata.json. The server discovers this directory via
 # LOCALAI_BACKENDS_SYSTEM_PATH (set in sci-ml/local-ai's service config);
 # symlinking into /var/lib is neither needed nor seen by discovery, which
 # skips symlinked entries.
@@ -113,10 +150,8 @@ local-ai-backend_install() {
 
 	exeinto "${dest}"
 	doexe "$@"
-	doexe "${FILESDIR}"/run.sh
 
-	insinto "${dest}"
-	doins "${FILESDIR}"/metadata.json
+	local-ai-backend_install_meta "${name}"
 }
 
 fi

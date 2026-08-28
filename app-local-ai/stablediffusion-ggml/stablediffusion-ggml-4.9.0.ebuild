@@ -17,7 +17,7 @@ LOCAL_AI_HIP_CMAKE_VARS="SD_HIPBLAS"
 # across the same rpc-server workers the llama.cpp backend uses.
 LOCAL_AI_EXTRA_CMAKE_ARGS=( -DSD_RPC=ON )
 
-inherit local-ai-ggml-backend
+inherit local-ai-ggml-go
 
 # The stable-diffusion.cpp commit LocalAI v4.9.0 builds against. Source of
 # truth: backend/go/stablediffusion-ggml/Makefile

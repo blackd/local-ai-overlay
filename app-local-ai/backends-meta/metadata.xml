@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>plamen [at] ipnmod.org</email>
+		<name>Plamen K. Kosseff</name>
+	</maintainer>
+	<upstream>
+		<remote-id type="github">mudler/LocalAI</remote-id>
+	</upstream>
+	<use>
+		<flag name="llama-cpp">Install the llama.cpp text-generation backend (<pkg>app-local-ai/llama-cpp</pkg>)</flag>
+		<flag name="audio-cpp">Install the audio backend (<pkg>app-local-ai/audio-cpp</pkg>)</flag>
+		<flag name="ik-llama-cpp">Install the ik_llama.cpp text-generation backend (<pkg>app-local-ai/ik-llama-cpp</pkg>)</flag>
+		<flag name="piper">Install the piper text-to-speech backend (<pkg>app-local-ai/piper</pkg>)</flag>
+		<flag name="stablediffusion-ggml">Install the stable-diffusion.cpp image-generation backend (<pkg>app-local-ai/stablediffusion-ggml</pkg>)</flag>
+		<flag name="vibevoice-cpp">Install the vibevoice.cpp text-to-speech backend (<pkg>app-local-ai/vibevoice-cpp</pkg>)</flag>
+		<flag name="whisper">Install the whisper.cpp speech-to-text backend (<pkg>app-local-ai/whisper</pkg>)</flag>
+	</use>
+</pkgmetadata>

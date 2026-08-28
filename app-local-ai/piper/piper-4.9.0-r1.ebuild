@@ -144,12 +144,9 @@ src_compile() {
 src_install() {
 	local dest="${LOCAL_AI_BACKENDS_DIR#${EPREFIX}}/piper"
 
-	exeinto "${dest}"
-	doexe "${S}/piper"
-	doexe "${FILESDIR}"/run.sh
+	local-ai-backend_install piper "${S}/piper"
 
 	insinto "${dest}"
-	doins "${FILESDIR}"/metadata.json
 	doins -r "${S}/espeak-ng-data"
 
 	exeinto "${dest}/lib"

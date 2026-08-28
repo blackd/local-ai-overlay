@@ -15,7 +15,7 @@ LOCAL_AI_VULKAN_CMAKE_VARS="GGML_VULKAN VIBEVOICE_GGML_VULKAN"
 # libvibevoice in as its link dependency.
 LOCAL_AI_CMAKE_TARGET="govibevoicecpp"
 
-inherit local-ai-ggml-backend
+inherit local-ai-ggml-go
 
 # The vibevoice.cpp commit LocalAI v4.9.0 builds against. Source of truth:
 # backend/go/vibevoice-cpp/Makefile (VIBEVOICE_CPP_VERSION) at the upstream

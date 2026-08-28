@@ -10,10 +10,10 @@ EAPI=8
 
 inherit go-module local-ai-backend systemd
 
-# Commit hash the upstream v4.8.2 release tag points at. Embedded into the
+# Commit hash the upstream v4.9.0 release tag points at. Embedded into the
 # binary (internal.Commit) so `local-ai --version` reports the same build
 # metadata as upstream's official builds.
-LOCAL_AI_COMMIT="5ff25d9d145e0a03a5b9a3559c620f1e1204ca6d"
+LOCAL_AI_COMMIT="f7ad3f70eb5d8a0ddf80e08557f0d7df28cf032e"
 
 DESCRIPTION="Self-hosted, OpenAI-compatible AI server (core, without inference backends)"
 HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"
@@ -29,17 +29,17 @@ LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64 ~arm64"
 
-# Backend flags do not change how the core is built; they only pull in the
-# matching backend package so a plain `emerge local-ai` yields a server that
-# can actually run models.
-IUSE="+llama-cpp"
+# The flag does not change how the core is built; it pulls in the
+# app-local-ai/backends-meta package, whose own USE flags select the
+# inference backends — so backend choices never rebuild the server.
+IUSE="+backends"
 
 RDEPEND="
 	acct-group/local-ai
 	acct-user/local-ai
 "
 PDEPEND="
-	llama-cpp? ( app-local-ai/llama-cpp )
+	backends? ( app-local-ai/backends-meta )
 "
 # go.mod declares `go 1.26.0`. nodejs[npm] builds the web UI; the UI's
 # dependencies come from the node_modules tarball, not the network.
@@ -49,6 +49,11 @@ BDEPEND="
 "
 
 DOCS=( README.md )
+
+# Adds a persistent "Focus mode" toggle to the chat settings drawer so the
+# sidebar auto-collapse can be switched off. Merged upstream — this patch
+# is 4.9.0-only: drop it (and the file in files/) at the next version bump.
+PATCHES=( "${FILESDIR}/local-ai-4.9.0-focus-mode-toggle.patch" )
 
 src_unpack() {
 	# ${P}-deps.tar.xz unpacks to ${WORKDIR}/go-mod — exactly where
@@ -95,7 +100,8 @@ src_install() {
 
 	# All mutable state (models, runtime-installed backends, generated
 	# configuration) lives here; the service files above point the server
-	# at it. Backend packages symlink themselves into backends/.
+	# at it. Portage-installed backends live under /usr/libexec instead,
+	# discovered via LOCALAI_BACKENDS_SYSTEM_PATH from the conf.d file.
 	keepdir /var/lib/local-ai /var/lib/local-ai/backends /var/lib/local-ai/models
 	fowners -R local-ai:local-ai /var/lib/local-ai
 
@@ -104,7 +110,13 @@ src_install() {
 
 pkg_postinst() {
 	elog "The LocalAI core server is installed. Inference backends are separate"
-	elog "packages: app-local-ai/llama-cpp provides text generation (GGUF models)."
+	elog "packages — see the app-local-ai category (llama-cpp for text"
+	elog "generation, stablediffusion-ggml for images, whisper for"
+	elog "speech-to-text, and more). USE flags on the app-local-ai/backends-meta"
+	elog "package select which ones are installed."
+	elog "Models needing a backend that is not installed through Portage make"
+	elog "the server download upstream's prebuilt binary variant into"
+	elog "/var/lib/local-ai/backends instead."
 	elog "Mutable state lives in /var/lib/local-ai."
 	elog "Start via: rc-service local-ai start   (OpenRC)"
 	elog "       or: systemctl start local-ai    (systemd)"

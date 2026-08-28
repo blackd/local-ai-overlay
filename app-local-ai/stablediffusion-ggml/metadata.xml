@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
-	<!-- Maintainer: Plamen K. Kosseff. No email by choice: GLEP 68 makes <email> mandatory inside <maintainer>, hence no maintainer element. -->
+	<maintainer type="person">
+		<email>plamen [at] ipnmod.org</email>
+		<name>Plamen K. Kosseff</name>
+	</maintainer>
 	<upstream>
 		<remote-id type="github">mudler/LocalAI</remote-id>
 	</upstream>
