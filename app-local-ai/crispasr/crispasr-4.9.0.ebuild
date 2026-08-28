@@ -66,6 +66,19 @@ src_unpack() {
 	local-ai-backend_engine_unpack "CrispASR-${CRISPASR_COMMIT}.tar.gz" CrispASR "${subs[@]}"
 }
 
+src_prepare() {
+	# CrispASR's src/CMakeLists.txt locates its vendored llama.cpp, the
+	# c2pa-audio submodule, and WebRTC VAD via ${CMAKE_SOURCE_DIR}, which
+	# assumes CrispASR is the top-level CMake project; under
+	# add_subdirectory that resolves to the wrapper dir instead. Rewrite
+	# to ${PROJECT_SOURCE_DIR}, exactly as upstream's clone recipe does.
+	einfo "Rewriting CMAKE_SOURCE_DIR source references to PROJECT_SOURCE_DIR"
+	sed -i -e 's#${CMAKE_SOURCE_DIR}/examples/talk-llama#${PROJECT_SOURCE_DIR}/examples/talk-llama#' -e 's#${CMAKE_SOURCE_DIR}/third_party#${PROJECT_SOURCE_DIR}/third_party#' "${S}/sources/CrispASR/src/CMakeLists.txt" || die
+	grep -q 'PROJECT_SOURCE_DIR}/third_party' "${S}/sources/CrispASR/src/CMakeLists.txt" || die "source-dir rewrite did not apply"
+
+	local-ai-ggml_src_prepare
+}
+
 src_configure() {
 	LOCAL_AI_EXTRA_CMAKE_ARGS+=( -DCRISPASR_FFMPEG=$(usex ffmpeg) )
 	local-ai-ggml_src_configure
