@@ -14,14 +14,15 @@ HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"
 LICENSE="metapackage"
 SLOT="0"
 KEYWORDS="~amd64 ~arm64"
-IUSE="+llama-cpp +audio-cpp +piper +stablediffusion-ggml +vibevoice-cpp +whisper"
+IUSE="+llama-cpp +audio-cpp +crispasr +piper +stablediffusion-ggml +vibevoice-cpp +whisper"
 # An empty meta package is a configuration error: the whole point is to
 # have at least one inference backend installed.
-REQUIRED_USE="|| ( llama-cpp audio-cpp piper stablediffusion-ggml vibevoice-cpp whisper )"
+REQUIRED_USE="|| ( llama-cpp audio-cpp crispasr piper stablediffusion-ggml vibevoice-cpp whisper )"
 
 RDEPEND="
 	llama-cpp? ( app-local-ai/llama-cpp )
 	audio-cpp? ( app-local-ai/audio-cpp )
+	crispasr? ( app-local-ai/crispasr )
 	piper? ( app-local-ai/piper )
 	stablediffusion-ggml? ( app-local-ai/stablediffusion-ggml )
 	vibevoice-cpp? ( app-local-ai/vibevoice-cpp )
