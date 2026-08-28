@@ -15,6 +15,10 @@ LOCAL_AI_EXTRA_CMAKE_ARGS=(
 	-DLLAMA_CURL=OFF
 	-DLLAMA_OPENSSL=OFF
 )
+# The fork predates ggml's GGML_HIP rename: its ROCm toggle is still the
+# old GGML_HIPBLAS (upstream's backend Makefile passes GGML_HIP and would
+# silently build CPU-only — presumably why no ROCm variant is published).
+LOCAL_AI_HIP_CMAKE_VARS="GGML_HIPBLAS"
 
 inherit local-ai-ggml
 
