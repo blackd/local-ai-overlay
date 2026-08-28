@@ -64,6 +64,10 @@ src_prepare() {
 	# registers the subdirectory with CMake. It is entirely offline, so
 	# run it as-is instead of replicating logic that shifts between
 	# releases.
+	# prepare.sh copies plain files into examples/grpc-server/ assuming the
+	# directory exists (the llama-cpp variant's script creates its target
+	# as a side effect of a directory copy; this one has no such accident).
+	mkdir -p "${S}/examples/grpc-server" || die
 	pushd "${WORKDIR}/LocalAI-${PV}/backend/cpp/ik-llama-cpp" >/dev/null || die
 	bash ./prepare.sh || die "prepare.sh failed"
 	popd >/dev/null || die
