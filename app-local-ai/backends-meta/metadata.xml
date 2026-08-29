@@ -12,6 +12,7 @@
 		<flag name="llama-cpp">Install the llama.cpp text-generation backend (<pkg>app-local-ai/llama-cpp</pkg>)</flag>
 		<flag name="audio-cpp">Install the audio backend (<pkg>app-local-ai/audio-cpp</pkg>)</flag>
 		<flag name="crispasr">Install the CrispASR multi-engine speech backend (<pkg>app-local-ai/crispasr</pkg>)</flag>
+		<flag name="depth-anything">Install the depth-anything.cpp depth-estimation backend (<pkg>app-local-ai/depth-anything</pkg>)</flag>
 		<flag name="piper">Install the piper text-to-speech backend (<pkg>app-local-ai/piper</pkg>)</flag>
 		<flag name="stablediffusion-ggml">Install the stable-diffusion.cpp image-generation backend (<pkg>app-local-ai/stablediffusion-ggml</pkg>)</flag>
 		<flag name="vibevoice-cpp">Install the vibevoice.cpp text-to-speech backend (<pkg>app-local-ai/vibevoice-cpp</pkg>)</flag>
