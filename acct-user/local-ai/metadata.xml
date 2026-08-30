@@ -2,7 +2,7 @@
 <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
 	<maintainer type="person">
-		<email>plamen [at] ipnmod.org</email>
+		<email>plamen@ipnmod.org</email>
 		<name>Plamen K. Kosseff</name>
 	</maintainer>
 </pkgmetadata>
