@@ -26,7 +26,7 @@ S="${WORKDIR}/LocalAI-${PV}/backend/cpp/audio-cpp"
 
 LICENSE="MIT"
 SLOT="0"
-KEYWORDS="~amd64 ~arm64"
+KEYWORDS="~amd64"
 IUSE="cuda native test vulkan"
 REQUIRED_USE="?? ( cuda vulkan )"
 RESTRICT="!test? ( test )"

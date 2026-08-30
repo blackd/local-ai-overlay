@@ -34,7 +34,7 @@ SRC_URI="
 # exactly that layout. src_unpack moves it into place.
 S="${WORKDIR}/LocalAI-${PV}/backend/cpp/llama-cpp/llama.cpp"
 
-KEYWORDS="~amd64 ~arm64"
+KEYWORDS="~amd64"
 IUSE="test"
 RESTRICT="!test? ( test )"
 

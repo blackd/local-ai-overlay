@@ -25,7 +25,7 @@ SRC_URI="
 "
 S="${WORKDIR}/LocalAI-${PV}/backend/go/whisper"
 
-KEYWORDS="~amd64 ~arm64"
+KEYWORDS="~amd64"
 
 src_unpack() {
 	local-ai-backend_go_unpack

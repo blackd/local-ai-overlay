@@ -27,6 +27,12 @@ libraries from Gentoo's package tree (Portage) wherever possible.
   - `Signed-off-by: NAME <EMAIL>` — the human contributor's sign-off, using
     the repository's configured git identity. Only the human may add it; it
     records that they reviewed the change and take responsibility for it.
+- **No unrelated tool use**: every command or tool invocation an AI
+  assistant runs must serve only the user's current request. Do not
+  piggyback unrelated actions (git staging, cleanups, preparation for
+  anticipated future steps) onto a command run for another purpose —
+  propose them separately and wait for approval. When the user asks to see
+  a tool's output, show the complete, unfiltered output.
 
 ## Layout
 

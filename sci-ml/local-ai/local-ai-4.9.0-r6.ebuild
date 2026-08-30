@@ -27,7 +27,7 @@ S="${WORKDIR}/LocalAI-${PV}"
 
 LICENSE="MIT"
 SLOT="0"
-KEYWORDS="~amd64 ~arm64"
+KEYWORDS="~amd64"
 
 # The flag does not change how the core is built; it pulls in the
 # app-local-ai/backends-meta package, whose own USE flags select the

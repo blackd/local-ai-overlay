@@ -9,6 +9,5 @@
 		<remote-id type="github">mudler/LocalAI</remote-id>
 	</upstream>
 	<use>
-		<flag name="system-onnxruntime">Link against <pkg>sci-libs/onnxruntime</pkg> instead of bundling upstream's prebuilt onnxruntime binary</flag>
 	</use>
 </pkgmetadata>

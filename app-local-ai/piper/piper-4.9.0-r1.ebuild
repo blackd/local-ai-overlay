@@ -4,10 +4,8 @@
 # LocalAI text-to-speech backend: LocalAI's Go gRPC wrapper around go-piper,
 # which builds the piper TTS engine with its phonemizer and the rhasspy fork
 # of espeak-ng (vendored deliberately: the fork carries phonemization patches
-# and provides the espeak-ng-data this backend ships). fmt/spdlog come from
-# the system; onnxruntime comes from the system by default, or as upstream's
-# prebuilt binary with USE=-system-onnxruntime (a from-source build of the
-# pinned onnxruntime has no offline-buildable upstream source archive).
+# and provides the espeak-ng-data this backend ships). fmt/spdlog and
+# onnxruntime come from the system.
 
 EAPI=8
 
@@ -35,43 +33,29 @@ SRC_URI="
 	https://github.com/rhasspy/piper-phonemize/archive/${PHONEMIZE_COMMIT}.tar.gz -> piper-phonemize-${PHONEMIZE_COMMIT}.tar.gz
 	https://github.com/rhasspy/espeak-ng/archive/${ESPEAK_COMMIT}.tar.gz -> rhasspy-espeak-ng-${ESPEAK_COMMIT}.tar.gz
 	https://github.com/waywardgeek/sonic/archive/${SONIC_COMMIT}.tar.gz -> sonic-${SONIC_COMMIT}.tar.gz
-	!system-onnxruntime? (
-		amd64? ( https://github.com/microsoft/onnxruntime/releases/download/v${ONNX_PV}/onnxruntime-linux-x64-${ONNX_PV}.tgz )
-		arm64? ( https://github.com/microsoft/onnxruntime/releases/download/v${ONNX_PV}/onnxruntime-linux-aarch64-${ONNX_PV}.tgz )
-	)
 "
 S="${WORKDIR}/LocalAI-${PV}/backend/go/piper"
 
 LICENSE="MIT"
 SLOT="0"
-KEYWORDS="~amd64 ~arm64"
-IUSE="+system-onnxruntime"
+KEYWORDS="~amd64"
 
 RDEPEND="
 	sci-ml/local-ai
 	dev-libs/libfmt:=
 	dev-libs/spdlog:=
-	system-onnxruntime? (
-		|| (
-			sci-libs/onnxruntime
-			sci-libs/onnxruntime-bin
-		)
+	|| (
+		sci-libs/onnxruntime
+		sci-libs/onnxruntime-bin
 	)
 "
 DEPEND="${RDEPEND}"
 BDEPEND=">=dev-lang/go-1.26.0"
 
-# With USE=-system-onnxruntime the upstream prebuilt library is shipped.
-QA_PREBUILT="usr/libexec/local-ai/backends/piper/lib/libonnxruntime.so*"
-
 GOPIPER="${S}/sources/go-piper"
 
 src_unpack() {
 	local-ai-backend_go_unpack
-	if ! use system-onnxruntime; then
-		use amd64 && unpack "onnxruntime-linux-x64-${ONNX_PV}.tgz"
-		use arm64 && unpack "onnxruntime-linux-aarch64-${ONNX_PV}.tgz"
-	fi
 
 	# sonic stays in WORKDIR: src_prepare points espeak's FetchContent
 	# at it there.
@@ -115,20 +99,13 @@ src_prepare() {
 
 # Provide ${T}/onnx-prefix with include/ and lib/ as piper-phonemize expects.
 setup_onnx_prefix() {
-	mkdir -p "${T}/onnx-prefix" || die
-	if use system-onnxruntime; then
-		# Real directories with only the onnxruntime pieces: phonemize's
-		# install() copies both include/ and lib/ of this prefix into its
-		# own tree, so symlinking /usr/include or the system libdir here
-		# would sweep system-wide content into the package staging.
-		mkdir -p "${T}/onnx-prefix/include" "${T}/onnx-prefix/lib" || die
-		cp -rL "${ESYSROOT}/usr/include/onnxruntime/." "${T}/onnx-prefix/include/" || die
-		cp -a "${ESYSROOT}/usr/$(get_libdir)"/libonnxruntime.so* "${T}/onnx-prefix/lib/" || die
-	else
-		local d=( "${WORKDIR}"/onnxruntime-linux-*-${ONNX_PV} )
-		ln -s "${d[0]}/include" "${T}/onnx-prefix/include" || die
-		ln -s "${d[0]}/lib" "${T}/onnx-prefix/lib" || die
-	fi
+	# Real directories with only the onnxruntime pieces: phonemize's
+	# install() copies both include/ and lib/ of this prefix into its
+	# own tree, so symlinking /usr/include or the system libdir here
+	# would sweep system-wide content into the package staging.
+	mkdir -p "${T}/onnx-prefix/include" "${T}/onnx-prefix/lib" || die
+	cp -rL "${ESYSROOT}/usr/include/onnxruntime/." "${T}/onnx-prefix/include/" || die
+	cp -a "${ESYSROOT}/usr/$(get_libdir)"/libonnxruntime.so* "${T}/onnx-prefix/lib/" || die
 }
 
 src_compile() {
@@ -150,9 +127,9 @@ src_install() {
 	doins -r "${S}/espeak-ng-data"
 
 	exeinto "${dest}/lib"
-	# phonemize's install copies the onnxruntime lib into pi/lib; in
-	# system mode the system copy must not be bundled (RDEPEND provides it).
-	use system-onnxruntime && { rm -f "${GOPIPER}"/piper-phonemize/pi/lib/libonnxruntime.so* || die ; }
+	# phonemize's install copies the onnxruntime lib into pi/lib; the
+	# system copy must not be bundled (RDEPEND provides it).
+	rm -f "${GOPIPER}"/piper-phonemize/pi/lib/libonnxruntime.so* || die
 	doexe "${GOPIPER}"/piper-phonemize/pi/lib/lib*.so*
 	doexe "${GOPIPER}"/espeak/ei/lib/lib*.so* 2>/dev/null || true
 }

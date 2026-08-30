@@ -43,7 +43,7 @@ SRC_URI="
 "
 S="${WORKDIR}/LocalAI-${PV}/backend/go/crispasr"
 
-KEYWORDS="~amd64 ~arm64"
+KEYWORDS="~amd64"
 IUSE="+ffmpeg"
 
 # ffmpeg decode support lets the backend transcribe any audio/video

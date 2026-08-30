@@ -13,7 +13,7 @@ HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"
 
 LICENSE="metapackage"
 SLOT="0"
-KEYWORDS="~amd64 ~arm64"
+KEYWORDS="~amd64"
 IUSE="+llama-cpp +audio-cpp +crispasr +depth-anything +piper +stablediffusion-ggml +vibevoice-cpp +whisper"
 # An empty meta package is a configuration error: the whole point is to
 # have at least one inference backend installed.

@@ -32,7 +32,7 @@ SRC_URI="
 "
 S="${WORKDIR}/LocalAI-${PV}/backend/go/vibevoice-cpp"
 
-KEYWORDS="~amd64 ~arm64"
+KEYWORDS="~amd64"
 
 src_unpack() {
 	local-ai-backend_go_unpack
