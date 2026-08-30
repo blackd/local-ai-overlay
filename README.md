@@ -24,6 +24,31 @@ strongly suggest enabling it as well:
     eselect repository enable guru
     emaint sync -r guru
 
+## Why a dedicated backend category
+
+The packages under `app-local-ai/` may look like duplicates of software
+Gentoo already ships (for example llama.cpp), but they are not
+interchangeable with the regular packages:
+
+- A backend is not the upstream tool. It is LocalAI's gRPC server (the
+  protocol the LocalAI core uses to talk to its inference processes)
+  compiled together with the inference engine's libraries; the engine's
+  own programs are not built or installed at all.
+- Each LocalAI release pins the exact engine commit it was developed and
+  tested against, and sometimes patches it. A system package follows its
+  own release schedule, so building the wrapper against one would combine
+  code versions that upstream never tested together — inference engines
+  change their internal interfaces too quickly for that to work.
+- Backends install only under `/usr/libexec/local-ai/backends/<name>/`,
+  where the LocalAI server discovers them. Nothing is placed in PATH or
+  the system library directories, so a backend can be installed next to
+  the regular package (e.g. app-misc/llama-cpp) without file collisions.
+
+System libraries with stable interfaces (gRPC, protobuf, abseil, fmt,
+spdlog, onnxruntime, ffmpeg, the ROCm and CUDA stacks, ...) do come from
+Portage wherever the engines support it; only the fast-moving inference
+engines themselves are built at their pinned commits.
+
 ## Version bumps
 
 1. Copy the ebuilds to the new version.
