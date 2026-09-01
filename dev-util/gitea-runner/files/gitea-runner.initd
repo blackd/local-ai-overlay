@@ -1,0 +1,21 @@
+#!/sbin/openrc-run
+# OpenRC service for the Gitea Actions runner.
+
+description="Gitea Actions runner"
+command="/usr/bin/gitea-runner"
+command_args="daemon --config ${GITEA_RUNNER_CONFIG:-/etc/gitea-runner/config.yaml}"
+command_user="gitea-runner:gitea-runner"
+command_background="yes"
+pidfile="/run/${RC_SVCNAME}.pid"
+directory="/var/lib/gitea-runner"
+output_log="/var/log/gitea-runner.log"
+error_log="/var/log/gitea-runner.log"
+
+depend() {
+	need net
+	use docker
+}
+
+start_pre() {
+	checkpath -f -o gitea-runner:gitea-runner "${output_log}"
+}

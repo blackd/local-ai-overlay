@@ -1,0 +1,2 @@
+# Configuration file the runner daemon starts with.
+GITEA_RUNNER_CONFIG=/etc/gitea-runner/config.yaml
