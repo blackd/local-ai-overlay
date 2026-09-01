@@ -75,10 +75,10 @@ src_compile() {
 		export GOFLAGS="${GOFLAGS} -mod=mod"
 	fi
 
-	# Mirror upstream's Makefile: version stamped the same way its
-	# release builds do it.
+	# Version stamped the same way upstream's release builds do it.
+	# Upstream's Makefile also adds -s -w; leave stripping to Portage
+	# instead (it would flag the binary as pre-stripped otherwise).
 	local ldflags=(
-		-s -w
 		-X "gitea.com/gitea/runner/internal/pkg/ver.version=v${PV}"
 	)
 	ego build -ldflags "${ldflags[*]}" -o gitea-runner
