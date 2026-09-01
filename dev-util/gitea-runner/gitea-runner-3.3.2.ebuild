@@ -34,6 +34,20 @@ RDEPEND="
 "
 BDEPEND=">=dev-lang/go-1.26.7"
 
+src_unpack() {
+	# go-module_src_unpack's `go mod verify` trips over the go >= 1.27
+	# directive before src_prepare relaxes it for the go 1.26 fallback;
+	# the eclass offers NONFATAL_VERIFY for exactly this. The Manifest
+	# already guarantees the deps tarball's integrity.
+	if ! has_version -b ">=dev-lang/go-1.27"; then
+		local NONFATAL_VERIFY=1
+		einfo "The following 'go mod verify' failure is expected with go < 1.27"
+		einfo "and handled: src_prepare relaxes the go directive for the"
+		einfo "GOEXPERIMENT=jsonv2 fallback build."
+	fi
+	go-module_src_unpack
+}
+
 src_prepare() {
 	default
 
