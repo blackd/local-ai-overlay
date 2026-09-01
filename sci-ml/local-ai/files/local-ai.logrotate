@@ -1,0 +1,9 @@
+/var/log/local-ai.log {
+	missingok
+	notifempty
+	weekly
+	rotate 4
+	compress
+	delaycompress
+	copytruncate
+}

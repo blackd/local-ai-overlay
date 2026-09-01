@@ -98,6 +98,9 @@ src_install() {
 	newconfd "${FILESDIR}"/local-ai.confd local-ai
 	systemd_dounit "${FILESDIR}"/local-ai.service
 
+	insinto /etc/logrotate.d
+	newins "${FILESDIR}"/local-ai.logrotate local-ai
+
 	# All mutable state (models, runtime-installed backends, generated
 	# configuration) lives here; the service files above point the server
 	# at it. Portage-installed backends live under /usr/libexec instead,

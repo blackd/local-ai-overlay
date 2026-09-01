@@ -1,0 +1,9 @@
+/var/log/gitea-runner.log {
+	missingok
+	notifempty
+	weekly
+	rotate 4
+	compress
+	delaycompress
+	copytruncate
+}

@@ -83,11 +83,18 @@ src_install() {
 	dobin zot
 
 	insinto /etc/zot
-	doins "${FILESDIR}"/config.json
+	if use ui; then
+		newins "${FILESDIR}"/config-ui.json config.json
+	else
+		doins "${FILESDIR}"/config.json
+	fi
 
 	newinitd "${FILESDIR}"/zot.initd zot
 	newconfd "${FILESDIR}"/zot.confd zot
 	systemd_dounit "${FILESDIR}"/zot.service
+
+	insinto /etc/logrotate.d
+	newins "${FILESDIR}"/zot.logrotate zot
 
 	# Image storage (storage.rootDirectory in the config).
 	keepdir /var/lib/zot

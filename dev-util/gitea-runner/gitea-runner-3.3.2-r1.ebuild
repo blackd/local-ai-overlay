@@ -98,6 +98,9 @@ src_install() {
 	newconfd "${FILESDIR}"/gitea-runner.confd gitea-runner
 	systemd_dounit examples/systemd/gitea-runner.service
 
+	insinto /etc/logrotate.d
+	newins "${FILESDIR}"/gitea-runner.logrotate gitea-runner
+
 	# The .runner registration file and job workspaces live here.
 	keepdir /var/lib/gitea-runner
 	fowners gitea-runner:gitea-runner /var/lib/gitea-runner

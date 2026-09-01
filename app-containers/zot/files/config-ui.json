@@ -1,0 +1,23 @@
+{
+	"distSpecVersion": "1.1.1",
+	"storage": {
+		"rootDirectory": "/var/lib/zot"
+	},
+	"http": {
+		"address": "127.0.0.1",
+		"port": "5000"
+	},
+	"log": {
+		"level": "info"
+	},
+	"extensions": {
+		"search": {
+			"cve": {
+				"updateInterval": "2h"
+			}
+		},
+		"ui": {
+			"enable": true
+		}
+	}
+}
