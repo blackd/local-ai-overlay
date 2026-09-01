@@ -11,6 +11,10 @@ WORK=$(mktemp -d /tmp/gitea-runner-distfiles.XXXXXX)
 OUT="$PWD"
 trap 'rm -rf "$WORK"' EXIT
 
+# The module requires go >= 1.27; when the host go is older, let it
+# fetch the required toolchain (stripped from the tarball below).
+export GOTOOLCHAIN="${GOTOOLCHAIN:-auto}"
+
 cd "$WORK"
 curl -fsSL "https://gitea.com/gitea/runner/archive/v${VERSION}.tar.gz" | tar -xz
 cd runner
