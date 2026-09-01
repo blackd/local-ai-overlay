@@ -1,0 +1,58 @@
+name: "cleanup-releases"
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Only report what would be deleted"
+        type: boolean
+        default: true
+
+jobs:
+  cleanup:
+    runs-on: "gentoo-latest"
+    permissions:
+      contents: write
+    steps:
+      - name: "Install jq from binhost"
+        run: emerge -G -q -un app-misc/jq
+      - uses: "actions/checkout@v4"
+      - name: "Delete stale releases"
+        run: |
+          API="${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}"
+          AUTH="Authorization: token ${GITHUB_TOKEN}"
+          CUTOFF=$(date -u -d '30 days ago' +%s)
+          declare -A FAMILIES=( [local-ai]=sci-ml/local-ai [opencode]=dev-util/opencode [gitea-runner]=dev-util/gitea-runner [zot]=app-containers/zot )
+          page=1
+          while :; do
+            rels=$(curl -sf -H "${AUTH}" "${API}/releases?limit=50&page=${page}")
+            [ "$(jq length <<<"${rels}")" -eq 0 ] && break
+            while read -r id tag created; do
+              case "${tag}" in
+                v[0-9]*) family=local-ai; version=${tag#v}; trigger=distfiles-v${version} ;;
+                *-v[0-9]*) version=${tag##*-v}; family=${tag%-v${version}}; trigger=${family}-distfiles-v${version} ;;
+                *) echo "skip (unrecognized tag): ${tag}"; continue ;;
+              esac
+              pkgdir=${FAMILIES[${family}]}
+              if [ -z "${pkgdir}" ]; then echo "skip (unknown family): ${tag}"; continue; fi
+              if compgen -G "${pkgdir}/${pkgdir##*/}-${version}*.ebuild" >/dev/null; then
+                echo "keep (referenced): ${tag}"; continue
+              fi
+              if [ "$(date -u -d "${created}" +%s)" -gt "${CUTOFF}" ]; then
+                echo "keep (younger than 30 days): ${tag}"; continue
+              fi
+              if [ "${DRY_RUN}" != "false" ]; then
+                echo "would delete: release ${tag}, tags ${tag} + ${trigger}"; continue
+              fi
+              echo "deleting: release ${tag}, tags ${tag} + ${trigger}"
+              curl -sf -X DELETE -H "${AUTH}" "${API}/releases/${id}"
+              curl -s -X DELETE -H "${AUTH}" "${API}/tags/${tag}"
+              curl -s -X DELETE -H "${AUTH}" "${API}/tags/${trigger}"
+            done < <(jq -r '.[] | "\(.id) \(.tag_name) \(.created_at)"' <<<"${rels}")
+            page=$((page+1))
+          done
+        env:
+          GITHUB_TOKEN: "${{ github.token }}"
+          DRY_RUN: "${{ github.event_name == 'schedule' && 'false' || inputs.dry_run }}"
