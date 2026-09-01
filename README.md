@@ -3,7 +3,10 @@
 Gentoo packages for [LocalAI](https://localai.io), a self-hosted,
 OpenAI-API-compatible AI server. The server core (`sci-ml/local-ai`) and each
 inference backend (`app-local-ai/*`) are separate packages, built from source
-against system libraries. See `metadata/docs/specs/` for the design.
+against system libraries. Beyond LocalAI, the overlay carries other
+AI tooling built from source (`dev-util/opencode`, an AI coding agent) and a
+few supporting packages (`dev-util/gitea-runner`, the dependency copies from
+GURU). See `metadata/docs/specs/` for the design.
 
 ## Enabling the overlay
 
