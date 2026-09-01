@@ -49,6 +49,10 @@ session (human or AI-assisted) can pick up where the last one stopped.
 
 ## Housekeeping
 
+- Next LocalAI release: rename the tag scheme to the namespaced form the
+  newer packages use (trigger `local-ai-distfiles-v*`, release
+  `local-ai-v*` in release.yml and the eclass DISTFILES_BASE), so all
+  release families on this repository follow one convention.
 - Advance the `release` branch after the opencode pipeline is validated.
 - Delete `~/tmp/portage` (2.9G opencode test build) and `~/tmp/pcfg`
   (defunct config-root experiment) when no longer needed.
