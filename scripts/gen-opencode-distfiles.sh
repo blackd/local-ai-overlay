@@ -19,6 +19,12 @@ cd "$WORK"
 curl -fsSL "https://github.com/anomalyco/opencode/archive/refs/tags/v${VERSION}.tar.gz" | tar -xz
 cd "opencode-${VERSION}"
 
+# Gitea Actions exports GITHUB_API_URL/GITHUB_SERVER_URL pointing at the
+# Gitea instance; bun resolves github: dependencies through them, so pin
+# the real GitHub endpoints regardless of environment.
+export GITHUB_API_URL="https://api.github.com"
+export GITHUB_SERVER_URL="https://github.com"
+
 bun install --frozen-lockfile
 
 find . -name node_modules -type d -prune | sed 's|^\./||' > "$WORK/nm.list"
