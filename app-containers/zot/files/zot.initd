@@ -1,0 +1,20 @@
+#!/sbin/openrc-run
+# OpenRC service for the zot container image registry.
+
+description="OCI-native container image registry"
+command="/usr/bin/zot"
+command_args="serve ${ZOT_CONFIG:-/etc/zot/config.json}"
+command_user="zot:zot"
+command_background="yes"
+pidfile="/run/${RC_SVCNAME}.pid"
+directory="/var/lib/zot"
+output_log="/var/log/zot.log"
+error_log="/var/log/zot.log"
+
+depend() {
+	need net
+}
+
+start_pre() {
+	checkpath -f -o zot:zot "${output_log}"
+}

@@ -1,0 +1,17 @@
+[Unit]
+Description=OCI-native container image registry
+Documentation=https://zotregistry.dev
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/zot serve /etc/zot/config.json
+WorkingDirectory=/var/lib/zot
+User=zot
+Group=zot
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

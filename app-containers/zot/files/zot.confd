@@ -1,0 +1,2 @@
+# Configuration file the registry starts with.
+ZOT_CONFIG=/etc/zot/config.json

@@ -20,7 +20,7 @@ set -euo pipefail
 
 VERSION=${1:?usage: gen-distfiles.sh <local-ai-version>}
 
-OUT=$(pwd)/distfiles-out
+OUT=$(pwd)
 WORK=$(mktemp -d)
 trap 'rm -rf "${WORK}"' EXIT
 mkdir -p "${OUT}"

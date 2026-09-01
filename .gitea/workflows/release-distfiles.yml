@@ -1,9 +1,9 @@
-name: "release-gitea-runner-distfiles"
+name: "release-distfiles"
 
 on:
   push:
     tags:
-      - "gitea-runner-distfiles-v*"
+      - "*-distfiles-v*"
 
 jobs:
   release:
@@ -17,31 +17,44 @@ jobs:
           API=https://git.ipnmod.org/v2/mirinimi/gentoo-runner-repos
           DIGEST=$(curl -sf -u "mirinimi:${{ secrets.REGISTRY_TOKEN }}" -H 'Accept: application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json' ${API}/manifests/${VARIANT}-latest | python3 -c 'import json,sys; print(json.load(sys.stdin)["layers"][0]["digest"])')
           curl -sfL -u "mirinimi:${{ secrets.REGISTRY_TOKEN }}" ${API}/blobs/${DIGEST} | tar -xzf - -C /
+      - name: "Install toolchain from binhost"
+        run: emerge -G -q -un dev-lang/go net-libs/nodejs dev-libs/protobuf dev-lang/bun-bin
       - uses: "actions/checkout@v4"
         with:
           fetch-depth: 0
       - name: "Generate distfiles"
+        id: "family"
         run: |
-          VERSION=${GITHUB_REF_NAME#gitea-runner-distfiles-v}
+          FAMILY=${GITHUB_REF_NAME%-distfiles-v*}
+          VERSION=${GITHUB_REF_NAME##*-distfiles-v}
+          echo "family=${FAMILY}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           mkdir distfiles-out
           cd distfiles-out
-          bash ../scripts/gen-gitea-runner-distfiles.sh "${VERSION}"
-      - name: "Push Manifest"
+          bash "../scripts/gen-${FAMILY}-distfiles.sh" "${VERSION}"
+      - name: "Push Manifests"
         id: "manifests"
         run: |
-          cp distfiles-out/gitea-runner-* /var/cache/distfiles/
-          ebuild --force $(ls dev-util/gitea-runner/*.ebuild | head -1) manifest
+          cp distfiles-out/* /var/cache/distfiles/
+          case "${{ steps.family.outputs.family }}" in
+            local-ai) DIRS=$(dirname $(find . -path ./distfiles-out -prune -o -name '*.ebuild' -print) | sort -u) ;;
+            opencode) DIRS=dev-util/opencode ;;
+            gitea-runner) DIRS=dev-util/gitea-runner ;;
+            zot) DIRS=app-containers/zot ;;
+            *) echo "unknown family ${{ steps.family.outputs.family }}"; exit 1 ;;
+          esac
+          for d in ${DIRS}; do ebuild --force $(ls $d/*.ebuild | head -1) manifest; done
           git config user.name "gitea-actions"
           git config user.email "gitea-actions@noreply.ipnmod.org"
-          git add dev-util/gitea-runner/Manifest
-          git diff --cached --quiet || git commit -m "Manifest for ${GITHUB_REF_NAME}"
+          find . -name Manifest -exec git add {} +
+          git diff --cached --quiet || git commit -m "Manifests for ${GITHUB_REF_NAME}"
           git push origin HEAD:master
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-          echo "version_tag=gitea-runner-v${GITHUB_REF_NAME#gitea-runner-distfiles-v}" >> "$GITHUB_OUTPUT"
+          echo "version_tag=${{ steps.family.outputs.family }}-v${{ steps.family.outputs.version }}" >> "$GITHUB_OUTPUT"
       - name: "Publish release"
         uses: "akkuman/gitea-release-action@v1"
         with:
           tag_name: "${{ steps.manifests.outputs.version_tag }}"
           target_commitish: "${{ steps.manifests.outputs.sha }}"
-          files: "distfiles-out/gitea-runner-*"
+          files: "distfiles-out/*"
           sha256sum: true

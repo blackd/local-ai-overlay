@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>plamen@ipnmod.org</email>
+		<name>Plamen K. Kosseff</name>
+	</maintainer>
+	<upstream>
+		<remote-id type="github">project-zot/zot</remote-id>
+	</upstream>
+	<use>
+		<flag name="ui">Build and embed the zui web interface</flag>
+	</use>
+</pkgmetadata>
