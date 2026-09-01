@@ -32,7 +32,7 @@ RDEPEND="
 	acct-group/gitea-runner
 	acct-user/gitea-runner
 "
-BDEPEND=">=dev-lang/go-1.27"
+BDEPEND=">=dev-lang/go-1.26.7"
 
 src_prepare() {
 	default
@@ -40,9 +40,21 @@ src_prepare() {
 	einfo "Pointing the systemd unit at the installed binary path"
 	sed -i 's#/usr/local/bin/gitea-runner#/usr/bin/gitea-runner#' examples/systemd/gitea-runner.service || die
 	grep -q '/usr/bin/gitea-runner' examples/systemd/gitea-runner.service || die "unit path fix did not apply"
+
+	# The code uses the json/v2 stdlib packages that go 1.27 stabilized;
+	# go 1.26 ships the same packages behind GOEXPERIMENT=jsonv2 (and
+	# dev-lang/go-1.27.0 is masked for regressions at the time of
+	# writing). With 1.26 the go.mod directive must be relaxed to match.
+	if ! has_version -b ">=dev-lang/go-1.27"; then
+		einfo "Relaxing go directive for go 1.26 + GOEXPERIMENT=jsonv2"
+		sed -i -e 's/^go 1.27$/go 1.26/' -e '/^toolchain /d' go.mod || die
+		grep -q '^go 1.26$' go.mod || die "go directive relax did not apply"
+	fi
 }
 
 src_compile() {
+	has_version -b ">=dev-lang/go-1.27" || export GOEXPERIMENT=jsonv2
+
 	# Mirror upstream's Makefile: version stamped the same way its
 	# release builds do it.
 	local ldflags=(
