@@ -1,14 +1,18 @@
 # LocalAI Gentoo Overlay
 
 This overlay packages tools for self-hosted AI, built from source against
-system libraries wherever possible. Its centerpiece is
-[LocalAI](https://localai.io), a self-hosted, OpenAI-API-compatible AI
-server: the server core (`sci-ml/local-ai`) and each inference backend
-(`app-local-ai/*`) are separate packages. Around it live other AI tools
-(`dev-util/opencode`, an AI coding agent) and supporting packages
-(`app-containers/zot`, an OCI image registry; `dev-util/gitea-runner`;
-the dependency copies from GURU). See `metadata/docs/specs/` for the
-design.
+system libraries wherever possible:
+
+- [LocalAI](https://localai.io), a self-hosted, OpenAI-API-compatible AI
+  server — the centerpiece: the server core (`sci-ml/local-ai`) and each
+  inference backend (`app-local-ai/*`) are separate packages
+- `dev-util/opencode` — an AI coding agent
+- `app-containers/zot` — an OCI-native container image registry
+- `dev-util/gitea-runner` — the Gitea Actions CI runner
+- dependency copies from the GURU repository (`sci-libs/onnxruntime` and
+  friends)
+
+See `metadata/docs/specs/` for the design.
 
 ## Enabling the overlay
 
