@@ -49,6 +49,11 @@ session (human or AI-assisted) can pick up where the last one stopped.
 
 ## Housekeeping
 
+- Revisit Go dependency handling: possibly one shared dependency artifact
+  for all Go packages in the overlay (common module cache or vendor
+  tarballs) instead of a per-package GOMODCACHE tarball — zot's alone is
+  983M, and the module graphs overlap.
+
 - Next LocalAI release: rename the tag scheme to the namespaced form the
   newer packages use (trigger `local-ai-distfiles-v*`, release
   `local-ai-v*` in release.yml and the eclass DISTFILES_BASE), so all
