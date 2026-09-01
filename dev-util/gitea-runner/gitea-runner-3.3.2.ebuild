@@ -67,7 +67,13 @@ src_prepare() {
 }
 
 src_compile() {
-	has_version -b ">=dev-lang/go-1.27" || export GOEXPERIMENT=jsonv2
+	if ! has_version -b ">=dev-lang/go-1.27"; then
+		export GOEXPERIMENT=jsonv2
+		# The relaxed go directive makes go want to rewrite go.mod's
+		# requirement graph; allow it (last -mod flag wins, and GOPROXY
+		# stays off so everything still comes from the module cache).
+		export GOFLAGS="${GOFLAGS} -mod=mod"
+	fi
 
 	# Mirror upstream's Makefile: version stamped the same way its
 	# release builds do it.
