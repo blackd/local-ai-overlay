@@ -33,6 +33,9 @@ QA_PREBUILT="usr/bin/opencode"
 
 BDEPEND=">=dev-lang/bun-bin-1.3.14"
 
+# GURU's dev-util/opencode-bin installs the same /usr/bin/opencode.
+RDEPEND="!dev-util/opencode-bin"
+
 src_unpack() {
 	unpack "${P}.tar.gz"
 	# node_modules unpacks across the workspace tree (rooted at the repo
