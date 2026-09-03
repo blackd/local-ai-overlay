@@ -20,6 +20,8 @@ jobs:
       - name: "Install jq from binhost"
         run: emerge -G -q -un app-misc/jq
       - uses: "actions/checkout@v4"
+        with:
+          ref: "master"
       - name: "Check upstream releases and GURU"
         run: bash scripts/check-updates.sh
         env:
