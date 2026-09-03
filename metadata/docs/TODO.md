@@ -15,12 +15,6 @@ session (human or AI-assisted) can pick up where the last one stopped.
 - Add a sentence to README.md explaining the overlay also carries
   AI-related tools beyond LocalAI (scope widened by opencode).
 
-## Official listing
-
-- Push the prepared `local-ai-overlay` branch of the api-gentoo-org clone
-  (commit "repositories: add LocalAI") to a GitHub fork and open the pull
-  request against gentoo/api-gentoo-org.
-
 ## LocalAI backends
 
 - Verify depth-anything and crispasr at runtime on the build machine
