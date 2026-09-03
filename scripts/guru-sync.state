@@ -1,0 +1,4 @@
+sci-libs/onnxruntime ea49afc91cf6ba7552d652a7c0ee56f035c33821
+sci-libs/onnxruntime-bin c728365ec3005437c6d5a2b4619d059a55967b01
+sci-libs/dlpack 0101b5d46c1d8c163d901db1f9e20fde16c8a3b3
+dev-cpp/safeint e20912358a42d926063111e9dc281e1888a0f2b7

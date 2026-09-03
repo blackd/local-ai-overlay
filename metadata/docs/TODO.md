@@ -22,6 +22,11 @@ session (human or AI-assisted) can pick up where the last one stopped.
 - Continue packaging by gallery-usage ranking: rfdetr-cpp and
   parakeet-cpp (11 models each), vllm-cpp and qwen3-tts-cpp (10), bonsai
   (8), then the tail.
+- Capability meta-flags on backends-meta (idea borrowed from the
+  oiledmachine-overlay LocalAI ebuild): flags like tts/stt/image that
+  REQUIRED_USE-map to "at least one backend providing that capability",
+  so users can ask for what the install should be able to do instead of
+  naming backends.
 
 ## Runner infrastructure (gitea-gentoo-runner)
 
