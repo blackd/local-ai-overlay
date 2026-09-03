@@ -16,12 +16,6 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: "Unpack repos snapshot"
-        run: |
-          VARIANT=$(cat /etc/gentoo-runner-variant 2>/dev/null || echo westmere)
-          API=https://git.ipnmod.org/v2/mirinimi/gentoo-runner-repos
-          DIGEST=$(curl -sf -u "mirinimi:${{ secrets.REGISTRY_TOKEN }}" -H 'Accept: application/vnd.oci.image.manifest.v1+json, application/vnd.docker.distribution.manifest.v2+json' ${API}/manifests/${VARIANT}-latest | python3 -c 'import json,sys; print(json.load(sys.stdin)["layers"][0]["digest"])')
-          curl -sfL -u "mirinimi:${{ secrets.REGISTRY_TOKEN }}" ${API}/blobs/${DIGEST} | tar -xzf - -C /
       - name: "Install jq from binhost"
         run: emerge -G -q -un app-misc/jq
       - uses: "actions/checkout@v4"
