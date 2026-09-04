@@ -8,7 +8,7 @@
 
 EAPI=8
 
-inherit go-module systemd
+inherit check-reqs go-module systemd
 
 # The dependency tarballs live as release assets on this repository,
 # tagged zot-v<version>.
@@ -42,6 +42,17 @@ BDEPEND="
 	ui? ( net-libs/nodejs[npm] )
 "
 
+# The module cache plus the Go build cache peak around 9G.
+CHECKREQS_DISK_BUILD="9G"
+
+pkg_pretend() {
+	check-reqs_pkg_pretend
+}
+
+pkg_setup() {
+	check-reqs_pkg_setup
+}
+
 src_prepare() {
 	default
 
@@ -49,6 +60,20 @@ src_prepare() {
 	# into the zui tree where npm expects it.
 	if use ui; then
 		mv "${WORKDIR}/node_modules" "${WORKDIR}/zui-${ZUI_PIN}/node_modules" || die
+	fi
+
+	# trivy v0.72.0 uses the experimental json/v2 SkipFunc sentinel,
+	# which go 1.27's graduated encoding/json/v2 removed; upstream fix
+	# is aquasecurity/trivy@dc3c56ee (not yet in any zot release).
+	# Apply it to the module cache copy (extracted trees are not
+	# re-verified against go.sum).
+	if has_version -b ">=dev-lang/go-1.27"; then
+		local trivy="${WORKDIR}/go-mod/github.com/aquasecurity/trivy@v0.72.0/pkg/x/json/json.go"
+		chmod u+w "${trivy%/*}" "${trivy}" || die
+		sed -i -e 's:^import (:import (\n\t"errors":' \
+			-e 's:return json\.SkipFunc:return errors.ErrUnsupported:' \
+			"${trivy}" || die
+		grep -q 'errors\.ErrUnsupported' "${trivy}" || die "trivy json/v2 fix did not apply"
 	fi
 }
 
