@@ -67,15 +67,19 @@ src_compile() {
 		tags+=",ui"
 	fi
 
-	# Mirrors upstream's `make binary` invocation (including its
-	# GOEXPERIMENT), minus -s -w: stripping is Portage's job.
+	# Mirrors upstream's `make binary` invocation, minus -s -w: stripping
+	# is Portage's job. zot targets go 1.27's encoding/json/v2 — still an
+	# experiment on go 1.26, graduated (and an unknown flag) on 1.27+.
 	local ldflags=(
 		-X "zotregistry.dev/zot/v2/pkg/buildinfo.ReleaseTag=v${PV}"
 		-X "zotregistry.dev/zot/v2/pkg/buildinfo.Commit=v${PV}"
 		-X "zotregistry.dev/zot/v2/pkg/buildinfo.BinaryType=-${tags//,/-}"
 		-X "zotregistry.dev/zot/v2/pkg/buildinfo.GoVersion=$(go env GOVERSION)"
 	)
-	local -x CGO_ENABLED=0 GOEXPERIMENT=jsonv2
+	local -x CGO_ENABLED=0
+	if ! has_version -b ">=dev-lang/go-1.27"; then
+		local -x GOEXPERIMENT=jsonv2
+	fi
 	ego build -tags "${tags}" -trimpath -ldflags "${ldflags[*]}" -o zot ./cmd/zot
 }
 
