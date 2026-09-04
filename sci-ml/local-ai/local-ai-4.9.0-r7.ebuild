@@ -8,7 +8,17 @@
 
 EAPI=8
 
-inherit go-module local-ai-backend systemd
+inherit check-reqs go-module local-ai-backend systemd
+
+CHECKREQS_DISK_BUILD="6500M"
+
+pkg_pretend() {
+	check-reqs_pkg_pretend
+}
+
+pkg_setup() {
+	check-reqs_pkg_setup
+}
 
 # Commit hash the upstream v4.9.0 release tag points at. Embedded into the
 # binary (internal.Commit) so `local-ai --version` reports the same build

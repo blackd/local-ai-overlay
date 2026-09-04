@@ -29,7 +29,13 @@ _LOCAL_AI_GGML_ECLASS=1
 # HIP/BLAS runtime dependencies.
 ROCM_VERSION=7.2
 
-inherit cmake cuda local-ai-backend rocm
+inherit check-reqs cmake cuda local-ai-backend rocm
+
+# @ECLASS_VARIABLE: CHECKREQS_DISK_BUILD
+# @DESCRIPTION:
+# Build-time disk requirement enforced via check-reqs; the ggml engine
+# builds peak around 3G. Ebuilds needing more assign a higher value.
+: "${CHECKREQS_DISK_BUILD:=4G}"
 
 # @ECLASS_VARIABLE: LOCAL_AI_CMAKE_TARGET
 # @DEFAULT_UNSET
@@ -86,6 +92,14 @@ DEPEND="${RDEPEND}
 BDEPEND="
 	vulkan? ( media-libs/shaderc )
 "
+
+local-ai-ggml_pkg_pretend() {
+	check-reqs_pkg_pretend
+}
+
+local-ai-ggml_pkg_setup() {
+	check-reqs_pkg_setup
+}
 
 local-ai-ggml_src_prepare() {
 	cmake_src_prepare
@@ -144,6 +158,6 @@ local-ai-ggml_src_compile() {
 	cmake_src_compile ${LOCAL_AI_CMAKE_TARGET}
 }
 
-EXPORT_FUNCTIONS src_prepare src_configure src_compile
+EXPORT_FUNCTIONS pkg_pretend pkg_setup src_prepare src_configure src_compile
 
 fi
