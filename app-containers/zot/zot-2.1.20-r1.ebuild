@@ -42,8 +42,8 @@ BDEPEND="
 	ui? ( net-libs/nodejs[npm] )
 "
 
-# The module cache plus the Go build cache peak around 9G.
-CHECKREQS_DISK_BUILD="9G"
+# The module cache plus the Go build cache peak at 9.9G (measured).
+CHECKREQS_DISK_BUILD="10G"
 
 pkg_pretend() {
 	check-reqs_pkg_pretend
