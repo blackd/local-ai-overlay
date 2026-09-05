@@ -38,7 +38,7 @@ RDEPEND="
 	acct-user/zot
 "
 BDEPEND="
-	>=dev-lang/go-1.26.7
+	>=dev-lang/go-1.26.4
 	ui? ( net-libs/nodejs[npm] )
 "
 
