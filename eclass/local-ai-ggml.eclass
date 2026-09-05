@@ -61,7 +61,7 @@ HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"
 LICENSE="MIT"
 SLOT="0"
 
-IUSE="cuda native openblas rocm vulkan"
+IUSE="cuda native openblas rocm vulkan video_cards_amdgpu"
 # Any selected amdgpu_targets_* flag (typically expanded from AMDGPU_TARGETS
 # in make.conf) requires USE=rocm — otherwise the target flags apply to a
 # non-HIP build and break it. Derive "flag? ( rocm )" for every target the
@@ -78,7 +78,10 @@ unset _amdgpu_implies_rocm _f
 RDEPEND="
 	sci-ml/local-ai
 	openblas? ( sci-libs/openblas )
-	vulkan? ( media-libs/vulkan-loader )
+	vulkan? (
+		media-libs/vulkan-loader
+		video_cards_amdgpu? ( media-libs/mesa[vulkan,video_cards_radeonsi] )
+	)
 	cuda? ( dev-util/nvidia-cuda-toolkit:= )
 	rocm? (
 		>=dev-util/hip-${ROCM_VERSION}
