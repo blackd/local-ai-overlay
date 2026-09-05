@@ -1,0 +1,3 @@
+# Home directory for dagu: DAG definitions (dags/), run history and
+# per-DAG logs all live here.
+DAGU_HOME="/var/lib/dagu"

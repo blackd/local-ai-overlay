@@ -53,6 +53,20 @@ session (human or AI-assisted) can pick up where the last one stopped.
   tarballs) instead of a per-package GOMODCACHE tarball — zot's alone is
   983M, and the module graphs overlap.
 
+- Prefixed dependency tarballs: tar with the source-tree prefix so they
+  unpack straight into place (the layout sys-process/dagu uses), then
+  drop the custom unpack/move code. Each waits for its family's next
+  release since published tarballs keep the old layout:
+  - dev-util/opencode: gen script prefixes the node_modules list with
+    opencode-<v>/, ebuild drops src_unpack (drafted in conversation
+    2026-09-05).
+  - app-containers/zot: zui node_modules tarred under zui-<pin>/,
+    ebuild drops src_prepare.
+  - sci-ml/local-ai: node_modules + prebuilt tarballs get the repo
+    prefix, ebuild drops src_unpack — fold into the next-release batch
+    below. The backend engine tarballs stay eclass-managed on purpose
+    (per-backend destination layout lives in ebuild args, not the gen
+    script).
 - Next LocalAI release: rename the tag scheme to the namespaced form the
   newer packages use (trigger `local-ai-distfiles-v*`, release
   `local-ai-v*` in release.yml and the eclass DISTFILES_BASE), so all

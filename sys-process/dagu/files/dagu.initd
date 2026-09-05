@@ -1,0 +1,22 @@
+#!/sbin/openrc-run
+# OpenRC service for the dagu workflow engine.
+
+description="Workflow engine and modern cron alternative"
+command="/usr/bin/dagu"
+command_args="start-all"
+command_user="dagu:dagu"
+command_background="yes"
+pidfile="/run/${RC_SVCNAME}.pid"
+directory="/var/lib/dagu"
+output_log="/var/log/dagu.log"
+error_log="/var/log/dagu.log"
+
+export DAGU_HOME="${DAGU_HOME:-/var/lib/dagu}"
+
+depend() {
+	need net
+}
+
+start_pre() {
+	checkpath -f -o dagu:dagu "${output_log}"
+}

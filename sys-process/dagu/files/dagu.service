@@ -1,0 +1,14 @@
+[Unit]
+Description=Workflow engine and modern cron alternative
+After=network.target
+
+[Service]
+User=dagu
+Group=dagu
+Environment=DAGU_HOME=/var/lib/dagu
+WorkingDirectory=/var/lib/dagu
+ExecStart=/usr/bin/dagu start-all
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

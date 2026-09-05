@@ -24,7 +24,7 @@ jobs:
           API="${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}"
           AUTH="Authorization: token ${GITHUB_TOKEN}"
           CUTOFF=$(date -u -d '30 days ago' +%s)
-          declare -A FAMILIES=( [local-ai]=sci-ml/local-ai [opencode]=dev-util/opencode [gitea-runner]=dev-util/gitea-runner [zot]=app-containers/zot )
+          declare -A FAMILIES=( [local-ai]=sci-ml/local-ai [opencode]=dev-util/opencode [gitea-runner]=dev-util/gitea-runner [zot]=app-containers/zot [dagu]=sys-process/dagu )
           page=1
           while :; do
             rels=$(curl -sf -H "${AUTH}" "${API}/releases?limit=50&page=${page}")

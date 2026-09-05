@@ -19,6 +19,7 @@ declare -A UPSTREAMS=(
 	[dev-util/opencode]=github:anomalyco/opencode
 	[dev-util/gitea-runner]=gitea:gitea.com/gitea/runner
 	[app-containers/zot]=github:project-zot/zot
+	[sys-process/dagu]=github:dagucloud/dagu
 )
 
 latest_upstream() {

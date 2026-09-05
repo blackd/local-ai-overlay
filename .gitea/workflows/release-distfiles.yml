@@ -35,6 +35,7 @@ jobs:
             opencode) DIRS=dev-util/opencode ;;
             gitea-runner) DIRS=dev-util/gitea-runner ;;
             zot) DIRS=app-containers/zot ;;
+            dagu) DIRS=sys-process/dagu ;;
             *) echo "unknown family ${{ steps.family.outputs.family }}"; exit 1 ;;
           esac
           for d in ${DIRS}; do ebuild --force $(ls $d/*.ebuild | head -1) manifest; done
