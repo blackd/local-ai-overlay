@@ -14,6 +14,7 @@
 		<flag name="crispasr">Install the CrispASR multi-engine speech backend (<pkg>app-local-ai/crispasr</pkg>)</flag>
 		<flag name="depth-anything">Install the depth-anything.cpp depth-estimation backend (<pkg>app-local-ai/depth-anything</pkg>)</flag>
 		<flag name="parakeet-cpp">Install the parakeet.cpp speech-to-text backend (<pkg>app-local-ai/parakeet-cpp</pkg>)</flag>
+		<flag name="rfdetr-cpp">Install the rf-detr.cpp object-detection backend (<pkg>app-local-ai/rfdetr-cpp</pkg>)</flag>
 		<flag name="piper">Install the piper text-to-speech backend (<pkg>app-local-ai/piper</pkg>)</flag>
 		<flag name="stablediffusion-ggml">Install the stable-diffusion.cpp image-generation backend (<pkg>app-local-ai/stablediffusion-ggml</pkg>)</flag>
 		<flag name="vibevoice-cpp">Install the vibevoice.cpp text-to-speech backend (<pkg>app-local-ai/vibevoice-cpp</pkg>)</flag>
