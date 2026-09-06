@@ -70,6 +70,22 @@ For the standalone packages (opencode, zot, gitea-runner, dagu):
    release branch (which now includes the workflow's Manifest commit —
    `git fetch` before pushing `origin/master:release`).
 
+### Go version dependency
+
+Every Go package's BDEPEND on dev-lang/go must be at least the version
+named by the go.mod `go` directive, written in full three-component
+form — a bare `>=dev-lang/go-1.27` does not satisfy Portage's QA check
+against `go 1.27.0`. Re-check the directive at every bump; a drifting
+atom shows up as a "QA Notice: found go.mod file which specifies ..."
+during the build. Current deliberate exceptions:
+
+- dev-util/gitea-runner: upstream's go.mod says `go 1.27`, but
+  src_prepare relaxes it to 1.26 for the dormant older-go fallback;
+  BDEPEND stays `>=dev-lang/go-1.26.7` on purpose.
+- app-containers/zot: BDEPEND is the lowest STABLE go satisfying the
+  directive (`>=dev-lang/go-1.26.4` for `go 1.26.3`), not the directive
+  verbatim.
+
 Per-package notes below list everything that deviates from this.
 
 ## Family: local-ai (sci-ml/local-ai + app-local-ai/*)

@@ -50,7 +50,6 @@ RDEPEND="
 	)
 "
 DEPEND="${RDEPEND}"
-BDEPEND=">=dev-lang/go-1.26.0"
 
 GOPIPER="${S}/sources/go-piper"
 

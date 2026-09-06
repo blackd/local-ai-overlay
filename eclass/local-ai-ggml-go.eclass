@@ -28,6 +28,9 @@ _LOCAL_AI_GGML_GO_ECLASS=1
 
 inherit go-module local-ai-ggml
 
+# LocalAI's go.mod directive; all backends build that Go module.
+BDEPEND=">=dev-lang/go-1.26.0"
+
 # @ECLASS_VARIABLE: LOCAL_AI_ENGINE_LIB
 # @REQUIRED
 # @DESCRIPTION:
