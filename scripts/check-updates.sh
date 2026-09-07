@@ -14,6 +14,9 @@ AUTH="Authorization: token ${GITHUB_TOKEN}"
 # app-local-ai/* and the acct packages follow sci-ml/local-ai and need
 # no entries of their own; the vendored GURU copies follow GURU, not
 # their real upstream, and are covered by the guru-sync check below.
+# dev-python/safetensors and dev-python/tokenizers are DELIBERATELY
+# absent: their versions are dictated by the diffusers/transformers
+# pins of the LocalAI release, not by their own upstream releases.
 declare -A UPSTREAMS=(
 	[sci-ml/local-ai]=github:mudler/LocalAI
 	[dev-util/opencode]=github:anomalyco/opencode

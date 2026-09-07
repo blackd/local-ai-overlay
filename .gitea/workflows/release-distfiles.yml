@@ -12,7 +12,7 @@ jobs:
       contents: write
     steps:
       - name: "Install toolchain from binhost"
-        run: emerge -G -q -un dev-lang/go net-libs/nodejs dev-libs/protobuf dev-lang/bun-bin
+        run: emerge -G -q -un dev-lang/go net-libs/nodejs dev-libs/protobuf dev-lang/bun-bin dev-lang/rust
       - uses: "actions/checkout@v4"
         with:
           fetch-depth: 0
@@ -36,6 +36,8 @@ jobs:
             gitea-runner) DIRS=dev-util/gitea-runner ;;
             zot) DIRS=app-containers/zot ;;
             dagu) DIRS=sys-process/dagu ;;
+            safetensors) DIRS=dev-python/safetensors ;;
+            tokenizers) DIRS=dev-python/tokenizers ;;
             *) echo "unknown family ${{ steps.family.outputs.family }}"; exit 1 ;;
           esac
           for d in ${DIRS}; do ebuild --force $(ls $d/*.ebuild | head -1) manifest; done
