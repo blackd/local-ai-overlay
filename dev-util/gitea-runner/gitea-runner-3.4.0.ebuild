@@ -56,9 +56,8 @@ src_prepare() {
 	grep -q '/usr/bin/gitea-runner' examples/systemd/gitea-runner.service || die "unit path fix did not apply"
 
 	# The code uses the json/v2 stdlib packages that go 1.27 stabilized;
-	# go 1.26 ships the same packages behind GOEXPERIMENT=jsonv2 (and
-	# dev-lang/go-1.27.0 is masked for regressions at the time of
-	# writing). With 1.26 the go.mod directive must be relaxed to match.
+	# go 1.26 ships the same packages behind GOEXPERIMENT=jsonv2. With
+	# 1.26 the go.mod directive must be relaxed to match.
 	if ! has_version -b ">=dev-lang/go-1.27"; then
 		einfo "Relaxing go directive for go 1.26 + GOEXPERIMENT=jsonv2"
 		sed -i -e 's/^go 1.27$/go 1.26/' -e '/^toolchain /d' go.mod || die
