@@ -112,4 +112,31 @@ sed -i 's|^${pkg} .*|${pkg} ${latest}|' scripts/guru-sync.state
 	file_issue "${existing}" "guru-sync: ${pkg} changed in GURU (${latest:0:12})" "${body}"
 done < scripts/guru-sync.state
 
+# System build dependencies: a version bump in ::gentoo can break every
+# consumer at once (go 1.27 vs zot's jsonv2 experiment, abseil vs the
+# grpc glue). Compare the runner image's tree against the versions the
+# overlay was last verified with.
+GENTOO=/var/db/repos/gentoo
+while read -r pkg known; do
+	latest=$(basename -s .ebuild "${GENTOO}/${pkg}"/*.ebuild 2>/dev/null \
+		| sed "s:^${pkg##*/}-::" | grep -v 9999 | sort -V | tail -n1)
+	if [ -z "${latest}" ]; then
+		echo "warn: no version for ${pkg} in ::gentoo"
+		rc=1
+		continue
+	fi
+	existing=$(open_issue "dep-bump: ${pkg} ")
+	if [ "${latest}" = "${known}" ]; then
+		echo "unchanged in ::gentoo: ${pkg} ${latest}"
+		[ -n "${existing}" ] && close_issue "${existing%% *}"
+		continue
+	fi
+	body="::gentoo moved ${pkg} from ${known} to ${latest}. Rebuild the
+overlay's packages against it to verify they still compile, then record:
+\`\`\`
+sed -i 's|^${pkg} .*|${pkg} ${latest}|' scripts/gentoo-deps.state
+\`\`\`"
+	file_issue "${existing}" "dep-bump: ${pkg} ${latest} in ::gentoo (verified with ${known})" "${body}"
+done < scripts/gentoo-deps.state
+
 exit ${rc}
