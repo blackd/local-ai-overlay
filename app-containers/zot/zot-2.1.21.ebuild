@@ -61,21 +61,21 @@ src_prepare() {
 		mv "${WORKDIR}/node_modules" "${WORKDIR}/zui-${ZUI_PIN}/node_modules" || die
 	fi
 
-	# trivy v0.72.0 uses the experimental json/v2 SkipFunc sentinel,
-	# which go 1.27's graduated encoding/json/v2 removed; upstream fix
-	# is aquasecurity/trivy@dc3c56ee (not yet in any zot release) and
-	# replaces it with errors.ErrUnsupported. Apply the same change to
-	# every affected file in the module cache copy (extracted trees are
-	# not re-verified against go.sum).
+	# trivy (v0.74.0 at this zot release) uses the experimental json/v2
+	# SkipFunc sentinel, which go 1.27's graduated encoding/json/v2
+	# removed; upstream fix is aquasecurity/trivy@dc3c56ee (still in no
+	# trivy release) and replaces it with errors.ErrUnsupported. Apply
+	# the same change to every affected file in the module cache copy
+	# (extracted trees are not re-verified against go.sum).
 	if has_version -b ">=dev-lang/go-1.27"; then
-		local trivy="${WORKDIR}/go-mod/github.com/aquasecurity/trivy@v0.72.0" f found=
+		local f found=
 		while IFS= read -r -d '' f; do
 			found=1
 			chmod u+w "${f%/*}" "${f}" || die
 			sed -i -e 's:json\.SkipFunc:errors.ErrUnsupported:g' "${f}" || die
 			grep -q '"errors"' "${f}" || \
 				sed -i -e '0,/^import (/s:^import (:import (\n\t"errors":' "${f}" || die
-		done < <(grep -rlZ 'json\.SkipFunc' "${trivy}")
+		done < <(grep -rlZ 'json\.SkipFunc' "${WORKDIR}"/go-mod/github.com/aquasecurity/trivy@v*)
 		[[ -n ${found} ]] || die "trivy json/v2 fix did not apply"
 	fi
 }
