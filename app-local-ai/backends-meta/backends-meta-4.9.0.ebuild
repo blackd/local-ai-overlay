@@ -14,10 +14,10 @@ HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"
 LICENSE="metapackage"
 SLOT="0"
 KEYWORDS="~amd64"
-IUSE="+llama-cpp +audio-cpp +crispasr +depth-anything +parakeet-cpp +piper +qwen3-tts-cpp +rfdetr-cpp +stablediffusion-ggml +vibevoice-cpp +whisper"
+IUSE="+llama-cpp +audio-cpp +crispasr +depth-anything +parakeet-cpp +piper +qwen3-tts-cpp +rfdetr-cpp +stablediffusion-ggml +vibevoice-cpp +vllm-cpp +whisper"
 # An empty meta package is a configuration error: the whole point is to
 # have at least one inference backend installed.
-REQUIRED_USE="|| ( llama-cpp audio-cpp crispasr depth-anything parakeet-cpp piper qwen3-tts-cpp rfdetr-cpp stablediffusion-ggml vibevoice-cpp whisper )"
+REQUIRED_USE="|| ( llama-cpp audio-cpp crispasr depth-anything parakeet-cpp piper qwen3-tts-cpp rfdetr-cpp stablediffusion-ggml vibevoice-cpp vllm-cpp whisper )"
 
 RDEPEND="
 	llama-cpp? ( app-local-ai/llama-cpp )
@@ -30,5 +30,6 @@ RDEPEND="
 	rfdetr-cpp? ( app-local-ai/rfdetr-cpp )
 	stablediffusion-ggml? ( app-local-ai/stablediffusion-ggml )
 	vibevoice-cpp? ( app-local-ai/vibevoice-cpp )
+	vllm-cpp? ( app-local-ai/vllm-cpp )
 	whisper? ( app-local-ai/whisper )
 "

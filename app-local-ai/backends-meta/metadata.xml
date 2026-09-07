@@ -15,6 +15,7 @@
 		<flag name="depth-anything">Install the depth-anything.cpp depth-estimation backend (<pkg>app-local-ai/depth-anything</pkg>)</flag>
 		<flag name="parakeet-cpp">Install the parakeet.cpp speech-to-text backend (<pkg>app-local-ai/parakeet-cpp</pkg>)</flag>
 		<flag name="qwen3-tts-cpp">Install the qwentts.cpp text-to-speech backend (<pkg>app-local-ai/qwen3-tts-cpp</pkg>)</flag>
+		<flag name="vllm-cpp">Install the vllm.cpp text-generation backend (<pkg>app-local-ai/vllm-cpp</pkg>)</flag>
 		<flag name="rfdetr-cpp">Install the rf-detr.cpp object-detection backend (<pkg>app-local-ai/rfdetr-cpp</pkg>)</flag>
 		<flag name="piper">Install the piper text-to-speech backend (<pkg>app-local-ai/piper</pkg>)</flag>
 		<flag name="stablediffusion-ggml">Install the stable-diffusion.cpp image-generation backend (<pkg>app-local-ai/stablediffusion-ggml</pkg>)</flag>
