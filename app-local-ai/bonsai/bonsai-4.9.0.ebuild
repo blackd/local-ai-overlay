@@ -11,7 +11,9 @@
 # patch series in backend/cpp/bonsai/patches/ is EMPTY at this release
 # but fills up whenever the fork lags an API change the shared
 # grpc-server needs (apply-patches.sh consumes it, failing fast when a
-# patch stops applying — the retire signal).
+# patch stops applying — the retire signal). Post-4.9.0 upstream also
+# added a patch-grpc-server.sh (JSON-API rename for the fork): expect
+# to add its invocation at the next bump.
 
 EAPI=8
 
@@ -27,8 +29,8 @@ inherit local-ai-ggml
 
 # The PrismML llama.cpp (prism branch) commit LocalAI v4.9.0 pins.
 # Source of truth: backend/cpp/bonsai/Makefile (BONSAI_VERSION) at the
-# upstream release tag.
-BONSAI_COMMIT="312bb2a93ea2bf798333fa859614fbf913ecb9e2"
+# upstream release tag — NOT the auto-bumped pin on master.
+BONSAI_COMMIT="9ca265a57f85f2117942490f421f64a226dd9847"
 
 DESCRIPTION="LocalAI text-generation backend for 1-bit/ternary models (Bonsai fork of llama.cpp)"
 SRC_URI="
@@ -80,10 +82,8 @@ src_prepare() {
 	# the fork; fork-skew patches live in backend/cpp/bonsai/patches/
 	# instead (upstream's Makefile does the same removal).
 	rm -rf patches || die
-	# Adapt the shared gRPC source to the fork's older JSON API and drop
-	# the tasks the Bonsai backend does not serve — upstream's exact
-	# scripts, run on the same file they run on.
-	bash "${bonsai}/patch-grpc-server.sh" ./grpc-server.cpp || die
+	# Drop the tasks the Bonsai backend does not serve — upstream's
+	# exact scripts, run on the same file they run on.
 	bash ./disable-score-task.sh ./grpc-server.cpp || die
 	bash ./disable-tts-task.sh ./grpc-server.cpp || die
 	# Fork-skew patch series (empty at this pin; fails fast if stale).
