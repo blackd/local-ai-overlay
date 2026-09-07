@@ -11,10 +11,11 @@
 
 EAPI=8
 
+RUST_MIN_VER="1.80.0"
 DISTUTILS_USE_PEP517=maturin
 PYTHON_COMPAT=( python3_{12..14} )
 
-inherit distutils-r1
+inherit distutils-r1 rust
 
 CRATES_BASE="https://git.ipnmod.org/packages/local-ai-overlay/releases/download/safetensors-v${PV}"
 
@@ -31,7 +32,6 @@ LICENSE+=" MIT Unicode-DFS-2016"
 SLOT="0"
 KEYWORDS="~amd64"
 
-BDEPEND=">=virtual/rust-1.80"
 
 src_prepare() {
 	distutils-r1_src_prepare
