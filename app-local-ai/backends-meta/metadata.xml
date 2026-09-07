@@ -11,6 +11,7 @@
 	<use>
 		<flag name="llama-cpp">Install the llama.cpp text-generation backend (<pkg>app-local-ai/llama-cpp</pkg>)</flag>
 		<flag name="audio-cpp">Install the audio backend (<pkg>app-local-ai/audio-cpp</pkg>)</flag>
+		<flag name="bonsai">Install the Bonsai 1-bit/ternary text-generation backend (<pkg>app-local-ai/bonsai</pkg>)</flag>
 		<flag name="crispasr">Install the CrispASR multi-engine speech backend (<pkg>app-local-ai/crispasr</pkg>)</flag>
 		<flag name="depth-anything">Install the depth-anything.cpp depth-estimation backend (<pkg>app-local-ai/depth-anything</pkg>)</flag>
 		<flag name="parakeet-cpp">Install the parakeet.cpp speech-to-text backend (<pkg>app-local-ai/parakeet-cpp</pkg>)</flag>
