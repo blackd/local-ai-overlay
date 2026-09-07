@@ -13,6 +13,7 @@
 EAPI=8
 
 RUST_MIN_VER="1.80.0"
+DISTUTILS_EXT=1
 DISTUTILS_USE_PEP517=maturin
 PYTHON_COMPAT=( python3_{12..14} )
 
@@ -32,6 +33,10 @@ LICENSE="Apache-2.0"
 LICENSE+=" MIT Unicode-DFS-2016"
 SLOT="0"
 KEYWORDS="~amd64"
+
+# The test suites need network-fetched models/fixtures (HuggingFace
+# hub downloads), unrunnable in the sandbox.
+RESTRICT="test"
 
 
 src_prepare() {
