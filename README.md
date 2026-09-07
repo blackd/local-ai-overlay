@@ -18,11 +18,12 @@ See `metadata/docs/specs/` for the design.
 
 Needs app-eselect/eselect-repository and dev-vcs/git installed:
 
-    eselect repository add local-ai git https://git.ipnmod.org/packages/local-ai-overlay.git
+    eselect repository enable local-ai
     emaint sync -r local-ai
 
-This registers the overlay under the name `local-ai` (checkout managed by
-Portage in /var/db/repos/local-ai, kept up to date by `emerge --sync`).
+The overlay is listed in Gentoo's official repository index, so `enable`
+finds it by name (checkout managed by Portage in /var/db/repos/local-ai,
+kept up to date by `emerge --sync`).
 
 A few dependency packages (sci-libs/onnxruntime, sci-libs/onnxruntime-bin,
 sci-libs/dlpack, dev-cpp/safeint) are copied verbatim from the GURU
