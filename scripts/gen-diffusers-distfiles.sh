@@ -41,7 +41,7 @@ done
 # the digest the overlay already pins before extracting the proto.
 curl -fsSL "https://github.com/mudler/LocalAI/archive/refs/tags/v${VERSION}.tar.gz" \
 	-o "$WORK/local-ai-${VERSION}.tar.gz"
-recorded=$(grep -h "^DIST local-ai-${VERSION}.tar.gz " ../app-local-ai/*/Manifest | awk '{print $6}' | sort -u | head -n1)
+recorded=$(grep -h "^DIST local-ai-${VERSION}.tar.gz " ../app-local-ai/*/Manifest | awk '{print $7}' | sort -u | head -n1)
 actual=$(sha512sum "$WORK/local-ai-${VERSION}.tar.gz" | cut -d' ' -f1)
 if [ -z "$recorded" ] || [ "$recorded" != "$actual" ]; then
 	echo "local-ai-${VERSION}.tar.gz does not match the Manifest-pinned digest" >&2
