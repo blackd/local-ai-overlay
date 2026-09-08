@@ -6,6 +6,11 @@
 # the wheels release asset, with --system-site-packages exposing every
 # compiled dependency as a real Portage package — torch (ROCm and all)
 # included. The venv layer is pure python only.
+#
+# The gRPC stubs (backend_pb2*.py) ship pre-generated inside the wheels
+# tarball: the tree has no dev-python/grpcio-tools and the system grpc
+# builds no python plugin. The gen script generates them from the
+# digest-verified source tarball, so they match what compiles here.
 
 EAPI=8
 
@@ -37,7 +42,7 @@ RDEPEND="${PYTHON_DEPS}
 		dev-python/av[${PYTHON_USEDEP}]
 		dev-python/safetensors[${PYTHON_USEDEP}]
 		dev-python/tokenizers[${PYTHON_USEDEP}]
-		dev-python/grpcio[${PYTHON_USEDEP}]
+		>=dev-python/grpcio-1.76.0[${PYTHON_USEDEP}]
 		dev-python/protobuf[${PYTHON_USEDEP}]
 		dev-python/pillow[${PYTHON_USEDEP}]
 		dev-python/ftfy[${PYTHON_USEDEP}]
@@ -52,7 +57,6 @@ RDEPEND="${PYTHON_DEPS}
 		dev-python/tqdm[${PYTHON_USEDEP}]
 	')
 "
-BDEPEND="$(python_gen_cond_dep 'dev-python/grpcio-tools[${PYTHON_USEDEP}]')"
 
 BACKEND_DIR="/usr/libexec/local-ai/backends/diffusers"
 
@@ -60,18 +64,10 @@ src_unpack() {
 	unpack "local-ai-${PV}.tar.gz" "diffusers-${PV}-wheels.tar.xz"
 }
 
-src_compile() {
-	# The gRPC stubs upstream generates at image-build time; grpcio-tools
-	# runs offline in the sandbox, so no pre-generated asset is needed
-	# (unlike the Go backends' -prebuilt tarball, whose protoc plugins
-	# would be a build-time toolchain burden).
-	"${EPYTHON}" -m grpc_tools.protoc -I "${WORKDIR}/LocalAI-${PV}/backend" \
-		--python_out=. --grpc_python_out=. backend.proto || die
-}
-
 src_install() {
 	exeinto "${BACKEND_DIR}"
-	doexe backend.py diffusers_dynamic_loader.py backend_pb2.py backend_pb2_grpc.py
+	doexe backend.py diffusers_dynamic_loader.py \
+		"${WORKDIR}"/stubs/backend_pb2.py "${WORKDIR}"/stubs/backend_pb2_grpc.py
 	# The shared helpers backend.py imports from ../common.
 	insinto "${BACKEND_DIR}/common"
 	doins ../common/grpc_auth.py ../common/model_utils.py
