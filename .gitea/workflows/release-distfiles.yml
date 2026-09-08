@@ -38,6 +38,7 @@ jobs:
             dagu) DIRS=sys-process/dagu ;;
             safetensors) DIRS=dev-python/safetensors ;;
             tokenizers) DIRS=dev-python/tokenizers ;;
+            diffusers) DIRS=app-local-ai/diffusers ;;
             *) echo "unknown family ${{ steps.family.outputs.family }}"; exit 1 ;;
           esac
           for d in ${DIRS}; do ebuild --force $(ls $d/*.ebuild | head -1) manifest; done

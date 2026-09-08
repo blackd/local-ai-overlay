@@ -28,6 +28,12 @@ session (human or AI-assisted) can pick up where the last one stopped.
   so users can ask for what the install should be able to do instead of
   naming backends.
 
+## Candidate packages
+
+- https://github.com/mudler/LocalAGI — mudler's autonomous-agent
+  platform (Go, web UI), natural companion to sci-ml/local-ai; would
+  follow the standard Go + node_modules pipeline as its own family.
+
 ## Runner infrastructure (gitea-gentoo-runner)
 
 - Ryzen variant bootstrap: register the `gentoo-ryzen` runner on the
