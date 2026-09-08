@@ -30,8 +30,8 @@ REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 RDEPEND="${PYTHON_DEPS}
 	sci-ml/local-ai
 	$(python_gen_cond_dep '
-		sci-ml/pytorch[${PYTHON_USEDEP}]
-		sci-ml/torchvision[${PYTHON_USEDEP}]
+		sci-ml/pytorch[${PYTHON_SINGLE_USEDEP}]
+		sci-ml/torchvision[${PYTHON_SINGLE_USEDEP}]
 		sci-ml/sentencepiece[${PYTHON_USEDEP}]
 		media-libs/opencv[python,${PYTHON_USEDEP}]
 		dev-python/av[${PYTHON_USEDEP}]
