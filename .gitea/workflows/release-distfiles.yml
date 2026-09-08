@@ -12,7 +12,7 @@ jobs:
       contents: write
     steps:
       - name: "Install toolchain from binhost"
-        run: emerge -G -q -un dev-lang/go net-libs/nodejs dev-libs/protobuf dev-lang/bun-bin dev-lang/rust
+        run: emerge -G -q -un dev-lang/go net-libs/nodejs dev-libs/protobuf dev-lang/bun-bin dev-lang/rust dev-python/pip
       - uses: "actions/checkout@v4"
         with:
           fetch-depth: 0
