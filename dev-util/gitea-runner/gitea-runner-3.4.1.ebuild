@@ -32,21 +32,8 @@ RDEPEND="
 	acct-group/gitea-runner
 	acct-user/gitea-runner
 "
-BDEPEND=">=dev-lang/go-1.26.7"
+BDEPEND=">=dev-lang/go-1.27"
 
-src_unpack() {
-	# go-module_src_unpack's `go mod verify` trips over the go >= 1.27
-	# directive before src_prepare relaxes it for the go 1.26 fallback;
-	# the eclass offers NONFATAL_VERIFY for exactly this. The Manifest
-	# already guarantees the deps tarball's integrity.
-	if ! has_version -b ">=dev-lang/go-1.27"; then
-		local NONFATAL_VERIFY=1
-		einfo "The following 'go mod verify' failure is expected with go < 1.27"
-		einfo "and handled: src_prepare relaxes the go directive for the"
-		einfo "GOEXPERIMENT=jsonv2 fallback build."
-	fi
-	go-module_src_unpack
-}
 
 src_prepare() {
 	default
@@ -55,25 +42,9 @@ src_prepare() {
 	sed -i 's#/usr/local/bin/gitea-runner#/usr/bin/gitea-runner#' examples/systemd/gitea-runner.service || die
 	grep -q '/usr/bin/gitea-runner' examples/systemd/gitea-runner.service || die "unit path fix did not apply"
 
-	# The code uses the json/v2 stdlib packages that go 1.27 stabilized;
-	# go 1.26 ships the same packages behind GOEXPERIMENT=jsonv2. With
-	# 1.26 the go.mod directive must be relaxed to match.
-	if ! has_version -b ">=dev-lang/go-1.27"; then
-		einfo "Relaxing go directive for go 1.26 + GOEXPERIMENT=jsonv2"
-		sed -i -e 's/^go 1.27$/go 1.26/' -e '/^toolchain /d' go.mod || die
-		grep -q '^go 1.26$' go.mod || die "go directive relax did not apply"
-	fi
 }
 
 src_compile() {
-	if ! has_version -b ">=dev-lang/go-1.27"; then
-		export GOEXPERIMENT=jsonv2
-		# The relaxed go directive makes go want to rewrite go.mod's
-		# requirement graph; allow it (last -mod flag wins, and GOPROXY
-		# stays off so everything still comes from the module cache).
-		export GOFLAGS="${GOFLAGS} -mod=mod"
-	fi
-
 	# Version stamped the same way upstream's release builds do it.
 	# Upstream's Makefile also adds -s -w; leave stripping to Portage
 	# instead (it would flag the binary as pre-stripped otherwise).
