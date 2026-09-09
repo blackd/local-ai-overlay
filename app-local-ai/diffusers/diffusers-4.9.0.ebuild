@@ -64,6 +64,13 @@ src_unpack() {
 	unpack "local-ai-${PV}.tar.gz" "diffusers-${PV}-wheels.tar.xz"
 }
 
+src_compile() {
+	# Nothing to build here: the Makefile in this directory drives
+	# upstream's uv-based image install, which the venv assembled in
+	# src_install replaces entirely.
+	:
+}
+
 src_install() {
 	exeinto "${BACKEND_DIR}"
 	doexe backend.py diffusers_dynamic_loader.py \
