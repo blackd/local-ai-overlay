@@ -52,7 +52,19 @@ RDEPEND="${PYTHON_DEPS}
 		dev-python/pyyaml[${PYTHON_USEDEP}]
 		dev-python/requests[${PYTHON_USEDEP}]
 		dev-python/tqdm[${PYTHON_USEDEP}]
+		dev-python/httpx[${PYTHON_USEDEP}]
+		dev-python/httpcore[${PYTHON_USEDEP}]
+		dev-python/anyio[${PYTHON_USEDEP}]
+		dev-python/h11[${PYTHON_USEDEP}]
+		dev-python/idna[${PYTHON_USEDEP}]
+		dev-python/certifi[${PYTHON_USEDEP}]
+		dev-python/charset-normalizer[${PYTHON_USEDEP}]
+		dev-python/urllib3[${PYTHON_USEDEP}]
+		dev-python/importlib-metadata[${PYTHON_USEDEP}]
+		dev-python/zipp[${PYTHON_USEDEP}]
+		dev-python/typing-extensions[${PYTHON_USEDEP}]
 	')
+	dev-build/ninja
 "
 # Build-time too: the import smoke test at the end of src_install runs
 # the backend's whole import closure.

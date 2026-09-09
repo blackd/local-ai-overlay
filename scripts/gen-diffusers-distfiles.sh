@@ -21,7 +21,7 @@ PACKAGES=(
 	transformers==4.57.6
 	accelerate
 	peft
-	huggingface-hub
+	huggingface-hub==0.36.2
 	optimum-quanto
 )
 
