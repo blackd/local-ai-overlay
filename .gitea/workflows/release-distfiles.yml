@@ -39,6 +39,7 @@ jobs:
             safetensors) DIRS=dev-python/safetensors ;;
             tokenizers) DIRS=dev-python/tokenizers ;;
             diffusers) DIRS=app-local-ai/diffusers ;;
+            python-common) DIRS=app-local-ai/python-common ;;
             *) echo "unknown family ${{ steps.family.outputs.family }}"; exit 1 ;;
           esac
           for d in ${DIRS}; do ebuild --force $(ls $d/*.ebuild | head -1) manifest; done

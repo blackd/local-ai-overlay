@@ -5,12 +5,8 @@
 # first python backend: a venv assembled OFFLINE in src_install from
 # the wheels release asset, with --system-site-packages exposing every
 # compiled dependency as a real Portage package — torch (ROCm and all)
-# included. The venv layer is pure python only.
-#
-# The gRPC stubs (backend_pb2*.py) ship pre-generated inside the wheels
-# tarball: the tree has no dev-python/grpcio-tools and the system grpc
-# builds no python plugin. The gen script generates them from the
-# digest-verified source tarball, so they match what compiles here.
+# included. The venv layer is pure python only. Shared helpers and the
+# gRPC stubs come from app-local-ai/python-common via PYTHONPATH.
 
 EAPI=8
 
@@ -34,6 +30,7 @@ REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 
 RDEPEND="${PYTHON_DEPS}
 	sci-ml/local-ai
+	~app-local-ai/python-common-${PV}
 	$(python_gen_cond_dep '
 		sci-ml/pytorch[${PYTHON_SINGLE_USEDEP}]
 		sci-ml/torchvision[${PYTHON_SINGLE_USEDEP}]
@@ -57,6 +54,9 @@ RDEPEND="${PYTHON_DEPS}
 		dev-python/tqdm[${PYTHON_USEDEP}]
 	')
 "
+# Build-time too: the import smoke test at the end of src_install runs
+# the backend's whole import closure.
+DEPEND="${RDEPEND}"
 
 BACKEND_DIR="/usr/libexec/local-ai/backends/diffusers"
 
@@ -73,11 +73,7 @@ src_compile() {
 
 src_install() {
 	exeinto "${BACKEND_DIR}"
-	doexe backend.py diffusers_dynamic_loader.py \
-		"${WORKDIR}"/stubs/backend_pb2.py "${WORKDIR}"/stubs/backend_pb2_grpc.py
-	# The shared helpers backend.py imports from ../common.
-	insinto "${BACKEND_DIR}/common"
-	doins ../common/grpc_auth.py ../common/model_utils.py
+	doexe backend.py diffusers_dynamic_loader.py
 
 	# The venv: system-site for every compiled package, wheels for the
 	# pure-python layer, assembled fully offline.
@@ -90,6 +86,14 @@ src_install() {
 	python_optimize "${ED}${BACKEND_DIR}/venv/lib"
 
 	local-ai-backend_install_meta diffusers
+
+	# Import smoke test: backend.py's whole import closure (the
+	# python-common helpers and stubs, the venv wheels, the system
+	# site-packages) must resolve NOW, at build time — not at the
+	# user's first model load.
+	PYTHONPATH="${ED}${BACKEND_DIR}:${EPREFIX}/usr/libexec/local-ai/python-common" \
+		"${ED}${BACKEND_DIR}/venv/bin/python" -c "import backend" \
+		|| die "backend import check failed"
 }
 
 pkg_postinst() {
