@@ -65,6 +65,12 @@ src_prepare() {
 src_configure() {
 	use cuda && cuda_add_sandbox -w
 
+	# We deliberately link the system ffmpeg rather than upstream's
+	# bundled multi-ffmpeg wheel path; upstream gates this behind an
+	# acknowledgment because a GPL-built ffmpeg makes the combined
+	# work GPL-governed — business as usual for a source distro.
+	export I_CONFIRM_THIS_IS_NOT_A_LICENSE_VIOLATION=1
+
 	DISTUTILS_ARGS=(
 		-DENABLE_CUDA=$(usex cuda ON OFF)
 		-DTORCHCODEC_BUILD_JPEG=$(usex jpeg ON OFF)
