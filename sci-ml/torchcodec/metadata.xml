@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>plamen@ipnmod.org</email>
+		<name>Plamen K. Kosseff</name>
+	</maintainer>
+	<upstream>
+		<remote-id type="github">pytorch/torchcodec</remote-id>
+		<remote-id type="pypi">torchcodec</remote-id>
+	</upstream>
+	<use>
+		<flag name="avif">AVIF image decoding via <pkg>media-libs/libavif</pkg></flag>
+		<flag name="cuda">NVDEC video decoding and nvJPEG via CUDA</flag>
+		<flag name="gif">GIF image decoding via <pkg>media-libs/giflib</pkg></flag>
+		<flag name="heic">HEIC image decoding via <pkg>media-libs/libheif</pkg></flag>
+		<flag name="jpeg">JPEG image decoding via <pkg>media-libs/libjpeg-turbo</pkg></flag>
+		<flag name="png">PNG image decoding via <pkg>media-libs/libpng</pkg></flag>
+		<flag name="webp">WebP image decoding via <pkg>media-libs/libwebp</pkg></flag>
+	</use>
+</pkgmetadata>

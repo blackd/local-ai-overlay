@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>plamen@ipnmod.org</email>
+		<name>Plamen K. Kosseff</name>
+	</maintainer>
+	<upstream>
+		<remote-id type="github">pytorch/audio</remote-id>
+		<remote-id type="pypi">torchaudio</remote-id>
+	</upstream>
+	<use>
+		<flag name="cuda">GPU acceleration via CUDA</flag>
+		<flag name="rocm">GPU acceleration on AMD via ROCm/HIP</flag>
+	</use>
+</pkgmetadata>
