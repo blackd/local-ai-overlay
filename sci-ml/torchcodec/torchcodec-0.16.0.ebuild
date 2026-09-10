@@ -23,7 +23,11 @@ DISTUTILS_SINGLE_IMPL=1
 DISTUTILS_USE_PEP517=scikit-build-core
 DISTUTILS_EXT=1
 
-ROCM_SKIP_GLOBALS=1
+# The eclass's amdgpu_targets_* IUSE list is keyed off this; 7.2 =
+# the system ROCm. Portage filters the AMDGPU_TARGETS env var to
+# flags present in IUSE, so without the eclass globals
+# get_amdgpu_flags would return nothing.
+ROCM_VERSION=7.2
 inherit cuda distutils-r1 rocm
 
 DESCRIPTION="Media decoding for PyTorch, the torchaudio IO backend"
@@ -40,6 +44,7 @@ IUSE="+avif cuda +gif +heic +jpeg +png rocm +webp"
 
 REQUIRED_USE="
 	?? ( cuda rocm )
+	rocm? ( ${ROCM_REQUIRED_USE} )
 "
 
 RDEPEND="
@@ -104,6 +109,7 @@ src_prepare() {
 }
 
 src_configure() {
+	rocm_add_sandbox -w
 	use cuda && cuda_add_sandbox -w
 
 	# We deliberately link the system ffmpeg rather than upstream's

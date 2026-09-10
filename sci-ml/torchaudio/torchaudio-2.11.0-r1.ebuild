@@ -23,7 +23,11 @@ PYTHON_COMPAT=( python3_{12..14} )
 DISTUTILS_SINGLE_IMPL=1
 DISTUTILS_USE_PEP517=setuptools
 DISTUTILS_EXT=1
-ROCM_SKIP_GLOBALS=1
+# The eclass's amdgpu_targets_* IUSE list is keyed off this; 7.2 =
+# the system ROCm. Portage filters the AMDGPU_TARGETS env var to
+# flags present in IUSE, so without the eclass globals
+# get_amdgpu_flags would return nothing.
+ROCM_VERSION=7.2
 inherit cuda distutils-r1 multiprocessing rocm
 
 DESCRIPTION="Audio processing library for PyTorch"
@@ -40,6 +44,7 @@ IUSE="cuda rocm"
 
 REQUIRED_USE="
 	?? ( cuda rocm )
+	rocm? ( ${ROCM_REQUIRED_USE} )
 "
 
 RDEPEND="
