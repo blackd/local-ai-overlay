@@ -71,6 +71,20 @@ src_configure() {
 	# work GPL-governed — business as usual for a source distro.
 	export I_CONFIRM_THIS_IS_NOT_A_LICENSE_VIOLATION=1
 
+	# Gentoo's autotools-built libwebp installs no CMake config;
+	# generate one via pkg-config as the tree does (bug #937031).
+	# torchcodec links WebP::webp and WebP::webpdemux.
+	if use webp; then
+		mkdir -p "${T}/cmake" || die
+		cat <<-EOF > "${T}/cmake/WebPConfig.cmake" || die
+		find_package(PkgConfig REQUIRED)
+		pkg_check_modules(WebP REQUIRED IMPORTED_TARGET libwebp)
+		pkg_check_modules(WebPDemux REQUIRED IMPORTED_TARGET libwebpdemux)
+		add_library(WebP::webp ALIAS PkgConfig::WebP)
+		add_library(WebP::webpdemux ALIAS PkgConfig::WebPDemux)
+		EOF
+	fi
+
 	DISTUTILS_ARGS=(
 		-DENABLE_CUDA=$(usex cuda ON OFF)
 		-DTORCHCODEC_BUILD_JPEG=$(usex jpeg ON OFF)
@@ -82,6 +96,7 @@ src_configure() {
 		# nvJPEG rides the CUDA toolchain.
 		-DTORCHCODEC_BUILD_NVJPEG=$(usex cuda ON OFF)
 	)
+	use webp && DISTUTILS_ARGS+=( -DWebP_DIR="${T}/cmake" )
 	distutils-r1_src_configure
 }
 
