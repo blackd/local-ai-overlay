@@ -23,6 +23,27 @@ A "family" is a group of packages sharing one release cycle. Current
 families: `local-ai` (sci-ml/local-ai + every app-local-ai backend),
 `opencode`, `gitea-runner`, `zot`, `dagu`.
 
+### Dependency policy: system libraries first
+
+Every dependency a package needs must come from Portage (the Gentoo
+tree or this overlay) whenever it exists there — never from a copy
+bundled in the upstream sources or downloaded at build time — unless
+using the system library is proven impossible. "Upstream only
+supports its bundled copy" is not proof: check whether the code's
+actual API usage can be rewired to the system library. Two precedents
+in sci-ml/torchcodec: its AVIF decoder unconditionally downloads a
+prebuilt libavif, but that download's whole contract is to define one
+CMake target, so a one-line `find_package` shim replaces the fetch
+file; its GIF decoder compiles a giflib copy vendored in the repo but
+only uses the standard public API, so seds rewire it to the system
+giflib — each sed backed by a `grep || die` anchor check, because sed
+no-ops silently and a bump that moves the anchors must fail loudly
+rather than quietly revert to the bundle. When system use IS
+impossible, document why in an ebuild comment (precedent:
+stablediffusion-ggml's engine needs `GGML_MAX_NAME=160` baked into
+ggml, which the system ggml lacks). Audit what a package fetches or
+vendors when first packaging it AND at every bump.
+
 ### The automated pipeline
 
 Pushing a git tag named `<family>-distfiles-v<version>` (for the
