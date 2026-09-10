@@ -5,7 +5,7 @@
 # @MAINTAINER:
 # Plamen K. Kosseff
 # @SUPPORTED_EAPIS: 8
-# @PROVIDES: cmake cuda local-ai-backend rocm
+# @PROVIDES: cmake cuda local-ai-backend local-ai-rocm rocm
 # @BLURB: Shared flags, dependencies and CMake phases for ggml-engine backends
 # @DESCRIPTION:
 # Every LocalAI backend that embeds a ggml-based inference engine shares
@@ -23,13 +23,9 @@ esac
 if [[ -z ${_LOCAL_AI_GGML_ECLASS} ]]; then
 _LOCAL_AI_GGML_ECLASS=1
 
-# @ECLASS_VARIABLE: ROCM_VERSION
-# @DESCRIPTION:
-# ROCm toolchain version the rocm eclass targets; also the floor for the
-# HIP/BLAS runtime dependencies.
-ROCM_VERSION=7.2
-
-inherit check-reqs cmake cuda local-ai-backend rocm
+# ROCM_VERSION (the rocm eclass key and the HIP/BLAS dependency floor)
+# is pinned overlay-wide in local-ai-rocm.eclass.
+inherit check-reqs cmake cuda local-ai-backend local-ai-rocm
 
 # @ECLASS_VARIABLE: CHECKREQS_DISK_BUILD
 # @DESCRIPTION:

@@ -4,31 +4,17 @@
 # PyTorch's media decoder — the IO backend torchaudio 2.11 delegates
 # load/save to. Builds against the system ffmpeg (upstream's wheels
 # instead bundle several ffmpeg majors via an env-gated path we leave
-# off). torch >= 2.11 is officially supported, so the system 2.13
-# pairing is in-matrix. Video and audio format coverage follows the
-# system ffmpeg's own USE flags; the image codecs are gated here.
-#
-# Revision ladder: each -rN pairs this build with one pytorch
-# generation the tree carries (libtorch has no ABI subslot, so hard
-# version pins are the only resolver-enforced pairing). Portage picks
-# the revision whose pin is satisfiable, and a torch generation
-# upgrade forces the switch — an ABI rebuild — atomically. When the
-# tree gains a new pytorch, append the next -rN with its pin; the
-# nightly dep-bump issue for sci-ml/pytorch is the reminder.
+# off). torch >= 2.11 is officially supported, so the system pairing
+# is in-matrix. Video and audio format coverage follows the system
+# ffmpeg's own USE flags; the image codecs are gated here. The
+# pytorch revision ladder and the shared torch-extension boilerplate
+# live in local-ai-torch.eclass.
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{12..14} )
-DISTUTILS_SINGLE_IMPL=1
 DISTUTILS_USE_PEP517=scikit-build-core
-DISTUTILS_EXT=1
-
-# The eclass's amdgpu_targets_* IUSE list is keyed off this; 7.2 =
-# the system ROCm. Portage filters the AMDGPU_TARGETS env var to
-# flags present in IUSE, so without the eclass globals
-# get_amdgpu_flags would return nothing.
-ROCM_VERSION=7.2
-inherit cuda distutils-r1 rocm
+LOCAL_AI_TORCH_GEN=2.14
+inherit local-ai-torch
 
 DESCRIPTION="Media decoding for PyTorch, the torchaudio IO backend"
 HOMEPAGE="https://github.com/pytorch/torchcodec"
@@ -38,25 +24,16 @@ SRC_URI="https://github.com/pytorch/torchcodec/archive/refs/tags/v${PV}.tar.gz
 S="${WORKDIR}"/torchcodec-${PV}
 
 LICENSE="BSD"
-SLOT="0"
 KEYWORDS="~amd64"
-IUSE="+avif cuda +gif +heic +jpeg +png rocm +webp"
-
-REQUIRED_USE="
-	?? ( cuda rocm )
-	rocm? ( ${ROCM_REQUIRED_USE} )
-"
+IUSE="+avif +gif +heic +jpeg +png +webp"
 
 RDEPEND="
 	media-video/ffmpeg:=
-	=sci-ml/pytorch-2.14*[${PYTHON_SINGLE_USEDEP},cuda?,rocm?]
 	avif? ( media-libs/libavif:= )
-	cuda? ( dev-util/nvidia-cuda-toolkit:= )
 	gif? ( media-libs/giflib:= )
 	heic? ( media-libs/libheif:= )
 	jpeg? ( media-libs/libjpeg-turbo:= )
 	png? ( media-libs/libpng:= )
-	rocm? ( dev-util/hip:= )
 	webp? ( media-libs/libwebp:= )
 "
 DEPEND="${RDEPEND}"
@@ -65,12 +42,8 @@ BDEPEND="
 	$(python_gen_cond_dep 'dev-python/pybind11[${PYTHON_USEDEP}]')
 "
 
-# The test suite needs network-fetched media fixtures.
-RESTRICT="test"
-
 src_prepare() {
-	use cuda && cuda_src_prepare
-	distutils-r1_src_prepare
+	local-ai-torch_src_prepare
 
 	# The AVIF path has no system-library branch: it unconditionally
 	# FetchContent-downloads a prebuilt decode-only libavif from
@@ -109,9 +82,6 @@ src_prepare() {
 }
 
 src_configure() {
-	rocm_add_sandbox -w
-	use cuda && cuda_add_sandbox -w
-
 	# We deliberately link the system ffmpeg rather than upstream's
 	# bundled multi-ffmpeg wheel path; upstream gates this behind an
 	# acknowledgment because a GPL-built ffmpeg makes the combined
@@ -144,32 +114,9 @@ src_configure() {
 		-DTORCHCODEC_BUILD_NVJPEG=$(usex cuda ON OFF)
 	)
 	use webp && DISTUTILS_ARGS+=( -DWebP_DIR="${T}/cmake" )
-	distutils-r1_src_configure
+	local-ai-torch_src_configure
 }
 
 python_compile() {
-	# The version plugin honors this over version.txt+git probing.
-	export BUILD_VERSION="${PV}"
-
-	if use rocm; then
-		# scikit-build-core runs cmake HERE, not in src_configure.
-		# On a rocm-built pytorch, torch's exported config pulls in
-		# Caffe2's LoadHIP.cmake, which silently skips defining
-		# hip::host unless ROCM_PATH names a real ROCm root (its
-		# default probe is /opt/rocm; Gentoo's lives in /usr — the
-		# same value pytorch's own ebuild uses) — configure then
-		# dies at Caffe2Targets.cmake.
-		local -x ROCM_PATH=/usr
-		# LoadHIP also wants the GPU arch list; feed it the same
-		# AMDGPU_TARGETS the system pytorch was built with (without
-		# it, LoadHIP shells out to rocm_agent_enumerator, which
-		# needs GPU device access the sandbox doesn't grant).
-		local -x PYTORCH_ROCM_ARCH="$(get_amdgpu_flags)"
-		# LoadHIP derives the HIP compiler as ROCM_PATH/lib/llvm/bin,
-		# but Gentoo's clang lives in a slotted /usr/lib/llvm/<N>/bin —
-		# ask hipconfig, exactly as pytorch's own ebuild does.
-		local -x HIP_CLANG_PATH=$(hipconfig --hipclangpath)
-	fi
-
-	distutils-r1_python_compile
+	local-ai-torch_python_compile
 }
