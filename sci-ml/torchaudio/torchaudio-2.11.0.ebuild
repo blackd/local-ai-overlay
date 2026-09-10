@@ -71,6 +71,9 @@ python_compile() {
 	export USE_OPENMP=1
 
 	if use rocm; then
+		# Gentoo installs ROCm under /usr (same export pytorch's own
+		# ebuild uses; the default probe is /opt/rocm).
+		export ROCM_PATH=/usr
 		export PYTORCH_ROCM_ARCH="$(get_amdgpu_flags)"
 	fi
 

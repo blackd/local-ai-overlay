@@ -85,6 +85,12 @@ src_configure() {
 		EOF
 	fi
 
+	# Gentoo installs ROCm under /usr; pytorch's cmake probes /opt/rocm
+	# otherwise and prints a confusing "without ROCm support" notice
+	# (harmless here — torchcodec has no HIP kernels). Same export
+	# pytorch's own ebuild uses.
+	local -x ROCM_PATH=/usr
+
 	DISTUTILS_ARGS=(
 		-DENABLE_CUDA=$(usex cuda ON OFF)
 		-DTORCHCODEC_BUILD_JPEG=$(usex jpeg ON OFF)
