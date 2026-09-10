@@ -39,7 +39,7 @@ IUSE="avif cuda gif heic +jpeg +png +webp"
 
 RDEPEND="
 	media-video/ffmpeg:=
-	=sci-ml/pytorch-2.12*[${PYTHON_SINGLE_USEDEP},cuda?]
+	=sci-ml/pytorch-2.13*[${PYTHON_SINGLE_USEDEP},cuda?]
 	avif? ( media-libs/libavif:= )
 	cuda? ( dev-util/nvidia-cuda-toolkit:= )
 	gif? ( media-libs/giflib:= )

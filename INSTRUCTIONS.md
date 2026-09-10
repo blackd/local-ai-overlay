@@ -202,6 +202,21 @@ bumps. pnpm's blocked-lifecycle-scripts warning during tarball
 generation is expected and harmless (verified: esbuild ships prebuilt
 binaries as optional dependencies).
 
+## The sci-ml torch stack (torchcodec, torchaudio)
+
+Extensions linking libtorch's C++ ABI, which pytorch does not keep
+stable across minor versions and does not expose as a subslot — so
+each package is a REVISION LADDER: -r0/-r1/-r2 are identical ebuilds
+except for a hard `=sci-ml/pytorch-2.X*` pin, one per pytorch
+generation the tree carries. Portage selects the satisfiable revision,
+and a consumer's torch generation upgrade forces the switch (an ABI
+rebuild) with no overlay-lag window. When the tree gains a new
+pytorch — the nightly `dep-bump: sci-ml/pytorch` issue is the signal —
+append the next -rN with the new pin (and retire revisions whose
+pytorch left the tree). torchaudio upstream is in maintenance mode
+(last tag 2.11.0, no torch pairing releases); its load/save delegate
+entirely to torchcodec.
+
 ## Mirrored GURU packages (no upstream bumps!)
 
 `dev-lang/bun-bin`, `sci-libs/onnxruntime`, `sci-libs/onnxruntime-bin`,
