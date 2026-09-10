@@ -80,6 +80,10 @@ python_compile() {
 		# ebuild uses; the default probe is /opt/rocm).
 		export ROCM_PATH=/usr
 		export PYTORCH_ROCM_ARCH="$(get_amdgpu_flags)"
+		# LoadHIP derives the HIP compiler as ROCM_PATH/lib/llvm/bin,
+		# but Gentoo's clang lives in a slotted /usr/lib/llvm/<N>/bin —
+		# ask hipconfig, exactly as pytorch's own ebuild does.
+		export HIP_CLANG_PATH=$(hipconfig --hipclangpath)
 	fi
 
 	MAX_JOBS="$(get_makeopts_jobs)" \

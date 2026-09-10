@@ -165,6 +165,10 @@ python_compile() {
 		# it, LoadHIP shells out to rocm_agent_enumerator, which
 		# needs GPU device access the sandbox doesn't grant).
 		local -x PYTORCH_ROCM_ARCH="$(get_amdgpu_flags)"
+		# LoadHIP derives the HIP compiler as ROCM_PATH/lib/llvm/bin,
+		# but Gentoo's clang lives in a slotted /usr/lib/llvm/<N>/bin —
+		# ask hipconfig, exactly as pytorch's own ebuild does.
+		local -x HIP_CLANG_PATH=$(hipconfig --hipclangpath)
 	fi
 
 	distutils-r1_python_compile
