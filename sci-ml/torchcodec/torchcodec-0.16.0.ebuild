@@ -35,17 +35,22 @@ S="${WORKDIR}"/torchcodec-${PV}
 LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~amd64"
-IUSE="+avif cuda +gif +heic +jpeg +png +webp"
+IUSE="+avif cuda +gif +heic +jpeg +png rocm +webp"
+
+REQUIRED_USE="
+	?? ( cuda rocm )
+"
 
 RDEPEND="
 	media-video/ffmpeg:=
-	=sci-ml/pytorch-2.12*[${PYTHON_SINGLE_USEDEP},cuda(-)?]
+	=sci-ml/pytorch-2.12*[${PYTHON_SINGLE_USEDEP},cuda(-)?,rocm(-)?]
 	avif? ( media-libs/libavif:= )
 	cuda? ( dev-util/nvidia-cuda-toolkit:= )
 	gif? ( media-libs/giflib:= )
 	heic? ( media-libs/libheif:= )
 	jpeg? ( media-libs/libjpeg-turbo:= )
 	png? ( media-libs/libpng:= )
+	rocm? ( dev-util/hip:= )
 	webp? ( media-libs/libwebp:= )
 "
 DEPEND="${RDEPEND}"
@@ -120,12 +125,6 @@ src_configure() {
 		EOF
 	fi
 
-	# Gentoo installs ROCm under /usr; pytorch's cmake probes /opt/rocm
-	# otherwise and prints a confusing "without ROCm support" notice
-	# (harmless here — torchcodec has no HIP kernels). Same export
-	# pytorch's own ebuild uses.
-	local -x ROCM_PATH=/usr
-
 	DISTUTILS_ARGS=(
 		-DENABLE_CUDA=$(usex cuda ON OFF)
 		-DTORCHCODEC_BUILD_JPEG=$(usex jpeg ON OFF)
@@ -144,5 +143,14 @@ src_configure() {
 python_compile() {
 	# The version plugin honors this over version.txt+git probing.
 	export BUILD_VERSION="${PV}"
+
+	# scikit-build-core runs cmake HERE, not in src_configure. On a
+	# rocm-built pytorch, torch's exported config pulls in Caffe2's
+	# LoadHIP.cmake, which silently skips defining hip::host unless
+	# ROCM_PATH names a real ROCm root (its default probe is
+	# /opt/rocm; Gentoo's lives in /usr — the same value pytorch's
+	# own ebuild uses) — configure then dies at Caffe2Targets.cmake.
+	use rocm && local -x ROCM_PATH=/usr
+
 	distutils-r1_python_compile
 }

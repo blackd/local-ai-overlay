@@ -16,6 +16,7 @@
 		<flag name="heic">HEIC image decoding via <pkg>media-libs/libheif</pkg></flag>
 		<flag name="jpeg">JPEG image decoding via <pkg>media-libs/libjpeg-turbo</pkg></flag>
 		<flag name="png">PNG image decoding via <pkg>media-libs/libpng</pkg></flag>
+		<flag name="rocm">Pair with a ROCm-built pytorch (torch's link interface pulls in HIP)</flag>
 		<flag name="webp">WebP image decoding via <pkg>media-libs/libwebp</pkg></flag>
 	</use>
 </pkgmetadata>
