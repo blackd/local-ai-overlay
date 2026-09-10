@@ -7,6 +7,9 @@
 # off). torch >= 2.11 is officially supported, so the system 2.13
 # pairing is in-matrix. Video and audio format coverage follows the
 # system ffmpeg's own USE flags; the image codecs are gated here.
+# GIF has no system-library branch — the decoder compiles giflib
+# sources vendored in the torchcodec repo (static, hidden symbols) —
+# so its flag gates code but depends on nothing.
 #
 # Revision ladder: each -rN pairs this build with one pytorch
 # generation the tree carries (libtorch has no ABI subslot, so hard
@@ -42,7 +45,6 @@ RDEPEND="
 	=sci-ml/pytorch-2.14*[${PYTHON_SINGLE_USEDEP},cuda?]
 	avif? ( media-libs/libavif:= )
 	cuda? ( dev-util/nvidia-cuda-toolkit:= )
-	gif? ( media-libs/giflib:= )
 	heic? ( media-libs/libheif:= )
 	jpeg? ( media-libs/libjpeg-turbo:= )
 	png? ( media-libs/libpng:= )
@@ -60,6 +62,18 @@ RESTRICT="test"
 src_prepare() {
 	use cuda && cuda_src_prepare
 	distutils-r1_src_prepare
+
+	# The AVIF path has no system-library branch: it unconditionally
+	# FetchContent-downloads a prebuilt decode-only libavif from
+	# upstream's S3 (their wheel-bundling mechanism). The fetch file's
+	# whole contract is to define the `avif` CMake target, which
+	# libavif's own installed package config provides under exactly
+	# that name — so the file becomes the find_package.
+	if use avif; then
+		cat <<-EOF > src/torchcodec/_core/fetch_avif_from_s3.cmake || die
+		find_package(libavif CONFIG REQUIRED)
+		EOF
+	fi
 }
 
 src_configure() {
