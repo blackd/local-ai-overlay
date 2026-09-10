@@ -43,7 +43,7 @@ REQUIRED_USE="
 "
 
 RDEPEND="
-	=sci-ml/pytorch-2.12*[${PYTHON_SINGLE_USEDEP},cuda?,rocm?]
+	=sci-ml/pytorch-2.12*[${PYTHON_SINGLE_USEDEP},cuda(-)?,rocm(-)?]
 	$(python_gen_cond_dep 'sci-ml/torchcodec[${PYTHON_SINGLE_USEDEP}]')
 "
 

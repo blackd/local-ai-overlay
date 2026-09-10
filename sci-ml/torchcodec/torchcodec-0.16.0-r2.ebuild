@@ -35,7 +35,7 @@ S="${WORKDIR}"/torchcodec-${PV}
 LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~amd64"
-IUSE="avif cuda gif heic +jpeg +png +webp"
+IUSE="+avif cuda +gif +heic +jpeg +png +webp"
 
 RDEPEND="
 	media-video/ffmpeg:=
