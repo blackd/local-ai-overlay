@@ -23,7 +23,8 @@ DISTUTILS_SINGLE_IMPL=1
 DISTUTILS_USE_PEP517=scikit-build-core
 DISTUTILS_EXT=1
 
-inherit cuda distutils-r1
+ROCM_SKIP_GLOBALS=1
+inherit cuda distutils-r1 rocm
 
 DESCRIPTION="Media decoding for PyTorch, the torchaudio IO backend"
 HOMEPAGE="https://github.com/pytorch/torchcodec"
@@ -144,13 +145,21 @@ python_compile() {
 	# The version plugin honors this over version.txt+git probing.
 	export BUILD_VERSION="${PV}"
 
-	# scikit-build-core runs cmake HERE, not in src_configure. On a
-	# rocm-built pytorch, torch's exported config pulls in Caffe2's
-	# LoadHIP.cmake, which silently skips defining hip::host unless
-	# ROCM_PATH names a real ROCm root (its default probe is
-	# /opt/rocm; Gentoo's lives in /usr — the same value pytorch's
-	# own ebuild uses) — configure then dies at Caffe2Targets.cmake.
-	use rocm && local -x ROCM_PATH=/usr
+	if use rocm; then
+		# scikit-build-core runs cmake HERE, not in src_configure.
+		# On a rocm-built pytorch, torch's exported config pulls in
+		# Caffe2's LoadHIP.cmake, which silently skips defining
+		# hip::host unless ROCM_PATH names a real ROCm root (its
+		# default probe is /opt/rocm; Gentoo's lives in /usr — the
+		# same value pytorch's own ebuild uses) — configure then
+		# dies at Caffe2Targets.cmake.
+		local -x ROCM_PATH=/usr
+		# LoadHIP also wants the GPU arch list; feed it the same
+		# AMDGPU_TARGETS the system pytorch was built with (without
+		# it, LoadHIP shells out to rocm_agent_enumerator, which
+		# needs GPU device access the sandbox doesn't grant).
+		local -x PYTORCH_ROCM_ARCH="$(get_amdgpu_flags)"
+	fi
 
 	distutils-r1_python_compile
 }
