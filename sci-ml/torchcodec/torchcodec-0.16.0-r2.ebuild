@@ -7,9 +7,6 @@
 # off). torch >= 2.11 is officially supported, so the system 2.13
 # pairing is in-matrix. Video and audio format coverage follows the
 # system ffmpeg's own USE flags; the image codecs are gated here.
-# GIF has no system-library branch — the decoder compiles giflib
-# sources vendored in the torchcodec repo (static, hidden symbols) —
-# so its flag gates code but depends on nothing.
 #
 # Revision ladder: each -rN pairs this build with one pytorch
 # generation the tree carries (libtorch has no ABI subslot, so hard
@@ -45,6 +42,7 @@ RDEPEND="
 	=sci-ml/pytorch-2.14*[${PYTHON_SINGLE_USEDEP},cuda?]
 	avif? ( media-libs/libavif:= )
 	cuda? ( dev-util/nvidia-cuda-toolkit:= )
+	gif? ( media-libs/giflib:= )
 	heic? ( media-libs/libheif:= )
 	jpeg? ( media-libs/libjpeg-turbo:= )
 	png? ( media-libs/libpng:= )
@@ -73,6 +71,29 @@ src_prepare() {
 		cat <<-EOF > src/torchcodec/_core/fetch_avif_from_s3.cmake || die
 		find_package(libavif CONFIG REQUIRED)
 		EOF
+	fi
+
+	# GIF: no system-library branch upstream either — a vendored
+	# decode-only giflib subset is compiled into the image library.
+	# The decoder only uses the standard public DGif* API, so rewire
+	# it to the system giflib: swap the vendored source list for
+	# CMake's stock FindGIF, link GIF::GIF, include the system header.
+	# sed no-ops silently, hence the anchor greps.
+	if use gif; then
+		sed -i \
+			-e 's|list(APPEND image_library_sources ${TORCHCODEC_GIFLIB_SOURCES})|find_package(GIF 5 REQUIRED)|' \
+			-e 's|target_compile_definitions(${image_library_name} PRIVATE TORCHCODEC_ENABLE_GIF=1)|&\n        target_link_libraries(${image_library_name} PRIVATE GIF::GIF)|' \
+			src/torchcodec/_core/CMakeLists.txt || die
+		grep -q 'find_package(GIF 5 REQUIRED)' \
+			src/torchcodec/_core/CMakeLists.txt \
+			|| die "giflib source-list anchor moved"
+		grep -q 'GIF::GIF' src/torchcodec/_core/CMakeLists.txt \
+			|| die "giflib link anchor moved"
+		sed -i 's|"giflib/gif_lib.h"|<gif_lib.h>|' \
+			src/torchcodec/_core/DecodeGif.cpp || die
+		grep -q '<gif_lib.h>' src/torchcodec/_core/DecodeGif.cpp \
+			|| die "gif include anchor moved"
+		rm -r src/torchcodec/_core/giflib || die
 	fi
 }
 
