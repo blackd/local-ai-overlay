@@ -2,111 +2,33 @@
 # Distributed under the terms of the GNU General Public License v2
 
 # LocalAI image/video-generation backend (HuggingFace diffusers), the
-# first python backend: a venv assembled OFFLINE in src_install from
-# the wheels release asset, with --system-site-packages exposing every
-# compiled dependency as a real Portage package — torch (ROCm and all)
-# included. The venv layer is pure python only. Shared helpers and the
-# gRPC stubs come from app-local-ai/python-common via PYTHONPATH.
+# first python backend. The venv skeleton (offline wheels, system-site
+# tree packages, run.sh, build-time import smoke test) lives in
+# local-ai-python.eclass; this ebuild adds only the diffusers-specific
+# dependencies.
 
 EAPI=8
 
-PYTHON_COMPAT=( python3_{12..14} )
+LOCAL_AI_PYTHON_EXES="backend.py diffusers_dynamic_loader.py"
 
-inherit local-ai-backend python-single-r1
-
-DIFFUSERS_DISTFILES="https://git.ipnmod.org/packages/local-ai-overlay/releases/download/diffusers-v${PV}"
+inherit local-ai-python
 
 DESCRIPTION="LocalAI image and video generation backend (diffusers gRPC server)"
-SRC_URI="
-	${LOCAL_AI_SRC_URI}
-	${DIFFUSERS_DISTFILES}/diffusers-${PV}-wheels.tar.xz
-"
-S="${WORKDIR}/LocalAI-${PV}/backend/python/diffusers"
 
 LICENSE="MIT Apache-2.0"
-SLOT="0"
-KEYWORDS="~amd64"
-REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 
-RDEPEND="${PYTHON_DEPS}
-	sci-ml/local-ai
-	~app-local-ai/python-common-${PV}
+RDEPEND+="
 	$(python_gen_cond_dep '
-		sci-ml/pytorch[${PYTHON_SINGLE_USEDEP}]
 		sci-ml/torchvision[${PYTHON_SINGLE_USEDEP}]
 		sci-ml/sentencepiece[${PYTHON_USEDEP}]
 		media-libs/opencv[python,${PYTHON_USEDEP}]
 		dev-python/av[${PYTHON_USEDEP}]
-		dev-python/safetensors[${PYTHON_USEDEP}]
-		dev-python/tokenizers[${PYTHON_USEDEP}]
-		>=dev-python/grpcio-1.76.0[${PYTHON_USEDEP}]
-		dev-python/protobuf[${PYTHON_USEDEP}]
 		dev-python/pillow[${PYTHON_USEDEP}]
 		dev-python/ftfy[${PYTHON_USEDEP}]
-		dev-python/numpy[${PYTHON_USEDEP}]
-		dev-python/regex[${PYTHON_USEDEP}]
-		dev-python/filelock[${PYTHON_USEDEP}]
-		dev-python/fsspec[${PYTHON_USEDEP}]
-		dev-python/packaging[${PYTHON_USEDEP}]
-		dev-python/psutil[${PYTHON_USEDEP}]
-		dev-python/pyyaml[${PYTHON_USEDEP}]
-		dev-python/requests[${PYTHON_USEDEP}]
-		dev-python/tqdm[${PYTHON_USEDEP}]
-		dev-python/httpx[${PYTHON_USEDEP}]
-		dev-python/httpcore[${PYTHON_USEDEP}]
-		dev-python/anyio[${PYTHON_USEDEP}]
-		dev-python/h11[${PYTHON_USEDEP}]
-		dev-python/idna[${PYTHON_USEDEP}]
-		dev-python/certifi[${PYTHON_USEDEP}]
-		dev-python/charset-normalizer[${PYTHON_USEDEP}]
-		dev-python/urllib3[${PYTHON_USEDEP}]
-		dev-python/importlib-metadata[${PYTHON_USEDEP}]
-		dev-python/zipp[${PYTHON_USEDEP}]
-		dev-python/typing-extensions[${PYTHON_USEDEP}]
 	')
 	dev-build/ninja
 "
-# Build-time too: the import smoke test at the end of src_install runs
-# the backend's whole import closure.
 DEPEND="${RDEPEND}"
-
-BACKEND_DIR="/usr/libexec/local-ai/backends/diffusers"
-
-src_unpack() {
-	unpack "local-ai-${PV}.tar.gz" "diffusers-${PV}-wheels.tar.xz"
-}
-
-src_compile() {
-	# Nothing to build here: the Makefile in this directory drives
-	# upstream's uv-based image install, which the venv assembled in
-	# src_install replaces entirely.
-	:
-}
-
-src_install() {
-	exeinto "${BACKEND_DIR}"
-	doexe backend.py diffusers_dynamic_loader.py
-
-	# The venv: system-site for every compiled package, wheels for the
-	# pure-python layer, assembled fully offline.
-	"${EPYTHON}" -m venv --system-site-packages "${ED}${BACKEND_DIR}/venv" || die
-	"${ED}${BACKEND_DIR}/venv/bin/python" -m pip install \
-		--no-index --find-links "${WORKDIR}/wheels" --no-deps --no-compile \
-		"${WORKDIR}"/wheels/*.whl || die
-	# The venv's paths must not remember the image root.
-	find "${ED}${BACKEND_DIR}/venv/bin" -type f -exec sed -i "s:${D}::g" {} + || die
-	python_optimize "${ED}${BACKEND_DIR}/venv/lib"
-
-	local-ai-backend_install_meta diffusers
-
-	# Import smoke test: backend.py's whole import closure (the
-	# python-common helpers and stubs, the venv wheels, the system
-	# site-packages) must resolve NOW, at build time — not at the
-	# user's first model load.
-	PYTHONPATH="${ED}${BACKEND_DIR}:${EPREFIX}/usr/libexec/local-ai/python-common" \
-		"${ED}${BACKEND_DIR}/venv/bin/python" -c "import backend" \
-		|| die "backend import check failed"
-}
 
 pkg_postinst() {
 	elog "Device selection follows the model YAML: until the auto-detect"
