@@ -1,0 +1,20 @@
+torchaudio 2.11 removed list_audio_backends() along with the whole
+sox/ffmpeg backend layer; its load() delegates to torchcodec and
+accepts-but-ignores backend=. Select statically what 2.11 ignores.
+--- a/fish_speech/inference_engine/reference_loader.py
++++ b/fish_speech/inference_engine/reference_loader.py
+@@ -31,11 +31,9 @@ class ReferenceLoader:
+         self.encode_reference: Callable
+
+         # Define the torchaudio backend
+-        backends = torchaudio.list_audio_backends()
+-        if "ffmpeg" in backends:
+-            self.backend = "ffmpeg"
+-        else:
+-            self.backend = "soundfile"
++        # Gentoo: torchaudio 2.11 removed list_audio_backends(); its
++        # load() delegates to torchcodec and ignores backend=.
++        self.backend = "soundfile"
+
+     def load_by_id(
+         self,

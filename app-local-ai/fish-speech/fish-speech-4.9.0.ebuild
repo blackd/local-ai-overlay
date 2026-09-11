@@ -140,6 +140,13 @@ RDEPEND+="
 "
 DEPEND="${RDEPEND}"
 
+src_prepare() {
+	default
+	# The system torchaudio is 2.11 (the maintenance-mode last tag) —
+	# newer than the 2.8 upstream pins; see the patch header.
+	eapply -d "${FISH_S}" -- "${FILESDIR}/fish-speech-2.0.0-beta-torchaudio-2.11.patch"
+}
+
 src_unpack() {
 	local-ai-python_src_unpack
 	unpack "fish-speech-${FISH_SPEECH_TAG}.gh.tar.gz"
