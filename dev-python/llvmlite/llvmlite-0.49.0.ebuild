@@ -31,6 +31,9 @@ python_configure_all() {
 	# point both at the slotted install.
 	export LLVM_CONFIG="$(get_llvm_prefix)/bin/llvm-config"
 	export CMAKE_PREFIX_PATH="$(get_llvm_prefix)"
+	# Gentoo's LLVM installs only the monolithic shared libLLVM —
+	# no static component archives; link against it.
+	export LLVMLITE_SHARED=1
 }
 
 python_test() {
