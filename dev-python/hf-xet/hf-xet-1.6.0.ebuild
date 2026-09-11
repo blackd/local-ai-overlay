@@ -22,11 +22,14 @@ CRATES_BASE="https://git.ipnmod.org/packages/local-ai-overlay/releases/download/
 
 DESCRIPTION="Xet storage client for huggingface-hub"
 HOMEPAGE="https://github.com/huggingface/xet-core https://pypi.org/project/hf-xet/"
+# The pypi sdist is an incomplete cargo workspace (root Cargo.toml
+# references members it does not ship); build from the repository tag.
 SRC_URI="
-	https://files.pythonhosted.org/packages/source/h/hf-xet/hf_xet-${PV}.tar.gz
+	https://github.com/huggingface/xet-core/archive/refs/tags/v${PV}.tar.gz
+		-> hf-xet-${PV}.gh.tar.gz
 	${CRATES_BASE}/${P}-crates.tar.xz
 "
-S="${WORKDIR}/hf_xet-${PV}"
+S="${WORKDIR}/xet-core-${PV}/hf_xet"
 
 LICENSE="Apache-2.0"
 # Crate licenses (vendored, statically linked).
