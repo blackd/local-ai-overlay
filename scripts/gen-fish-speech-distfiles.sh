@@ -71,7 +71,10 @@ PACKAGES=(
 
 mkdir "$WORK/wheels"
 for p in "${PACKAGES[@]}"; do
-	python3 -m pip download --no-deps --dest "$WORK/wheels" "$p"
+	# pip wheel, not pip download: some entries (randomname, argbind)
+	# publish only sdists; this builds them into wheels so the ebuild's
+	# offline *.whl install sees everything.
+	python3 -m pip wheel --no-deps --wheel-dir "$WORK/wheels" "$p"
 done
 tar -C "$WORK" -cJf "$OUT/fish-speech-${VERSION}-wheels.tar.xz" wheels
 

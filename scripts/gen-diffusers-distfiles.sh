@@ -27,7 +27,10 @@ PACKAGES=(
 
 mkdir "$WORK/wheels"
 for p in "${PACKAGES[@]}"; do
-	python3 -m pip download --no-deps --dest "$WORK/wheels" "$p"
+	# pip wheel, not pip download: sdist-only packages would otherwise
+	# land as .tar.gz the ebuild's offline *.whl install never sees
+	# (bit fish-speech via randomname/argbind).
+	python3 -m pip wheel --no-deps --wheel-dir "$WORK/wheels" "$p"
 done
 tar -C "$WORK" -cJf "$OUT/diffusers-${VERSION}-wheels.tar.xz" wheels
 
