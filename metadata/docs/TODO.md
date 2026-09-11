@@ -80,3 +80,13 @@ session (human or AI-assisted) can pick up where the last one stopped.
 - Advance the `release` branch after the opencode pipeline is validated.
 - Delete `~/tmp/portage` (2.9G opencode test build) and `~/tmp/pcfg`
   (defunct config-root experiment) when no longer needed.
+- Weekly python-backend upgrade script: upstream's OCI images re-resolve
+  their unpinned python deps weekly (DEPS_REFRESH cache-buster), while
+  our wheels tarballs freeze resolution at gen-script time until the
+  next LocalAI bump. Build the equivalent: a scheduled workflow that
+  re-runs each python family's gen-*-distfiles.sh, compares the
+  resolved wheel set against the published release assets, and on drift
+  republishes the tarball + revbumps the affected backend ebuilds
+  (Manifest regeneration included) so consumers get the refreshed venv
+  through a normal -rX upgrade. Wire per-family once fish-speech lands
+  (families so far: diffusers, fish-speech).
