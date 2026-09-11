@@ -25,6 +25,14 @@ OUT="$PWD"
 trap 'rm -rf "$WORK"' EXIT
 
 PACKAGES=(
+	# Version-pinned shadows of tree packages: the tree carries these
+	# newer than the resolution allows (hydra/omegaconf generate
+	# against antlr 4.9; datasets pins dill/fsspec; gradio pins
+	# tomlkit). The venv's copy shadows system-site.
+	antlr4-python3-runtime==4.9.3
+	dill==0.3.8
+	fsspec==2024.2.0
+	tomlkit==0.14.0
 	argbind==0.3.9
 	baize==0.23.1
 	datasets==2.18.0

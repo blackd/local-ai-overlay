@@ -89,4 +89,9 @@ session (human or AI-assisted) can pick up where the last one stopped.
   republishes the tarball + revbumps the affected backend ebuilds
   (Manifest regeneration included) so consumers get the refreshed venv
   through a normal -rX upgrade. Wire per-family once fish-speech lands
-  (families so far: diffusers, fish-speech).
+  (families so far: diffusers, fish-speech). Must include the
+  tree-version static check: evaluate every requirement in the fresh
+  resolution report against the CURRENT tree versions of the
+  system-site packages, and turn violations into pinned shadow wheels
+  (the antlr4/dill/fsspec/tomlkit class caught 2026-09-11) — tree
+  bumps can break a frozen wheels set between refreshes.
