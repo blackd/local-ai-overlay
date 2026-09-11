@@ -15,6 +15,7 @@
 		<flag name="crispasr">Install the CrispASR multi-engine speech backend (<pkg>app-local-ai/crispasr</pkg>)</flag>
 		<flag name="depth-anything">Install the depth-anything.cpp depth-estimation backend (<pkg>app-local-ai/depth-anything</pkg>)</flag>
 		<flag name="diffusers">Install the diffusers image/video-generation backend (<pkg>app-local-ai/diffusers</pkg>)</flag>
+		<flag name="fish-speech">Install the fish-speech text-to-speech backend (<pkg>app-local-ai/fish-speech</pkg>)</flag>
 		<flag name="parakeet-cpp">Install the parakeet.cpp speech-to-text backend (<pkg>app-local-ai/parakeet-cpp</pkg>)</flag>
 		<flag name="qwen3-tts-cpp">Install the qwentts.cpp text-to-speech backend (<pkg>app-local-ai/qwen3-tts-cpp</pkg>)</flag>
 		<flag name="vllm-cpp">Install the vllm.cpp text-generation backend (<pkg>app-local-ai/vllm-cpp</pkg>)</flag>
