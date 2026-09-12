@@ -5,3 +5,4 @@
 # Output directory of scripts/gen-distfiles.sh when run from the repo root;
 # the tarballs it produces are release assets, not repository content.
 /distfiles-out/
+metadata/docs/reviews/
