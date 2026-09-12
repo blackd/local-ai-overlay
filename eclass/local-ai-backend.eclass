@@ -85,7 +85,13 @@ local-ai-backend_engine_unpack() {
 
 	while [[ $# -gt 0 ]]; do
 		unpack "$1"
-		rmdir "${engine_root}/$3" 2>/dev/null
+		# GitHub archives keep an EMPTY placeholder dir for each
+		# submodule; mv into an existing dir would NEST the tree, so
+		# the placeholder must go. A NON-empty dir here means the
+		# archive layout changed — refuse rather than nest silently.
+		if [[ -e "${engine_root}/$3" ]]; then
+			rmdir "${engine_root}/$3" || die "submodule path $3 is not an empty placeholder; engine archive layout changed"
+		fi
 		mv "$2" "${engine_root}/$3" || die
 		shift 3
 	done

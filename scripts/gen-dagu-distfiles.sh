@@ -12,18 +12,13 @@ WORK=$(mktemp -d /tmp/dagu-distfiles.XXXXXX)
 OUT="$PWD"
 trap 'rm -rf "$WORK"' EXIT
 
-# The module may require a newer go than the host has; when it does, let
-# go fetch the required toolchain (stripped from the tarball below).
-export GOTOOLCHAIN="${GOTOOLCHAIN:-auto}"
+HERE=$(dirname "$(realpath "$0")")
 
 cd "$WORK"
 curl -fsSL "https://github.com/dagucloud/dagu/archive/refs/tags/v${VERSION}.tar.gz" | tar -xz
 cd "dagu-${VERSION}"
 
-GOMODCACHE="$WORK/go-mod" go mod download -modcacherw
-chmod -R u+w "$WORK/go-mod"
-rm -rf "$WORK"/go-mod/golang.org/toolchain@* "$WORK"/go-mod/cache/download/golang.org/toolchain
-tar -C "$WORK" -cJf "$OUT/dagu-${VERSION}-deps.tar.xz" go-mod
+bash "${HERE}/gen-go-deps.sh" "$WORK/dagu-${VERSION}" "$WORK" "$OUT/dagu-${VERSION}-deps.tar.xz"
 
 # The UI pins its package manager in package.json; npx runs that exact
 # pnpm without a global install. pnpm's node_modules is a farm of

@@ -44,9 +44,12 @@ latest_ebuild() {
 }
 
 open_issue() { # <title prefix> -> "<number> <title>" of the first matching open issue
+	# `|| true`: under set -e -o pipefail a curl failure (or SIGPIPE
+	# from head) would abort the whole nightly run instead of letting
+	# the caller's emptiness check warn and continue.
 	curl -sf -H "${AUTH}" --get --data-urlencode "q=${1}" \
 			--data 'state=open&type=issues' "${API}/issues" \
-		| jq -r --arg t "${1}" '.[] | select(.title | startswith($t)) | "\(.number) \(.title)"' | head -n1
+		| jq -r --arg t "${1}" '.[] | select(.title | startswith($t)) | "\(.number) \(.title)"' | head -n1 || true
 }
 
 close_issue() { # <number>
@@ -122,7 +125,7 @@ done < scripts/guru-sync.state
 GENTOO=/var/db/repos/gentoo
 while read -r pkg known; do
 	latest=$(basename -s .ebuild "${GENTOO}/${pkg}"/*.ebuild 2>/dev/null \
-		| sed "s:^${pkg##*/}-::" | grep -v 9999 | sort -V | tail -n1)
+		| sed "s:^${pkg##*/}-::" | grep -v 9999 | sort -V | tail -n1 || true)
 	if [ -z "${latest}" ]; then
 		echo "warn: no version for ${pkg} in ::gentoo"
 		rc=1

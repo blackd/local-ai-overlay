@@ -90,7 +90,7 @@ src_compile() {
 		pushd "${WORKDIR}/zui-${ZUI_PIN}" >/dev/null || die
 		npm run build || die "zui build failed"
 		popd >/dev/null || die
-		rm -rf pkg/extensions/build
+		rm -rf pkg/extensions/build || die
 		cp -R "${WORKDIR}/zui-${ZUI_PIN}/build" pkg/extensions/build || die
 		tags+=",ui"
 	fi

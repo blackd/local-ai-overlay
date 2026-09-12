@@ -43,11 +43,7 @@ fi
 echo ">>> plugin pins: protoc-gen-go@${PROTOC_GEN_GO_VERSION}, protoc-gen-go-grpc@${PROTOC_GEN_GO_GRPC_VERSION}"
 
 echo ">>> Go module cache (go-module.eclass -deps format)"
-# The go-mod/ directory name is mandated by go-module.eclass: it points
-# GOMODCACHE at ${WORKDIR}/go-mod, so a tarball with this root works with
-# the eclass's default src_unpack handling.
-( cd "${SRC}" && GOMODCACHE="${SRC}/go-mod" go mod download -modcacherw )
-XZ_OPT='-T0 -9' tar -C "${SRC}" -acf "${OUT}/local-ai-${VERSION}-deps.tar.xz" go-mod
+bash "$(dirname "$(realpath "$0")")/gen-go-deps.sh" "${SRC}" "${SRC}" "${OUT}/local-ai-${VERSION}-deps.tar.xz"
 
 echo ">>> React UI node_modules"
 ( cd "${SRC}/core/http/react-ui" && npm ci )

@@ -80,9 +80,9 @@ RDEPEND="
 	)
 	cuda? ( dev-util/nvidia-cuda-toolkit:= )
 	rocm? (
-		>=dev-util/hip-${ROCM_VERSION}
-		>=sci-libs/hipBLAS-${ROCM_VERSION}
-		>=sci-libs/rocBLAS-${ROCM_VERSION}
+		>=dev-util/hip-${ROCM_VERSION}:=
+		>=sci-libs/hipBLAS-${ROCM_VERSION}:=
+		>=sci-libs/rocBLAS-${ROCM_VERSION}:=
 	)
 "
 DEPEND="${RDEPEND}

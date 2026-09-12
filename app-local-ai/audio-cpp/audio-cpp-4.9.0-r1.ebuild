@@ -63,6 +63,7 @@ src_prepare() {
 	# byte-identical plain UTF-8 literals in either standard.
 	local files=()
 	readarray -t files < <(grep -rl 'CMAKE_CXX_STANDARD 17' .)
+	[[ ${#files[@]} -gt 0 ]] || die "no CMAKE_CXX_STANDARD 17 anchors found — engine build layout changed"
 	local-ai-backend_bump_cxx20 "${files[@]}"
 	einfo "Stripping u8 string literal prefixes from engine sources"
 	find "${S}/audio.cpp/src" \( -name '*.cpp' -o -name '*.h' \) -exec sed -i 's/\bu8"/"/g' {} + || die
