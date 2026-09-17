@@ -31,7 +31,11 @@ jobs:
         run: |
           cp distfiles-out/* /var/cache/distfiles/
           case "${{ steps.family.outputs.family }}" in
-            local-ai) DIRS=$(dirname $(find . -path ./distfiles-out -prune -o -name '*.ebuild' -print) | sort -u) ;;
+            # Every consumer of the LocalAI source tarball: the server
+            # itself and all backends (their Manifests pin it too).
+            # Unrelated packages (zot, dagu, av, onnxruntime, ...) keep
+            # their Manifests out of a LocalAI release run.
+            local-ai) DIRS="sci-ml/local-ai $(echo app-local-ai/*)" ;;
             opencode) DIRS=dev-util/opencode ;;
             gitea-runner) DIRS=dev-util/gitea-runner ;;
             zot) DIRS=app-containers/zot ;;

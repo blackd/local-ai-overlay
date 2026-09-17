@@ -9,6 +9,7 @@
 set -euo pipefail
 
 VERSION="${1:?usage: gen-python-common-distfiles.sh <version>}"
+REPO=$(dirname "$(dirname "$(realpath "$0")")")
 WORK=$(mktemp -d /tmp/python-common-distfiles.XXXXXX)
 OUT="$PWD"
 trap 'rm -rf "$WORK"' EXIT
@@ -18,7 +19,7 @@ trap 'rm -rf "$WORK"' EXIT
 # it against the digest the overlay already pins before extracting.
 curl -fsSL "https://github.com/mudler/LocalAI/archive/refs/tags/v${VERSION}.tar.gz" \
 	-o "$WORK/local-ai-${VERSION}.tar.gz"
-recorded=$(grep -h "^DIST local-ai-${VERSION}.tar.gz " ../app-local-ai/*/Manifest | awk '{print $7}' | sort -u | head -n1)
+recorded=$(grep -h "^DIST local-ai-${VERSION}.tar.gz " "${REPO}"/app-local-ai/*/Manifest 2>/dev/null | awk '{print $7}' | sort -u | head -n1 || true)
 actual=$(sha512sum "$WORK/local-ai-${VERSION}.tar.gz" | cut -d' ' -f1)
 if [ -z "$recorded" ] || [ "$recorded" != "$actual" ]; then
 	echo "local-ai-${VERSION}.tar.gz does not match the Manifest-pinned digest" >&2

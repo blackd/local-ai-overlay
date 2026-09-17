@@ -10,9 +10,7 @@
 set -euo pipefail
 
 VERSION="${1:?usage: gen-diffusers-distfiles.sh <version>}"
-WORK=$(mktemp -d /tmp/diffusers-distfiles.XXXXXX)
-OUT="$PWD"
-trap 'rm -rf "$WORK"' EXIT
+HERE=$(dirname "$(realpath "$0")")
 
 # Pins mirror backend/python/diffusers/requirements-hipblas.txt at the
 # LocalAI release; unpinned entries ride their latest at generation time.
@@ -25,14 +23,4 @@ PACKAGES=(
 	optimum-quanto
 )
 
-mkdir "$WORK/wheels"
-for p in "${PACKAGES[@]}"; do
-	# pip wheel, not pip download: sdist-only packages would otherwise
-	# land as .tar.gz the ebuild's offline *.whl install never sees
-	# (bit fish-speech via randomname/argbind).
-	python3 -m pip wheel --no-deps --wheel-dir "$WORK/wheels" "$p"
-done
-tar -C "$WORK" -cJf "$OUT/diffusers-${VERSION}-wheels.tar.xz" wheels
-
-echo "Created in $OUT:"
-ls -lh "$OUT/diffusers-${VERSION}-wheels.tar.xz"
+bash "${HERE}/gen-wheels.sh" diffusers "${VERSION}" "${PACKAGES[@]}"

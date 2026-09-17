@@ -20,9 +20,6 @@
 set -euo pipefail
 
 VERSION="${1:?usage: gen-fish-speech-distfiles.sh <version>}"
-WORK=$(mktemp -d /tmp/fish-speech-distfiles.XXXXXX)
-OUT="$PWD"
-trap 'rm -rf "$WORK"' EXIT
 
 PACKAGES=(
 	# Version-pinned shadows of tree packages: the tree carries these
@@ -77,14 +74,4 @@ PACKAGES=(
 	transformers==4.57.3
 )
 
-mkdir "$WORK/wheels"
-for p in "${PACKAGES[@]}"; do
-	# pip wheel, not pip download: some entries (randomname, argbind)
-	# publish only sdists; this builds them into wheels so the ebuild's
-	# offline *.whl install sees everything.
-	python3 -m pip wheel --no-deps --wheel-dir "$WORK/wheels" "$p"
-done
-tar -C "$WORK" -cJf "$OUT/fish-speech-${VERSION}-wheels.tar.xz" wheels
-
-echo "Created in $OUT:"
-ls -lh "$OUT/fish-speech-${VERSION}-wheels.tar.xz"
+bash "$(dirname "$(realpath "$0")")/gen-wheels.sh" fish-speech "${VERSION}" "${PACKAGES[@]}"
