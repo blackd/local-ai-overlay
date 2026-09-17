@@ -10,6 +10,7 @@
 EAPI=8
 
 LOCAL_AI_ENGINE_LIB="libgowhisper.so"
+LOCAL_AI_ENGINE_LIB_ENV="WHISPER_LIBRARY"
 
 inherit local-ai-ggml-go
 

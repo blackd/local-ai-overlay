@@ -9,6 +9,7 @@
 EAPI=8
 
 LOCAL_AI_ENGINE_LIB="libgosd.so"
+LOCAL_AI_ENGINE_LIB_ENV="SD_LIBRARY"
 # sd.cpp wraps the ggml backend toggles in its own option names.
 LOCAL_AI_CUDA_CMAKE_VARS="SD_CUDA"
 LOCAL_AI_VULKAN_CMAKE_VARS="SD_VULKAN"

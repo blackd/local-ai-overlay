@@ -95,5 +95,6 @@ src_compile() {
 }
 
 src_install() {
+	local-ai-backend_gen_run_sh vllm-cpp VLLM_CPP_LIBRARY=libvllm.so
 	local-ai-backend_install vllm-cpp "${BUILD_DIR}/libvllm.so" "${S}/vllm-cpp"
 }

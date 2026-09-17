@@ -14,6 +14,7 @@
 EAPI=8
 
 LOCAL_AI_ENGINE_LIB="libparakeet.so"
+LOCAL_AI_ENGINE_LIB_ENV="PARAKEET_LIBRARY"
 # parakeet.cpp FORCE-overwrites the bare GGML_* toggles from its own
 # gated options, so only the prefixed names select acceleration.
 LOCAL_AI_CUDA_CMAKE_VARS="PARAKEET_GGML_CUDA"

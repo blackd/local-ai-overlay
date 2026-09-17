@@ -37,6 +37,14 @@ BDEPEND=">=dev-lang/go-1.26.0"
 # File name of the compute module library the wrapper CMake project
 # emits, e.g. libgowhisper.so.
 
+# @ECLASS_VARIABLE: LOCAL_AI_ENGINE_LIB_ENV
+# @REQUIRED
+# @DESCRIPTION:
+# Name of the environment variable the Go binary reads to dlopen the
+# engine library, e.g. WHISPER_LIBRARY (upstream ships several compute
+# variants and picks one this way; this package builds exactly one, and
+# the generated run.sh points the variable at it).
+
 local-ai-ggml-go_src_compile() {
 	local-ai-ggml_src_compile
 
@@ -48,6 +56,7 @@ local-ai-ggml-go_src_compile() {
 }
 
 local-ai-ggml-go_src_install() {
+	local-ai-backend_gen_run_sh "${PN}" "${LOCAL_AI_ENGINE_LIB_ENV}=${LOCAL_AI_ENGINE_LIB}"
 	local-ai-backend_install "${PN}" "${BUILD_DIR}/${LOCAL_AI_ENGINE_LIB}" "${S}/${PN}"
 }
 

@@ -10,6 +10,7 @@
 EAPI=8
 
 LOCAL_AI_ENGINE_LIB="libgoqwen3ttscpp.so"
+LOCAL_AI_ENGINE_LIB_ENV="QWEN3TTS_LIBRARY"
 LOCAL_AI_CMAKE_TARGET="goqwen3ttscpp"
 
 inherit local-ai-ggml-go

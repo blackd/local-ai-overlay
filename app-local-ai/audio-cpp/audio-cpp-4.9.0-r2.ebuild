@@ -103,5 +103,6 @@ src_test() {
 }
 
 src_install() {
+	local-ai-backend_gen_run_sh grpc-server LD_LIBRARY_PATH=lib
 	local-ai-backend_install audio-cpp "${BUILD_DIR}"/grpc-server
 }

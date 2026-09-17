@@ -13,6 +13,7 @@
 EAPI=8
 
 LOCAL_AI_ENGINE_LIB="librfdetrcpp.so"
+LOCAL_AI_ENGINE_LIB_ENV="RFDETR_LIBRARY"
 # The engine gates ggml's toggles behind conditional RFDETR_GGML_*
 # options; upstream passes both names, mirror that.
 LOCAL_AI_CUDA_CMAKE_VARS="GGML_CUDA RFDETR_GGML_CUDA"

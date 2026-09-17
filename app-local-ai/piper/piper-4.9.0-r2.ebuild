@@ -120,6 +120,7 @@ src_compile() {
 src_install() {
 	local dest="${LOCAL_AI_BACKENDS_DIR#${EPREFIX}}/piper"
 
+	local-ai-backend_gen_run_sh piper LD_LIBRARY_PATH=lib ESPEAK_NG_DATA=espeak-ng-data
 	local-ai-backend_install piper "${S}/piper"
 
 	insinto "${dest}"

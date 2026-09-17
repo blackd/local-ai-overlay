@@ -12,6 +12,7 @@
 EAPI=8
 
 LOCAL_AI_ENGINE_LIB="libgocrispasr.so"
+LOCAL_AI_ENGINE_LIB_ENV="CRISPASR_LIBRARY"
 LOCAL_AI_CMAKE_TARGET="gocrispasr"
 # Keep the build lean, as upstream's backend build does: no tests/examples/
 # server binaries, no SDL2, and no in-engine model downloading (model

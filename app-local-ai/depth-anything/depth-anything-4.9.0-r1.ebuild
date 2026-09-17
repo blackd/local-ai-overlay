@@ -9,6 +9,7 @@
 EAPI=8
 
 LOCAL_AI_ENGINE_LIB="libdepthanything.so"
+LOCAL_AI_ENGINE_LIB_ENV="DEPTHANYTHING_LIBRARY"
 LOCAL_AI_CMAKE_TARGET="depthanything"
 # The engine FORCE-overrides GGML_CUDA/GGML_VULKAN/GGML_METAL from its own
 # DA_GGML_* options, so those toggles must use the DA names; GGML_HIP is
