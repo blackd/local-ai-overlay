@@ -24,13 +24,23 @@ SRC_URI="
 # engine checkout at ./audio.cpp (moved into place in src_unpack).
 S="${WORKDIR}/LocalAI-${PV}/backend/cpp/audio-cpp"
 
+# Backend option env fallback (AUDIOCPP_DEFAULT_BACKEND) — proposed
+# upstream; see the patch header.
+PATCHES=( "${FILESDIR}/${P}-default-backend-env.patch" )
+
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64"
-IUSE="cuda native rocm test vulkan"
+IUSE="+cpu cuda native rocm test vulkan"
+# Each enabled flag builds its own co-installable backend variant
+# (upstream's model: cpu-/cuda-/rocm-/vulkan-audio-cpp, all aliased to
+# audio-cpp — the server resolves the alias by host capability, and a
+# model YAML can pin a concrete variant, e.g. cpu-audio-cpp to spare
+# VRAM). Tests are engine-logic tests; one build of them suffices.
 REQUIRED_USE="
-	?? ( cuda rocm vulkan )
+	|| ( cpu cuda rocm vulkan )
 	rocm? ( ${ROCM_REQUIRED_USE} )
+	test? ( cpu )
 "
 RESTRICT="!test? ( test )"
 
@@ -77,52 +87,80 @@ src_prepare() {
 	find "${S}/audio.cpp/src" \( -name '*.cpp' -o -name '*.h' \) -exec sed -i 's/\bu8"/"/g' {} + || die
 }
 
-src_configure() {
-	local mycmakeargs=(
-		# Compiles the model_specs catalog into the binary so the installed
-		# backend needs no model_specs directory (upstream deployment mode).
-		-DAUDIOCPP_DEPLOYMENT_BUILD=ON
-		# sentencepiece's absl shim headers reuse real abseil's include
-		# guards and shadow it via -I third_party, which cannot coexist
-		# with the system protobuf headers (they include real abseil).
-		# The "package" provider replaces the shim directory with a
-		# symlink to the system abseil headers: one absl for every
-		# translation unit. (SPM_PROTOBUF_PROVIDER stays "package" —
-		# upstream FORCEs it, see their CMakeLists for the two-runtimes
-		# ABI war story.)
-		-DSPM_ABSL_PROVIDER=package
-		# One host-targeted build (per CFLAGS) instead of upstream's
-		# dlopen-able per-microarch ggml fan-out for fat container images.
-		-DENGINE_ENABLE_CPU_ALL_VARIANTS=OFF
-		-DGGML_NATIVE=$(usex native)
-		-DENGINE_ENABLE_CUDA=$(usex cuda)
-		-DENGINE_ENABLE_VULKAN=$(usex vulkan)
-		# HIP support arrived upstream in the 4.10.0 cycle; the engine
-		# forwards GPU_TARGETS to ggml's HIP arch list.
-		-DENGINE_ENABLE_HIP=$(usex rocm)
-		-DAUDIO_CPP_GRPC_BUILD_TESTS=$(usex test)
-	)
+# Enabled variants, in the order they build.
+audio_cpp_variants() {
+	use cpu && echo cpu
+	use cuda && echo cuda
+	use rocm && echo rocm
+	use vulkan && echo vulkan
+	return 0
+}
 
-	if use rocm; then
-		rocm_use_hipcc
-		mycmakeargs+=(
-			-DAMDGPU_TARGETS="$(get_amdgpu_flags)"
-			-DGPU_TARGETS="$(get_amdgpu_flags)"
-			-DCMAKE_HIP_ARCHITECTURES="$(get_amdgpu_flags)"
+src_configure() {
+	local v
+	for v in $(audio_cpp_variants); do
+		local BUILD_DIR="${WORKDIR}/${P}_build-${v}"
+		local mycmakeargs=(
+			# Compiles the model_specs catalog into the binary so the installed
+			# backend needs no model_specs directory (upstream deployment mode).
+			-DAUDIOCPP_DEPLOYMENT_BUILD=ON
+			# sentencepiece's absl shim headers reuse real abseil's include
+			# guards and shadow it via -I third_party, which cannot coexist
+			# with the system protobuf headers (they include real abseil).
+			# The "package" provider replaces the shim directory with a
+			# symlink to the system abseil headers: one absl for every
+			# translation unit. (SPM_PROTOBUF_PROVIDER stays "package" —
+			# upstream FORCEs it, see their CMakeLists for the two-runtimes
+			# ABI war story.)
+			-DSPM_ABSL_PROVIDER=package
+			# One host-targeted build (per CFLAGS) instead of upstream's
+			# dlopen-able per-microarch ggml fan-out for fat container images.
+			-DENGINE_ENABLE_CPU_ALL_VARIANTS=OFF
+			-DGGML_NATIVE=$(usex native)
+			-DENGINE_ENABLE_CUDA=$([[ ${v} == cuda ]] && echo ON || echo OFF)
+			-DENGINE_ENABLE_HIP=$([[ ${v} == rocm ]] && echo ON || echo OFF)
+			-DENGINE_ENABLE_VULKAN=$([[ ${v} == vulkan ]] && echo ON || echo OFF)
+			# Engine-logic tests: built once, in the cpu variant.
+			-DAUDIO_CPP_GRPC_BUILD_TESTS=$([[ ${v} == cpu ]] && usex test || echo OFF)
 		)
-	fi
-	cmake_src_configure
+		if [[ ${v} == rocm ]]; then
+			# Subshell: rocm_use_hipcc exports CC/CXX, which must not
+			# leak into the other variants' configures. CMake caches
+			# the compilers, so the compile phase needs no env.
+			(
+				rocm_use_hipcc
+				mycmakeargs+=(
+					-DAMDGPU_TARGETS="$(get_amdgpu_flags)"
+					-DGPU_TARGETS="$(get_amdgpu_flags)"
+					-DCMAKE_HIP_ARCHITECTURES="$(get_amdgpu_flags)"
+				)
+				cmake_src_configure
+			) || die
+		else
+			cmake_src_configure
+		fi
+	done
 }
 
 src_compile() {
-	cmake_src_compile
+	local v
+	for v in $(audio_cpp_variants); do
+		local BUILD_DIR="${WORKDIR}/${P}_build-${v}"
+		cmake_src_compile
+	done
 }
 
 src_test() {
+	local BUILD_DIR="${WORKDIR}/${P}_build-cpu"
 	cmake_src_test
 }
 
 src_install() {
-	local-ai-backend_gen_run_sh grpc-server LD_LIBRARY_PATH=lib
-	local-ai-backend_install audio-cpp "${BUILD_DIR}"/grpc-server
+	local v
+	for v in $(audio_cpp_variants); do
+		local BUILD_DIR="${WORKDIR}/${P}_build-${v}"
+		local-ai-backend_gen_run_sh grpc-server LD_LIBRARY_PATH=lib
+		local-ai-backend_install "${v}-audio-cpp" --alias audio-cpp \
+			"${BUILD_DIR}"/grpc-server
+	done
 }

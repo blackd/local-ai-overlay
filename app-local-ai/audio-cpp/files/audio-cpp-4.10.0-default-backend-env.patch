@@ -1,0 +1,56 @@
+Give backend selection an environment fallback: AUDIOCPP_DEFAULT_BACKEND
+applies when a model's options carry no explicit backend:, so models
+without one use the deployment's accelerator instead of the CPU default.
+The overlay's run.sh sets it per installed variant. Proposed upstream.
+
+--- a/model_options.h	2026-09-18 21:34:04.626662645 -0000
++++ b/model_options.h	2026-09-18 21:34:04.695086119 -0000
+@@ -19,6 +19,10 @@
+     std::string task;
+     // ggml backend: cpu, cuda, hip (or rocm), vulkan, metal, best.
+     std::string backend = "cpu";
++    // True once a `backend:` entry has been seen: "cpu" is both the default
++    // and a legitimate explicit choice, so the value alone cannot tell them
++    // apart, and a caller merging in its own fallback needs the difference.
++    bool backend_set = false;
+     int device = 0;
+     // True once a `device:` entry has been seen. 0 is both the default and a
+     // legitimate device index, so the value alone cannot tell an explicit
+--- a/model_options.cpp	2026-09-18 21:34:04.626800105 -0000
++++ b/model_options.cpp	2026-09-18 21:34:04.696250515 -0000
+@@ -120,6 +120,7 @@
+                 return parsed;
+             }
+             parsed.options.backend = value;
++            parsed.options.backend_set = true;
+         } else if (key == "model_spec_override") {
+             parsed.options.model_spec_override = value;
+         } else if (key == "device") {
+--- a/grpc-server.cpp	2026-09-18 21:34:04.627065760 -0000
++++ b/grpc-server.cpp	2026-09-18 21:34:45.933392421 -0000
+@@ -596,6 +596,25 @@
+             if (!parsed.options.device_set && !request->maingpu().empty()) {
+                 parsed.options.device = parse_device_index(request->maingpu());
+             }
++            // AUDIOCPP_DEFAULT_BACKEND is the deployment's backend fallback:
++            // an accelerator image sets it (typically to "best") so models
++            // without an explicit backend: option use the compiled
++            // accelerator instead of the CPU default — gallery entries carry
++            // backend:best, hand-written model configs get the same fix
++            // here. An explicit backend: option wins, matching threads and
++            // maingpu above. Validation reuses the option parser itself.
++            if (!parsed.options.backend_set) {
++                const char * env = std::getenv("AUDIOCPP_DEFAULT_BACKEND");
++                if (env != nullptr && *env != '\0') {
++                    auto fallback = audiocpp_backend::parse_model_options(
++                        {std::string("backend:") + env});
++                    if (!fallback.error.empty()) {
++                        throw audiocpp_backend::ConfigError(
++                            "audio-cpp: AUDIOCPP_DEFAULT_BACKEND: " + fallback.error);
++                    }
++                    parsed.options.backend = fallback.options.backend;
++                }
++            }
+ 
+             const std::string path = audiocpp_backend::resolve_model_path(
+                 request->modelpath(), request->modelfile(), request->model());
