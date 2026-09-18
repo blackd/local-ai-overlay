@@ -14,7 +14,10 @@ cd "$REPO"
 for d in "$@"; do
 	d="${d%/}"
 	eb=$(ls "${d}"/*.ebuild | sort -V | tail -n1)
-	ebuild --force "${eb}" manifest
+	# FORCE=--force after a (re)release: the fresh assets must replace
+	# the recorded digests. Otherwise plain manifest is a cheap no-op
+	# on complete Manifests and self-heals incomplete ones.
+	ebuild ${FORCE:-} "${eb}" manifest
 done
 
 git config user.name "gitea-actions"

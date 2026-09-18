@@ -23,6 +23,7 @@ rid=$(curl -sf -H "${AUTH}" "${API}/releases/tags/${TAG}" | jq -r .id || true)
 if [ -n "${rid}" ] && [ "${rid}" != "null" ]; then
 	if [ "${RERELEASE}" != "true" ]; then
 		echo ">>> ${TAG} already released (id ${rid}), skipping"
+		[ -n "${GITHUB_OUTPUT:-}" ] && echo "released=false" >> "$GITHUB_OUTPUT"
 		exit 0
 	fi
 	echo ">>> deleting release ${TAG} (id ${rid}) for re-release"
@@ -49,3 +50,5 @@ for f in "$WORK"/*; do
 done
 
 cp "$WORK"/* /var/cache/distfiles/
+[ -n "${GITHUB_OUTPUT:-}" ] && echo "released=true" >> "$GITHUB_OUTPUT"
+exit 0
