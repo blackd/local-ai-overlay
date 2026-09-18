@@ -32,10 +32,12 @@ jobs:
           cp distfiles-out/* /var/cache/distfiles/
           case "${{ steps.family.outputs.family }}" in
             # Every consumer of the LocalAI source tarball: the server
-            # itself and all backends (their Manifests pin it too).
-            # Unrelated packages (zot, dagu, av, onnxruntime, ...) keep
-            # their Manifests out of a LocalAI release run.
-            local-ai) DIRS="sci-ml/local-ai $(echo app-local-ai/*)" ;;
+            # itself and the backends without a distfiles family of
+            # their own. The python packages (diffusers, fish-speech,
+            # python-common) are manifested by their own family runs —
+            # including them here needs their releases to already
+            # exist, which deadlocks a lockstep version bump.
+            local-ai) DIRS="sci-ml/local-ai $(ls -d app-local-ai/*/ | grep -vE '/(diffusers|fish-speech|python-common)/$')" ;;
             opencode) DIRS=dev-util/opencode ;;
             gitea-runner) DIRS=dev-util/gitea-runner ;;
             zot) DIRS=app-containers/zot ;;
