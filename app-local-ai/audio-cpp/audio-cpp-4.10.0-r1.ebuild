@@ -7,9 +7,9 @@
 
 EAPI=8
 
-inherit cmake local-ai-backend
+inherit cmake local-ai-backend local-ai-rocm
 
-# The audio.cpp commit LocalAI v4.9.0 builds against. Source of truth:
+# The audio.cpp commit LocalAI v4.10.0 builds against. Source of truth:
 # backend/cpp/audio-cpp/Makefile (AUDIO_CPP_VERSION) at the release tag.
 AUDIOCPP_COMMIT="4af143229384fb6da3f373dc87de145ae954609b"
 
@@ -27,8 +27,11 @@ S="${WORKDIR}/LocalAI-${PV}/backend/cpp/audio-cpp"
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64"
-IUSE="cuda native test vulkan"
-REQUIRED_USE="?? ( cuda vulkan )"
+IUSE="cuda native rocm test vulkan"
+REQUIRED_USE="
+	?? ( cuda rocm vulkan )
+	rocm? ( ${ROCM_REQUIRED_USE} )
+"
 RESTRICT="!test? ( test )"
 
 RDEPEND="
@@ -38,6 +41,11 @@ RDEPEND="
 	net-libs/grpc:=
 	vulkan? ( media-libs/vulkan-loader )
 	cuda? ( dev-util/nvidia-cuda-toolkit:= )
+	rocm? (
+		>=dev-util/hip-${ROCM_VERSION}:=
+		>=sci-libs/hipBLAS-${ROCM_VERSION}:=
+		>=sci-libs/rocBLAS-${ROCM_VERSION}:=
+	)
 "
 DEPEND="${RDEPEND}
 	vulkan? ( dev-util/vulkan-headers )
@@ -89,8 +97,20 @@ src_configure() {
 		-DGGML_NATIVE=$(usex native)
 		-DENGINE_ENABLE_CUDA=$(usex cuda)
 		-DENGINE_ENABLE_VULKAN=$(usex vulkan)
+		# HIP support arrived upstream in the 4.10.0 cycle; the engine
+		# forwards GPU_TARGETS to ggml's HIP arch list.
+		-DENGINE_ENABLE_HIP=$(usex rocm)
 		-DAUDIO_CPP_GRPC_BUILD_TESTS=$(usex test)
 	)
+
+	if use rocm; then
+		rocm_use_hipcc
+		mycmakeargs+=(
+			-DAMDGPU_TARGETS="$(get_amdgpu_flags)"
+			-DGPU_TARGETS="$(get_amdgpu_flags)"
+			-DCMAKE_HIP_ARCHITECTURES="$(get_amdgpu_flags)"
+		)
+	fi
 	cmake_src_configure
 }
 
