@@ -27,14 +27,16 @@ inherit local-ai-python
 
 # The newest fish-speech release; matches the module layout backend.py
 # imports (inference_engine, models.dac, models.text2semantic).
-FISH_SPEECH_TAG="v2.0.0-beta"
+# v2.0.0-beta at the time of pinning; fetched by commit because tags can
+# move — the Manifest digest would only turn that into a fetch error.
+FISH_SPEECH_COMMIT="3578e4e7099ee85464756dab27a3af86b5a21331"
 
 DESCRIPTION="LocalAI text-to-speech backend (fish-speech gRPC server)"
 SRC_URI+="
-	https://github.com/fishaudio/fish-speech/archive/refs/tags/${FISH_SPEECH_TAG}.tar.gz
-		-> fish-speech-${FISH_SPEECH_TAG}.gh.tar.gz
+	https://github.com/fishaudio/fish-speech/archive/${FISH_SPEECH_COMMIT}.tar.gz
+		-> fish-speech-${FISH_SPEECH_COMMIT}.gh.tar.gz
 "
-FISH_S="${WORKDIR}/fish-speech-${FISH_SPEECH_TAG#v}"
+FISH_S="${WORKDIR}/fish-speech-${FISH_SPEECH_COMMIT}"
 
 LICENSE="MIT Apache-2.0 Fish-Audio-Research"
 
@@ -149,7 +151,7 @@ src_prepare() {
 
 src_unpack() {
 	local-ai-python_src_unpack
-	unpack "fish-speech-${FISH_SPEECH_TAG}.gh.tar.gz"
+	unpack "fish-speech-${FISH_SPEECH_COMMIT}.gh.tar.gz"
 }
 
 src_install() {

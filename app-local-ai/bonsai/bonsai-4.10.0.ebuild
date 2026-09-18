@@ -20,6 +20,8 @@ EAPI=8
 # Build only the gRPC glue's target; the engine's own binaries are skipped.
 LOCAL_AI_CMAKE_TARGET="grpc-server"
 LOCAL_AI_EXTRA_CMAKE_ARGS=(
+	# Mirrors upstream's grpc build (added at 4.10.0).
+	-DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON
 	-DLLAMA_CURL=ON
 	-DLLAMA_BUILD_TESTS=OFF
 	-DLLAMA_BUILD_EXAMPLES=OFF
@@ -30,7 +32,7 @@ inherit local-ai-ggml
 # The PrismML llama.cpp (prism branch) commit LocalAI v4.9.0 pins.
 # Source of truth: backend/cpp/bonsai/Makefile (BONSAI_VERSION) at the
 # upstream release tag — NOT the auto-bumped pin on master.
-BONSAI_COMMIT="9ca265a57f85f2117942490f421f64a226dd9847"
+BONSAI_COMMIT="7dffb158de30ebb8ef9d64f33c6b0b2d7c1e6313"
 
 DESCRIPTION="LocalAI text-generation backend for 1-bit/ternary models (Bonsai fork of llama.cpp)"
 SRC_URI="

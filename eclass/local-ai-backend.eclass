@@ -26,11 +26,9 @@ _LOCAL_AI_BACKEND_ECLASS=1
 # @ECLASS_VARIABLE: DISTFILES_BASE
 # @DESCRIPTION:
 # Base URL of the maintainer-generated dependency tarballs (Go module cache,
-# npm node_modules, pre-generated protobuf Go code). They are produced by
-# scripts/gen-distfiles.sh and attached as release assets on the overlay's
-# own Gitea repository: one release per LocalAI version, tagged v<version>,
-# holding that version's three tarballs.
-DISTFILES_BASE="https://git.ipnmod.org/packages/local-ai-overlay/releases/download/v${PV}"
+# npm node_modules, pre-generated protobuf Go code); produced by
+# scripts/gen-local-ai-distfiles.sh.
+DISTFILES_BASE="https://git.ipnmod.org/packages/local-ai-overlay/releases/download/local-ai-v${PV}"
 
 # @ECLASS_VARIABLE: LOCAL_AI_SRC_URI
 # @DESCRIPTION:

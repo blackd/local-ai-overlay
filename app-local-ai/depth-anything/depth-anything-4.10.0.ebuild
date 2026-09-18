@@ -25,7 +25,7 @@ inherit local-ai-ggml-go
 # truth: backend/go/depth-anything-cpp/Makefile (DEPTHANYTHING_VERSION) at
 # the upstream release tag; the ggml pin is that commit's third_party/ggml
 # submodule gitlink (ggml-org's mainline ggml).
-DEPTHANYTHING_COMMIT="54abd5c0abfd1f394e01cb3c38f2e3af4daedf85"
+DEPTHANYTHING_COMMIT="14f7461d1f704761a038ac9f50dbde8fdb7275e2"
 GGML_COMMIT="eced84c86f8b012c752c016f7fe789adea168e1e"
 
 DESCRIPTION="LocalAI depth-estimation backend (depth-anything.cpp gRPC server)"

@@ -31,8 +31,8 @@ inherit local-ai-ggml-go
 # backend/go/crispasr/Makefile (CRISPASR_VERSION) at the upstream release
 # tag; the other two are that commit's submodule gitlinks (CrispStrobe's
 # ggml fork and the C2PA content-credentials signer).
-CRISPASR_COMMIT="a153b09b37c90cd55cd9336fccbdf3ba7a289596"
-GGML_COMMIT="5049ebb8472fdc965eb3fb72c1cb111260726186"
+CRISPASR_COMMIT="ba3499e7c7f6013a73738cad530b252d59675f49"
+GGML_COMMIT="2dd13eddc783f2cd0a29324affd78081cc6f0034"
 C2PA_COMMIT="e40329b83f16f67bb5ddc7bb13ae18de0a9376fc"
 
 DESCRIPTION="LocalAI speech backend (CrispASR gRPC server)"

@@ -11,7 +11,7 @@ inherit cmake local-ai-backend
 
 # The audio.cpp commit LocalAI v4.9.0 builds against. Source of truth:
 # backend/cpp/audio-cpp/Makefile (AUDIO_CPP_VERSION) at the release tag.
-AUDIOCPP_COMMIT="a61da671b6a81c79071500954eea3c91c1a383dd"
+AUDIOCPP_COMMIT="4af143229384fb6da3f373dc87de145ae954609b"
 
 DESCRIPTION="LocalAI audio backend (audio.cpp gRPC server)"
 HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"

@@ -12,6 +12,8 @@ EAPI=8
 # Build only the gRPC glue's target; the engine's own binaries are skipped.
 LOCAL_AI_CMAKE_TARGET="grpc-server"
 LOCAL_AI_EXTRA_CMAKE_ARGS=(
+	# Mirrors upstream's grpc build (added at 4.10.0).
+	-DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON
 	-DLLAMA_CURL=ON
 	-DLLAMA_BUILD_TESTS=OFF
 	-DLLAMA_BUILD_EXAMPLES=OFF
@@ -21,7 +23,7 @@ inherit local-ai-ggml
 
 # The llama.cpp commit LocalAI v4.9.0 builds against. Source of truth:
 # backend/cpp/llama-cpp/Makefile (LLAMA_VERSION) at the upstream release tag.
-LLAMA_COMMIT="60addddf3c567c43ec3caf70fc953fba3572d96f"
+LLAMA_COMMIT="38a5b42d9a3e82e0a586bcd1caed121f36c87a73"
 
 DESCRIPTION="LocalAI text-generation backend (llama.cpp gRPC server)"
 SRC_URI="

@@ -17,7 +17,7 @@ inherit local-ai-ggml-go
 # The whisper.cpp commit LocalAI v4.9.0 builds against. Source of truth:
 # backend/go/whisper/Makefile (WHISPER_CPP_VERSION) at the upstream
 # release tag.
-WHISPER_COMMIT="1fe009caeda75f69bc864d6370b10674e45a92bd"
+WHISPER_COMMIT="da54572229bcf64ba367d96c7ef15770376c4280"
 
 DESCRIPTION="LocalAI speech-to-text backend (whisper.cpp gRPC server)"
 SRC_URI="

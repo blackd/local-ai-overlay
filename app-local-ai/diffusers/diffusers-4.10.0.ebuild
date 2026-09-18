@@ -29,9 +29,3 @@ RDEPEND+="
 	dev-build/ninja
 "
 DEPEND="${RDEPEND}"
-
-pkg_postinst() {
-	elog "Device selection follows the model YAML: until the auto-detect"
-	elog "patch lands upstream, set 'cuda: true' (ROCm torch reports as"
-	elog "CUDA) on gallery models that lack it."
-}
