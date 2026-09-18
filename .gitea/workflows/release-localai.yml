@@ -1,0 +1,75 @@
+name: "release-localai"
+
+# One entry point for a LocalAI version's distfiles: the server assets
+# first, then the python families fanned out across the runners. Every
+# family is exists-checked — rerunning after a partial failure only
+# executes the missing pieces, and re-releasing is an explicit input.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "LocalAI version (default: newest sci-ml/local-ai ebuild)"
+        default: ""
+      rerelease:
+        description: "Regenerate and REPLACE releases that already exist"
+        type: boolean
+        default: false
+
+jobs:
+  local-ai:
+    runs-on: "gentoo-latest"
+    permissions:
+      contents: "write"
+    outputs:
+      version: "${{ steps.ver.outputs.version }}"
+    steps:
+      - uses: "actions/checkout@v4"
+        with:
+          fetch-depth: 0
+          ref: "master"
+      - name: "Resolve version"
+        id: "ver"
+        run: |
+          V="${{ inputs.version }}"
+          [ -n "$V" ] || V=$(basename -s .ebuild sci-ml/local-ai/local-ai-*.ebuild | sed 's/^local-ai-//' | sort -V | tail -n1)
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+      - name: "Release local-ai"
+        run: >-
+          bash scripts/release-family.sh local-ai
+          "${{ steps.ver.outputs.version }}" "${{ inputs.rerelease }}"
+      - name: "Manifests"
+        env:
+          RELEASE_TAG: "local-ai-v${{ steps.ver.outputs.version }}"
+        run: |
+          source scripts/families.sh
+          bash scripts/manifest-and-push.sh $(family_dirs local-ai)
+
+  python-families:
+    needs: "local-ai"
+    strategy:
+      fail-fast: false
+      matrix:
+        family: ["python-common", "diffusers", "fish-speech"]
+    runs-on: "gentoo-latest"
+    permissions:
+      contents: "write"
+    steps:
+      - uses: "actions/checkout@v4"
+        with:
+          fetch-depth: 0
+          ref: "master"
+      # python-common's digest check reads the Manifests the local-ai
+      # job just committed — make sure this checkout has them.
+      - name: "Pull the local-ai manifest commit"
+        run: git pull --rebase origin master
+      - name: "Release ${{ matrix.family }}"
+        run: >-
+          bash scripts/release-family.sh "${{ matrix.family }}"
+          "${{ needs.local-ai.outputs.version }}" "${{ inputs.rerelease }}"
+      - name: "Manifests"
+        env:
+          RELEASE_TAG: "${{ matrix.family }}-v${{ needs.local-ai.outputs.version }}"
+        run: |
+          source scripts/families.sh
+          bash scripts/manifest-and-push.sh $(family_dirs "${{ matrix.family }}")

@@ -1,75 +1,59 @@
 name: "release-distfiles"
 
+# One family per run: triggered by a <family>-distfiles-v<version> tag,
+# or dispatched manually (which is also the only way to REPLACE an
+# existing release — a re-pushed tag over one is skipped, not
+# double-published). The heavy lifting lives in scripts/: families.sh
+# (family -> manifest dirs), release-family.sh (exists-check, generate,
+# publish), manifest-and-push.sh (manifest, commit, retry-push).
+
 on:
   push:
     tags:
       - "*-distfiles-v*"
+  workflow_dispatch:
+    inputs:
+      family:
+        description: "Distfiles family (see scripts/families.sh)"
+        required: true
+      version:
+        description: "Version to release"
+        required: true
+      rerelease:
+        description: "Regenerate and REPLACE an existing release"
+        type: boolean
+        default: false
 
 jobs:
   release:
     runs-on: "gentoo-latest"
     permissions:
-      contents: write
+      contents: "write"
     steps:
-      - name: "Install toolchain from binhost"
-        run: emerge -G -q -un dev-lang/go net-libs/nodejs dev-libs/protobuf dev-lang/bun-bin dev-lang/rust dev-python/pip
       - uses: "actions/checkout@v4"
         with:
           fetch-depth: 0
-      - name: "Generate distfiles"
-        id: "family"
+          ref: "master"
+      - name: "Resolve family and version"
+        id: "fam"
         run: |
-          FAMILY=${GITHUB_REF_NAME%-distfiles-v*}
-          VERSION=${GITHUB_REF_NAME##*-distfiles-v}
+          if [ -n "${{ inputs.family }}" ]; then
+            FAMILY="${{ inputs.family }}" VERSION="${{ inputs.version }}"
+          else
+            FAMILY=${GITHUB_REF_NAME%-distfiles-v*}
+            VERSION=${GITHUB_REF_NAME##*-distfiles-v}
+          fi
           echo "family=${FAMILY}" >> "$GITHUB_OUTPUT"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-          mkdir distfiles-out
-          cd distfiles-out
-          bash "../scripts/gen-${FAMILY}-distfiles.sh" "${VERSION}"
-      - name: "Push Manifests"
-        id: "manifests"
+      - name: "Release ${{ steps.fam.outputs.family }}"
+        run: >-
+          bash scripts/release-family.sh
+          "${{ steps.fam.outputs.family }}"
+          "${{ steps.fam.outputs.version }}"
+          "${{ inputs.rerelease || 'false' }}"
+      - name: "Manifests"
+        env:
+          RELEASE_TAG: "${{ steps.fam.outputs.family }}-v${{ steps.fam.outputs.version }}"
         run: |
-          cp distfiles-out/* /var/cache/distfiles/
-          case "${{ steps.family.outputs.family }}" in
-            # Every consumer of the LocalAI source tarball: the server
-            # itself and the backends without a distfiles family of
-            # their own. The python packages (diffusers, fish-speech,
-            # python-common) are manifested by their own family runs —
-            # including them here needs their releases to already
-            # exist, which deadlocks a lockstep version bump.
-            local-ai) DIRS="sci-ml/local-ai $(ls -d app-local-ai/*/ | grep -vE '/(diffusers|fish-speech|python-common)/$')" ;;
-            opencode) DIRS=dev-util/opencode ;;
-            gitea-runner) DIRS=dev-util/gitea-runner ;;
-            zot) DIRS=app-containers/zot ;;
-            dagu) DIRS=sys-process/dagu ;;
-            safetensors) DIRS=dev-python/safetensors ;;
-            tokenizers) DIRS=dev-python/tokenizers ;;
-            diffusers) DIRS=app-local-ai/diffusers ;;
-            fish-speech) DIRS=app-local-ai/fish-speech ;;
-            ormsgpack) DIRS=dev-python/ormsgpack ;;
-            hf-xet) DIRS=dev-python/hf-xet ;;
-            python-common) DIRS=app-local-ai/python-common ;;
-            *) echo "unknown family ${{ steps.family.outputs.family }}"; exit 1 ;;
-          esac
-          for d in ${DIRS}; do ebuild --force $(ls $d/*.ebuild | head -1) manifest; done
-          git config user.name "gitea-actions"
-          git config user.email "gitea-actions@noreply.ipnmod.org"
-          find . -name Manifest -exec git add {} +
-          git diff --cached --quiet || git commit -m "Manifests for ${GITHUB_REF_NAME}"
-          # Sibling runs and re-runs of old tags race this push; replay
-          # the Manifest commit onto whatever master has become, and
-          # retry — a sibling can still push in the rebase→push gap.
-          for i in 1 2 3 4 5; do
-            git pull --rebase origin master && git push origin HEAD:master && break
-            [ "$i" = 5 ] && exit 1
-            sleep $((i * 5))
-          done
-          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-          echo "version_tag=${{ steps.family.outputs.family }}-v${{ steps.family.outputs.version }}" >> "$GITHUB_OUTPUT"
-      - name: "Publish release"
-        uses: "akkuman/gitea-release-action@v1"
-        with:
-          tag_name: "${{ steps.manifests.outputs.version_tag }}"
-          target_commitish: "${{ steps.manifests.outputs.sha }}"
-          files: "distfiles-out/*"
-          sha256sum: true
+          source scripts/families.sh
+          bash scripts/manifest-and-push.sh $(family_dirs "${{ steps.fam.outputs.family }}")
