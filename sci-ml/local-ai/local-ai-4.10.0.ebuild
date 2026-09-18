@@ -63,7 +63,6 @@ DOCS=( README.md )
 # Adds a persistent "Focus mode" toggle to the chat settings drawer so the
 # sidebar auto-collapse can be switched off. Merged upstream — this patch
 # is 4.9.0-only: drop it (and the file in files/) at the next version bump.
-PATCHES=( "${FILESDIR}/local-ai-4.9.0-focus-mode-toggle.patch" )
 
 src_unpack() {
 	# ${P}-deps.tar.xz unpacks to ${WORKDIR}/go-mod — exactly where
