@@ -46,6 +46,8 @@ jobs:
           echo "family=${FAMILY}" >> "$GITHUB_OUTPUT"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
       - name: "Release ${{ steps.fam.outputs.family }}"
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         run: >-
           bash scripts/release-family.sh
           "${{ steps.fam.outputs.family }}"

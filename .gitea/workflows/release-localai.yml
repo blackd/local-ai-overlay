@@ -35,6 +35,8 @@ jobs:
           [ -n "$V" ] || V=$(basename -s .ebuild sci-ml/local-ai/local-ai-*.ebuild | sed 's/^local-ai-//' | sort -V | tail -n1)
           echo "version=$V" >> "$GITHUB_OUTPUT"
       - name: "Release local-ai"
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         run: >-
           bash scripts/release-family.sh local-ai
           "${{ steps.ver.outputs.version }}" "${{ inputs.rerelease }}"
@@ -64,6 +66,8 @@ jobs:
       - name: "Pull the local-ai manifest commit"
         run: git pull --rebase origin master
       - name: "Release ${{ matrix.family }}"
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         run: >-
           bash scripts/release-family.sh "${{ matrix.family }}"
           "${{ needs.local-ai.outputs.version }}" "${{ inputs.rerelease }}"
