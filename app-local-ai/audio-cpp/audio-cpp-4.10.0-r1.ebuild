@@ -85,6 +85,11 @@ src_prepare() {
 	local-ai-backend_bump_cxx20 "${files[@]}"
 	einfo "Stripping u8 string literal prefixes from engine sources"
 	find "${S}/audio.cpp/src" \( -name '*.cpp' -o -name '*.h' \) -exec sed -i 's/\bu8"/"/g' {} + || die
+	# The method form of the same char8_t break: path::u8string() returns
+	# std::u8string since C++20 (std::string in C++17, which upstream
+	# builds as); the bytes are identical UTF-8 either way on Linux.
+	einfo "Replacing path::u8string() calls in engine sources"
+	find "${S}/audio.cpp/src" \( -name '*.cpp' -o -name '*.h' \) -exec sed -i 's/\.u8string()/.string()/g' {} + || die
 }
 
 # Enabled variants, in the order they build.
