@@ -1,9 +1,6 @@
-Stage OCI image downloads in a 'downloading' directory beside the
-extraction target instead of os.TempDir(): /tmp is commonly a
-RAM-backed tmpfs far smaller than a backend image. Proposed upstream.
 
 diff --git a/pkg/oci/image.go b/pkg/oci/image.go
-index 56f9c9b41..4b367ac04 100644
+index 56f9c9b41..a8e6355d5 100644
 --- a/pkg/oci/image.go
 +++ b/pkg/oci/image.go
 @@ -30,6 +30,13 @@ import (
@@ -20,13 +17,16 @@ index 56f9c9b41..4b367ac04 100644
  // ref: https://github.com/mudler/luet/blob/master/pkg/helpers/docker/docker.go#L117
  type staticAuth struct {
  	auth *registrytypes.AuthConfig
-@@ -325,8 +332,12 @@ func (pw *progressWriter) Write(p []byte) (int, error) {
+@@ -325,8 +332,15 @@ func (pw *progressWriter) Write(p []byte) (int, error) {
  
  // ExtractOCIImage will extract a given targetImage into a given targetDestination
  func ExtractOCIImage(ctx context.Context, img v1.Image, imageRef string, targetDestination string, downloadStatus func(string, string, string, float64)) error {
 -	// Create a temporary tar file
 -	tmpTarFile, err := os.CreateTemp("", "localai-oci-*.tar")
-+	downloadDir := filepath.Join(filepath.Dir(filepath.Clean(targetDestination)), stagingDirName)
++	// One level above the destination's parent: for a backend install
++	// (backends/<name>) staging must not live inside the scanned
++	// backends directory itself.
++	downloadDir := filepath.Join(filepath.Dir(filepath.Dir(filepath.Clean(targetDestination))), stagingDirName)
 +	if err := os.MkdirAll(downloadDir, 0755); err != nil {
 +		return fmt.Errorf("failed to create staging directory: %v", err)
 +	}
@@ -35,7 +35,7 @@ index 56f9c9b41..4b367ac04 100644
  	if err != nil {
  		return fmt.Errorf("failed to create temporary tar file: %v", err)
  	}
-@@ -504,7 +515,7 @@ func DownloadOCIImageTar(ctx context.Context, img v1.Image, imageRef string, tar
+@@ -504,7 +518,7 @@ func DownloadOCIImageTar(ctx context.Context, img v1.Image, imageRef string, tar
  	}
  
  	// Create a temporary directory to store the compressed layers
