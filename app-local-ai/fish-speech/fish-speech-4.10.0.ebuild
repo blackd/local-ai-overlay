@@ -39,6 +39,13 @@ SRC_URI+="
 FISH_S="${WORKDIR}/fish-speech-${FISH_SPEECH_COMMIT}"
 
 LICENSE="MIT Apache-2.0 Fish-Audio-Research"
+IUSE="distributed"
+
+# descript-audiotools touches torch.distributed.ReduceOp at import
+# time. With USE=distributed the requirement is passed through to
+# pytorch (full fidelity, DDP training possible); without it the
+# install lazy-guards the one line instead (see src_install).
+RDEPEND="distributed? ( sci-ml/pytorch[distributed] )"
 
 RDEPEND+="
 	$(python_gen_cond_dep '
@@ -169,6 +176,17 @@ src_install() {
 	doins "${T}/.project-root"
 
 	local-ai-python_install_venv
+
+	if ! use distributed; then
+		# Stringified annotation + lazy default: identical semantics on
+		# a full torch, importable on the distributed-less stub — only
+		# an actual DDP training run would miss it.
+		local decorators=( "${ED}${BACKEND_DIR}/venv/lib"/python*/site-packages/audiotools/ml/decorators.py )
+		grep -q 'op: dist.ReduceOp = dist.ReduceOp.AVG,' "${decorators[@]}" \
+			|| die "audiotools ReduceOp anchor moved"
+		sed -i 's|op: dist.ReduceOp = dist.ReduceOp.AVG,|op: "dist.ReduceOp" = getattr(dist, "ReduceOp", None) and dist.ReduceOp.AVG,|' \
+			"${decorators[@]}" || die
+	fi
 	python_optimize "${ED}${BACKEND_DIR}/fish_speech"
 	local-ai-python_install_meta
 	local-ai-python_smoke_test
