@@ -178,7 +178,10 @@ src_install() {
 	local v
 	for v in $(audio_cpp_variants); do
 		local BUILD_DIR="${WORKDIR}/${P}_build-${v}"
-		local-ai-backend_gen_run_sh grpc-server LD_LIBRARY_PATH=lib
+		# Models without an explicit backend: option run on this
+		# variant's engine backend (the wrapper's env fallback patch).
+		local-ai-backend_gen_run_sh -e "AUDIOCPP_DEFAULT_BACKEND=${v}" \
+			grpc-server LD_LIBRARY_PATH=lib
 		local-ai-backend_install "${v}-audio-cpp" --alias audio-cpp \
 			"${BUILD_DIR}"/grpc-server
 	done
