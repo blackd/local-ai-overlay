@@ -37,7 +37,12 @@ S="${WORKDIR}/LocalAI-${PV}"
 
 # System-path backends read metadata.json (variant aliasing) — proposed
 # upstream; see the patch header.
-PATCHES=( "${FILESDIR}/local-ai-4.10.0-system-backend-metadata.patch" )
+PATCHES=(
+	"${FILESDIR}/local-ai-4.10.0-system-backend-metadata.patch"
+	# OCI downloads stage beside the destination, not tmpfs /tmp —
+	# proposed upstream; see the patch header.
+	"${FILESDIR}/local-ai-4.10.0-oci-staging-dir.patch"
+)
 
 LICENSE="MIT"
 SLOT="0"
