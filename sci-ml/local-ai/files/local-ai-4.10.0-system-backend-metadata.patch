@@ -1,0 +1,149 @@
+Read metadata.json (alias, meta indirection) for system-path backends
+too — upstream only wires it for the user-managed dir, so system-
+packaged backend variants cannot alias. Shared helper, both scans.
+Proposed upstream.
+
+--- a/core/gallery/backends.go	2026-09-19 08:44:52.992875777 -0000
++++ b/core/gallery/backends.go	2026-09-19 08:44:52.995638420 -0000
+@@ -624,23 +624,71 @@
+ 	return backends
+ }
+ 
++// collectBackendDir gathers one backend directory into the listing: its
++// concrete entry (when run.sh exists), its alias candidacy and its meta
++// indirection, all driven by the directory's optional metadata.json.
++// Shared by the system and user-managed scans.
++func collectBackendDir(basePath, dir string, isSystem bool, backends SystemBackends, aliasGroups map[string][]backendCandidate, metaMap map[string]*BackendMetadata) error {
++	run := filepath.Join(basePath, dir, runFile)
++
++	metadata := &BackendMetadata{Name: dir}
++	if _, err := os.Stat(filepath.Join(basePath, dir, metadataFile)); err == nil {
++		m, rerr := readBackendMetadata(filepath.Join(basePath, dir))
++		if rerr != nil {
++			return rerr
++		}
++		if m != nil {
++			metadata = m
++		}
++	}
++
++	metaMap[dir] = metadata
++
++	// Concrete-backend entry
++	if _, err := os.Stat(run); err == nil {
++		backends[dir] = SystemBackend{
++			Name:     dir,
++			RunFile:  run,
++			IsMeta:   false,
++			IsSystem: isSystem,
++			Metadata: metadata,
++		}
++	}
++
++	// Alias candidates
++	if metadata.Alias != "" {
++		aliasGroups[metadata.Alias] = append(aliasGroups[metadata.Alias], backendCandidate{name: dir, runFile: run})
++	}
++
++	// Meta backends indirection
++	if metadata.MetaBackendFor != "" {
++		backends[metadata.Name] = SystemBackend{
++			Name:     metadata.Name,
++			RunFile:  filepath.Join(basePath, metadata.MetaBackendFor, runFile),
++			IsMeta:   true,
++			IsSystem: isSystem,
++			Metadata: metadata,
++		}
++	}
++	return nil
++}
++
+ func ListSystemBackends(systemState *system.SystemState) (SystemBackends, error) {
+ 	// Gather backends from system and user paths, then resolve alias conflicts by capability.
+ 	backends := make(SystemBackends)
+ 
+-	// System-provided backends
++	aliasGroups := make(map[string][]backendCandidate)
++	metaMap := make(map[string]*BackendMetadata)
++
++	// System-provided backends: driven by the same optional metadata.json
++	// a user-managed backend carries, so system-packaged backends (distro
++	// packages) participate in variant aliasing and meta indirection the
++	// same way gallery-installed ones do.
+ 	if systemBackends, err := os.ReadDir(systemState.Backend.BackendsSystemPath); err == nil {
+ 		for _, systemBackend := range systemBackends {
+ 			if systemBackend.IsDir() {
+-				run := filepath.Join(systemState.Backend.BackendsSystemPath, systemBackend.Name(), runFile)
+-				if _, err := os.Stat(run); err == nil {
+-					backends[systemBackend.Name()] = SystemBackend{
+-						Name:     systemBackend.Name(),
+-						RunFile:  run,
+-						IsMeta:   false,
+-						IsSystem: true,
+-						Metadata: nil,
+-					}
++				if cerr := collectBackendDir(systemState.Backend.BackendsSystemPath, systemBackend.Name(), true, backends, aliasGroups, metaMap); cerr != nil {
++					xlog.Warn("Skipping system backend with unreadable metadata", "dir", systemBackend.Name(), "error", cerr)
+ 				}
+ 			}
+ 		}
+@@ -656,57 +704,12 @@
+ 		return nil, err
+ 	}
+ 
+-	aliasGroups := make(map[string][]backendCandidate)
+-	metaMap := make(map[string]*BackendMetadata)
+-
+ 	for _, e := range entries {
+ 		if !e.IsDir() {
+ 			continue
+ 		}
+-		dir := e.Name()
+-		run := filepath.Join(systemState.Backend.BackendsPath, dir, runFile)
+-
+-		var metadata *BackendMetadata
+-		metadataPath := filepath.Join(systemState.Backend.BackendsPath, dir, metadataFile)
+-		if _, err := os.Stat(metadataPath); os.IsNotExist(err) {
+-			metadata = &BackendMetadata{Name: dir}
+-		} else {
+-			m, rerr := readBackendMetadata(filepath.Join(systemState.Backend.BackendsPath, dir))
+-			if rerr != nil {
+-				return nil, rerr
+-			}
+-			if m == nil {
+-				metadata = &BackendMetadata{Name: dir}
+-			} else {
+-				metadata = m
+-			}
+-		}
+-
+-		metaMap[dir] = metadata
+-
+-		// Concrete-backend entry
+-		if _, err := os.Stat(run); err == nil {
+-			backends[dir] = SystemBackend{
+-				Name:     dir,
+-				RunFile:  run,
+-				IsMeta:   false,
+-				Metadata: metadata,
+-			}
+-		}
+-
+-		// Alias candidates
+-		if metadata.Alias != "" {
+-			aliasGroups[metadata.Alias] = append(aliasGroups[metadata.Alias], backendCandidate{name: dir, runFile: run})
+-		}
+-
+-		// Meta backends indirection
+-		if metadata.MetaBackendFor != "" {
+-			backends[metadata.Name] = SystemBackend{
+-				Name:     metadata.Name,
+-				RunFile:  filepath.Join(systemState.Backend.BackendsPath, metadata.MetaBackendFor, runFile),
+-				IsMeta:   true,
+-				Metadata: metadata,
+-			}
++		if cerr := collectBackendDir(systemState.Backend.BackendsPath, e.Name(), false, backends, aliasGroups, metaMap); cerr != nil {
++			return nil, cerr
+ 		}
+ 	}
+ 

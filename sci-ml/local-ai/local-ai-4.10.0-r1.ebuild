@@ -35,6 +35,10 @@ SRC_URI="
 "
 S="${WORKDIR}/LocalAI-${PV}"
 
+# System-path backends read metadata.json (variant aliasing) — proposed
+# upstream; see the patch header.
+PATCHES=( "${FILESDIR}/local-ai-4.10.0-system-backend-metadata.patch" )
+
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64"
