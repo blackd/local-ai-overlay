@@ -106,6 +106,10 @@ src_configure() {
 	for v in $(audio_cpp_variants); do
 		local BUILD_DIR="${WORKDIR}/${P}_build-${v}"
 		local mycmakeargs=(
+			# No C++20 modules anywhere in the tree: the scan otherwise
+			# runs clang-scan-deps (from a DIFFERENT llvm than rocm's
+			# clang) against every hipcc command as plain C++.
+			-DCMAKE_CXX_SCAN_FOR_MODULES=OFF
 			# Compiles the model_specs catalog into the binary so the installed
 			# backend needs no model_specs directory (upstream deployment mode).
 			-DAUDIOCPP_DEPLOYMENT_BUILD=ON
@@ -129,15 +133,25 @@ src_configure() {
 			-DAUDIO_CPP_GRPC_BUILD_TESTS=$([[ ${v} == cpu ]] && usex test || echo OFF)
 		)
 		if [[ ${v} == rocm ]]; then
-			# Subshell: rocm_use_hipcc exports CC/CXX, which must not
-			# leak into the other variants' configures. CMake caches
-			# the compilers, so the compile phase needs no env.
 			(
-				rocm_use_hipcc
+				# Upstream drives this build with ROCm clang rather than
+				# hipcc: hipcc treats every .cpp as HIP source and
+				# device-compiles it for its built-in default arch
+				# (gfx906) when no offload arch is passed — the kernels'
+				# archs already travel via CMAKE_HIP_ARCHITECTURES. The
+				# subshell keeps CC/CXX out of the other variants;
+				# CMake caches the compilers, so compile needs no env.
+				local hipclang
+				hipclang=$(hipconfig --hipclangpath) && [[ -n ${hipclang} ]] \
+					|| die "hipconfig --hipclangpath failed"
+				local -x CC="${hipclang}/clang" CXX="${hipclang}/clang++"
+				local amdgpu_flags
+				amdgpu_flags=$(get_amdgpu_flags)
+				amdgpu_flags=${amdgpu_flags%;}
 				mycmakeargs+=(
-					-DAMDGPU_TARGETS="$(get_amdgpu_flags)"
-					-DGPU_TARGETS="$(get_amdgpu_flags)"
-					-DCMAKE_HIP_ARCHITECTURES="$(get_amdgpu_flags)"
+					-DAMDGPU_TARGETS="${amdgpu_flags}"
+					-DGPU_TARGETS="${amdgpu_flags}"
+					-DCMAKE_HIP_ARCHITECTURES="${amdgpu_flags}"
 				)
 				cmake_src_configure
 			) || die
