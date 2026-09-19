@@ -1,11 +1,18 @@
-Read metadata.json (alias, meta indirection) for system-path backends
-too — upstream only wires it for the user-managed dir, so system-
-packaged backend variants cannot alias. Shared helper, both scans.
-Proposed upstream.
-
 --- a/core/gallery/backends.go	2026-09-19 08:44:52.992875777 -0000
-+++ b/core/gallery/backends.go	2026-09-19 08:44:52.995638420 -0000
-@@ -624,23 +624,71 @@
++++ b/core/gallery/backends.go	2026-09-19 09:16:39.141795139 -0000
+@@ -77,8 +77,9 @@
+ 
+ // backendCandidate represents an installed concrete backend option for a given alias
+ type backendCandidate struct {
+-	name    string
+-	runFile string
++	name     string
++	runFile  string
++	isSystem bool
+ }
+ 
+ // readBackendMetadata reads the metadata JSON file for a backend
+@@ -624,23 +625,71 @@
  	return backends
  }
  
@@ -42,7 +49,7 @@ Proposed upstream.
 +
 +	// Alias candidates
 +	if metadata.Alias != "" {
-+		aliasGroups[metadata.Alias] = append(aliasGroups[metadata.Alias], backendCandidate{name: dir, runFile: run})
++		aliasGroups[metadata.Alias] = append(aliasGroups[metadata.Alias], backendCandidate{name: dir, runFile: run, isSystem: isSystem})
 +	}
 +
 +	// Meta backends indirection
@@ -87,7 +94,7 @@ Proposed upstream.
  				}
  			}
  		}
-@@ -656,57 +704,12 @@
+@@ -656,57 +705,12 @@
  		return nil, err
  	}
  
@@ -147,3 +154,11 @@ Proposed upstream.
  		}
  	}
  
+@@ -743,6 +747,7 @@
+ 			Name:     alias,
+ 			RunFile:  chosen.runFile,
+ 			IsMeta:   false,
++			IsSystem: chosen.isSystem,
+ 			Metadata: md,
+ 		}
+ 	}
