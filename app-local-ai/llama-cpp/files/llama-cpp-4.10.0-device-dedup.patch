@@ -1,0 +1,269 @@
+Deduplicate default llama.cpp devices in multi-accelerator builds: the
+same physical GPU registers once per compiled ggml backend and memory
+gets booked for every view. Views are matched by PCI bus id, the
+native backend wins, an explicit device: option or LLAMA_ARG_DEVICE
+overrides. Single-backend builds are unaffected. Proposed upstream.
+
+--- a/device_dedup.h	1970-01-01 00:00:00.000000000 -0000
++++ b/device_dedup.h	1970-01-01 00:00:00.000000000 -0000
+@@ -0,0 +1,83 @@
++#pragma once
++// Default-device deduplication for multi-accelerator builds: the same
++// physical GPU registers once per compiled ggml backend (e.g. ROCm0 and
++// Vulkan0 both naming one card), and with no device selection llama.cpp
++// books memory for every view. Identity is the PCI bus id ggml reports
++// per device. Standard library only: compiled and tested without an
++// engine checkout.
++
++#include <map>
++#include <string>
++#include <vector>
++
++namespace llama_grpc {
++
++enum class DevKind { GPU, ACCEL, CPU };
++
++struct DeviceInfo {
++    std::string name;      // registry name, e.g. "ROCm0", "Vulkan1"
++    std::string device_id; // PCI bus id; empty when unknown
++    DevKind kind;
++};
++
++// Native backends outrank the portability layers when both expose the
++// same physical device; an unrecognized backend ranks between the two.
++inline int device_backend_rank(const std::string & name) {
++    static const char * native[] = { "CUDA", "ROCm", "HIP", "SYCL", "Metal" };
++    for (size_t i = 0; i < sizeof(native) / sizeof(*native); i++) {
++        if (name.rfind(native[i], 0) == 0) {
++            return (int) i;
++        }
++    }
++    if (name.rfind("Vulkan", 0) == 0) return 100;
++    if (name.rfind("OpenCL", 0) == 0) return 101;
++    return 50;
++}
++
++// Returns the device names to offload to when the user selected none:
++// for every group of GPU devices sharing a PCI bus id, all but the
++// preferred backend's view are dropped. GPUs with unknown identity are
++// kept, ACCEL devices are kept, CPU is never listed (it is the host
++// fallback, not an offload target). Returns an empty vector when no
++// duplicate exists — the caller then leaves the default behavior
++// untouched.
++inline std::vector<std::string> dedup_default_devices(const std::vector<DeviceInfo> & devices) {
++    std::map<std::string, const DeviceInfo *> best;
++    bool duplicate = false;
++    for (const auto & d : devices) {
++        if (d.kind != DevKind::GPU || d.device_id.empty()) {
++            continue;
++        }
++        auto it = best.find(d.device_id);
++        if (it == best.end()) {
++            best.emplace(d.device_id, &d);
++        } else {
++            duplicate = true;
++            if (device_backend_rank(d.name) < device_backend_rank(it->second->name)) {
++                it->second = &d;
++            }
++        }
++    }
++    if (!duplicate) {
++        return {};
++    }
++
++    std::vector<std::string> keep;
++    for (const auto & d : devices) {
++        switch (d.kind) {
++        case DevKind::CPU:
++            continue;
++        case DevKind::ACCEL:
++            keep.push_back(d.name);
++            continue;
++        case DevKind::GPU:
++            if (!d.device_id.empty() && best.at(d.device_id)->name != d.name) {
++                continue; // a duplicate view of a device kept under another backend
++            }
++            keep.push_back(d.name);
++        }
++    }
++    return keep;
++}
++
++} // namespace llama_grpc
+--- a/device_dedup_test.cpp	1970-01-01 00:00:00.000000000 -0000
++++ b/device_dedup_test.cpp	1970-01-01 00:00:00.000000000 -0000
+@@ -0,0 +1,72 @@
++#include "device_dedup.h"
++
++#include <cstdio>
++
++using llama_grpc::DevKind;
++using llama_grpc::DeviceInfo;
++using llama_grpc::dedup_default_devices;
++
++int main() {
++    // Same card via ROCm and Vulkan: the Vulkan view is dropped.
++    {
++        auto keep = dedup_default_devices({
++            { "ROCm0", "0000:c1:00.0", DevKind::GPU },
++            { "Vulkan0", "0000:c1:00.0", DevKind::GPU },
++        });
++        if (keep != std::vector<std::string>{ "ROCm0" }) {
++            std::fprintf(stderr, "single-card dedup did not keep the native view\n");
++            return 1;
++        }
++    }
++    // Twin cards: each pair dedups to its own native view.
++    {
++        auto keep = dedup_default_devices({
++            { "ROCm0", "0000:c1:00.0", DevKind::GPU },
++            { "ROCm1", "0000:c2:00.0", DevKind::GPU },
++            { "Vulkan0", "0000:c1:00.0", DevKind::GPU },
++            { "Vulkan1", "0000:c2:00.0", DevKind::GPU },
++        });
++        if (keep != (std::vector<std::string>{ "ROCm0", "ROCm1" })) {
++            std::fprintf(stderr, "twin-card dedup paired the views wrongly\n");
++            return 1;
++        }
++    }
++    // A genuine Vulkan-only card participates alongside the deduped one.
++    {
++        auto keep = dedup_default_devices({
++            { "ROCm0", "0000:c1:00.0", DevKind::GPU },
++            { "Vulkan0", "0000:c1:00.0", DevKind::GPU },
++            { "Vulkan1", "0000:03:00.0", DevKind::GPU },
++        });
++        if (keep != (std::vector<std::string>{ "ROCm0", "Vulkan1" })) {
++            std::fprintf(stderr, "vulkan-only card was not kept\n");
++            return 1;
++        }
++    }
++    // Unknown identity is never dropped; ACCEL kept; CPU never listed.
++    {
++        auto keep = dedup_default_devices({
++            { "ROCm0", "0000:c1:00.0", DevKind::GPU },
++            { "Vulkan0", "0000:c1:00.0", DevKind::GPU },
++            { "Vulkan1", "", DevKind::GPU },
++            { "BLAS", "", DevKind::ACCEL },
++            { "CPU", "", DevKind::CPU },
++        });
++        if (keep != (std::vector<std::string>{ "ROCm0", "Vulkan1", "BLAS" })) {
++            std::fprintf(stderr, "unknown-id/accel/cpu handling wrong\n");
++            return 1;
++        }
++    }
++    // No duplicates: empty result, caller keeps the default behavior.
++    {
++        auto keep = dedup_default_devices({
++            { "ROCm0", "0000:c1:00.0", DevKind::GPU },
++            { "CPU", "", DevKind::CPU },
++        });
++        if (!keep.empty()) {
++            std::fprintf(stderr, "dedup fired without duplicates\n");
++            return 1;
++        }
++    }
++    return 0;
++}
+--- a/grpc-server.cpp	2026-09-20 10:42:47.796773572 -0000
++++ b/grpc-server.cpp	2026-09-20 10:43:34.703288001 -0000
+@@ -57,6 +57,7 @@
+ #include "thread_params.h"
+ #include "message_content.h"
+ #include "passthrough_options.h"
++#include "device_dedup.h"
+ #include "stream_peer.h"
+ #include "tts_request_options.h"
+ #include <getopt.h>
+@@ -1428,6 +1429,56 @@
+             passthrough_draft_gpu_layers);
+     }
+ 
++    // Multi-accelerator builds register the same physical GPU once per
++    // compiled backend; with no device selection llama.cpp books memory
++    // for every view of the card. Drop duplicate views by PCI bus id,
++    // preferring the native backend. Single-BUILD_TYPE images register
++    // one view per card and are unaffected. An explicit device: option
++    // or LLAMA_ARG_DEVICE wins by running before this and filling
++    // params.devices.
++    if (params.devices.empty()) {
++        std::vector<llama_grpc::DeviceInfo> devs;
++        for (size_t i = 0; i < ggml_backend_dev_count(); i++) {
++            ggml_backend_dev_t dev = ggml_backend_dev_get(i);
++            ggml_backend_dev_props props;
++            ggml_backend_dev_get_props(dev, &props);
++            llama_grpc::DevKind kind = llama_grpc::DevKind::CPU;
++            if (props.type == GGML_BACKEND_DEVICE_TYPE_GPU ||
++            props.type == GGML_BACKEND_DEVICE_TYPE_IGPU) {
++                kind = llama_grpc::DevKind::GPU;
++            } else if (props.type == GGML_BACKEND_DEVICE_TYPE_ACCEL) {
++                kind = llama_grpc::DevKind::ACCEL;
++            }
++            devs.push_back({
++                props.name ? props.name : "",
++                props.device_id ? props.device_id : "",
++                kind,
++            });
++        }
++        const auto keep = llama_grpc::dedup_default_devices(devs);
++        if (!keep.empty()) {
++            auto kept = [&keep](const std::string & name) {
++                for (const auto & k : keep) {
++                    if (k == name) return true;
++                }
++                return false;
++            };
++            for (const auto & name : keep) {
++                if (ggml_backend_dev_t dev = ggml_backend_dev_by_name(name.c_str())) {
++                    params.devices.push_back(dev);
++                }
++            }
++            for (const auto & d : devs) {
++                if (d.kind == llama_grpc::DevKind::GPU && !kept(d.name)) {
++                    fprintf(stderr,
++                        "[llama-cpp] device %s is another backend's view of PCI %s, not using it (set the device: option to override)\n",
++                        d.name.c_str(), d.device_id.c_str());
++                }
++            }
++        }
++    }
++
++
+     // The library initializer now creates both threadpools before the server
+     // can apply llama_context's fallback for the -1 batch-thread sentinel.
+     params.cpuparams_batch.n_threads = llama_grpc::resolve_batch_threads(
+--- a/CMakeLists.txt	2026-09-20 10:42:47.796352736 -0000
++++ b/CMakeLists.txt	2026-09-20 10:43:34.704605898 -0000
+@@ -62,7 +62,7 @@
+   ${hw_proto_srcs}
+   ${hw_proto_hdrs} )
+ 
+-add_executable(${TARGET} grpc-server.cpp json.hpp httplib.h)
++add_executable(${TARGET} grpc-server.cpp json.hpp httplib.h device_dedup.h)
+ 
+ target_include_directories(${TARGET} PRIVATE ../llava)
+ target_include_directories(${TARGET} PRIVATE ${CMAKE_SOURCE_DIR})
+@@ -131,6 +131,12 @@
+     target_compile_features(model_load_error_test PRIVATE cxx_std_17)
+     add_test(NAME model_load_error_test COMMAND model_load_error_test)
+ 
++    # Default-device dedup for multi-accelerator builds (standard library only).
++    add_executable(device_dedup_test device_dedup_test.cpp device_dedup.h)
++    target_include_directories(device_dedup_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
++    target_compile_features(device_dedup_test PRIVATE cxx_std_17)
++    add_test(NAME device_dedup_test COMMAND device_dedup_test)
++
+     # Dead-stream tracker (standard library only).
+     add_executable(stream_peer_test stream_peer_test.cpp stream_peer.h)
+     target_include_directories(stream_peer_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+--- a/prepare.sh	2026-09-20 10:42:47.798105116 -0000
++++ b/prepare.sh	2026-09-20 10:44:32.555564485 -0000
+@@ -55,6 +55,8 @@
+ cp -r message_content_test.cpp llama.cpp/tools/grpc-server/
+ # Generic passthrough parser staging and its standalone regression test.
+ cp -r passthrough_options.h llama.cpp/tools/grpc-server/
++cp -r device_dedup.h llama.cpp/tools/grpc-server/
++cp -r device_dedup_test.cpp llama.cpp/tools/grpc-server/
+ cp -r passthrough_options_test.cpp llama.cpp/tools/grpc-server/
+ # TTS request validation (included by grpc-server.cpp) and its standalone
+ # regression test.

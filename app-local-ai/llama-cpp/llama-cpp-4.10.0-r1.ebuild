@@ -72,6 +72,12 @@ src_prepare() {
 	# probe) and registers the subdirectory with CMake. It is entirely
 	# offline, so run it as-is instead of replicating logic that shifts
 	# between releases.
+	# Default-device dedup for multi-accelerator builds — proposed
+	# upstream; see the patch header. Applied to the wrapper sources
+	# BEFORE prepare.sh copies them into the llama.cpp tree.
+	eapply -d "${WORKDIR}/LocalAI-${PV}/backend/cpp/llama-cpp" -- \
+		"${FILESDIR}/llama-cpp-4.10.0-device-dedup.patch"
+
 	pushd "${WORKDIR}/LocalAI-${PV}/backend/cpp/llama-cpp" >/dev/null || die
 	bash ./prepare.sh || die "prepare.sh failed"
 	popd >/dev/null || die
