@@ -2,7 +2,7 @@ dev-lang/go 1.27.1
 net-libs/grpc 1.80.0
 dev-libs/protobuf 34.2
 dev-cpp/abseil-cpp 20260107.1
-net-libs/nodejs 26.8.2
+net-libs/nodejs 26.8.2-r2
 net-misc/curl 8.22.0
 sci-libs/openblas 0.3.34
 media-libs/shaderc 2026.3
