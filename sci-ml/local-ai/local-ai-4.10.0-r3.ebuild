@@ -42,6 +42,9 @@ PATCHES=(
 	# OCI downloads stage beside the destination, not tmpfs /tmp —
 	# proposed upstream; see the patch header.
 	"${FILESDIR}/local-ai-4.10.0-oci-staging-dir.patch"
+	# Manual model imports with remote assets download through the
+	# gallery job queue — proposed upstream; see the patch header.
+	"${FILESDIR}/local-ai-4.10.0-manual-import-job-queue.patch"
 )
 
 LICENSE="MIT"

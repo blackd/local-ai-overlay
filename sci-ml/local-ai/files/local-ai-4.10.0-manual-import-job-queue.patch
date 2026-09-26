@@ -1,0 +1,135 @@
+Manual model imports whose config references remote assets (download_files,
+URI-valued model/mmproj) go through the gallery job queue - job UUID +
+/models/jobs/{uuid} progress, same as gallery installs and URI imports -
+instead of downloading synchronously inside the /models/import request.
+Config-only imports keep the synchronous path. Proposed upstream.
+
+diff --git a/core/http/endpoints/localai/edit_model_test.go b/core/http/endpoints/localai/edit_model_test.go
+index 223943e46..e09283422 100644
+--- a/core/http/endpoints/localai/edit_model_test.go
++++ b/core/http/endpoints/localai/edit_model_test.go
+@@ -183,7 +183,7 @@ var _ = Describe("Edit Model test", func() {
+ 			app := echo.New()
+ 			// Set up a simple renderer for the test
+ 			app.Renderer = &testRenderer{}
+-			app.POST("/import-model", ImportModelEndpoint(modelConfigLoader, nil, applicationConfig))
++			app.POST("/import-model", ImportModelEndpoint(modelConfigLoader, nil, applicationConfig, nil))
+ 			app.GET("/edit-model/:name", GetEditModelPage(modelConfigLoader, applicationConfig))
+ 
+ 			requestBody := bytes.NewBufferString(`{"name": "foo", "backend": "foo", "model": "foo"}`)
+diff --git a/core/http/endpoints/localai/import_model.go b/core/http/endpoints/localai/import_model.go
+index b3cf491eb..a0f4224d2 100644
+--- a/core/http/endpoints/localai/import_model.go
++++ b/core/http/endpoints/localai/import_model.go
+@@ -125,7 +125,7 @@ func ImportModelURIEndpoint(cl *config.ModelConfigLoader, appConfig *config.Appl
+ }
+ 
+ // ImportModelEndpoint handles creating new model configurations
+-func ImportModelEndpoint(cl *config.ModelConfigLoader, gs *galleryop.GalleryService, appConfig *config.ApplicationConfig) echo.HandlerFunc {
++func ImportModelEndpoint(cl *config.ModelConfigLoader, gs *galleryop.GalleryService, appConfig *config.ApplicationConfig, opcache *galleryop.OpCache) echo.HandlerFunc {
+ 	return func(c echo.Context) error {
+ 		// Get the raw body
+ 		body, err := io.ReadAll(c.Request().Body)
+@@ -220,6 +220,37 @@ func ImportModelEndpoint(cl *config.ModelConfigLoader, gs *galleryop.GalleryServ
+ 			return c.JSON(http.StatusInternalServerError, response)
+ 		}
+ 
++		// A config referencing remote assets is a download, not just a file
++		// write: route it through the gallery op queue so the UI tracks it
++		// like a gallery install (job UUID + /models/jobs/{uuid}), instead
++		// of downloading synchronously inside this request via Preload. The
++		// op writes the config file and reloads once the downloads finish;
++		// configs with no remote assets keep the fast synchronous path.
++		if files := remoteAssetFiles(&modelConfig); len(files) > 0 && gs != nil {
++			jobUUID, err := uuid.NewUUID()
++			if err != nil {
++				return err
++			}
++			if opcache != nil {
++				opcache.Set(modelConfig.Name, jobUUID.String())
++			}
++			gs.EnqueueModelOp(galleryop.ManagementOp[gallery.GalleryModel, gallery.ModelConfig]{
++				Req:                gallery.GalleryModel{Overrides: map[string]any{}},
++				ID:                 jobUUID.String(),
++				GalleryElementName: modelConfig.Name,
++				GalleryElement: &gallery.ModelConfig{
++					Name:       modelConfig.Name,
++					ConfigFile: string(yamlData),
++					Files:      files,
++				},
++				BackendGalleries: appConfig.BackendGalleries,
++			})
++			return c.JSON(200, schema.GalleryResponse{
++				ID:        jobUUID.String(),
++				StatusURL: fmt.Sprintf("%smodels/jobs/%s", httpUtils.BaseURL(c), jobUUID.String()),
++			})
++		}
++
+ 		// Write the file
+ 		if err := os.WriteFile(configPath, yamlData, 0644); err != nil {
+ 			response := ModelResponse{
+@@ -261,3 +292,22 @@ func ImportModelEndpoint(cl *config.ModelConfigLoader, gs *galleryop.GalleryServ
+ 		return c.JSON(200, response)
+ 	}
+ }
++
++// remoteAssetFiles lists the downloads a config implies: explicit
++// download_files entries, and URI-valued model/mmproj fields under the
++// same on-disk names the config loader's preload would give them — so
++// the later preload finds the files present and the config needs no
++// rewriting.
++func remoteAssetFiles(c *config.ModelConfig) []gallery.File {
++	var files []gallery.File
++	for _, f := range c.DownloadFiles {
++		files = append(files, gallery.File{Filename: f.Filename, SHA256: f.SHA256, URI: string(f.URI)})
++	}
++	if c.IsModelURL() {
++		files = append(files, gallery.File{Filename: c.ModelFileName(), URI: c.Model})
++	}
++	if c.IsMMProjURL() {
++		files = append(files, gallery.File{Filename: c.MMProjFileName(), URI: c.MMProj})
++	}
++	return files
++}
+diff --git a/core/http/react-ui/src/pages/ImportModel.jsx b/core/http/react-ui/src/pages/ImportModel.jsx
+index c66706f96..74de69a2d 100644
+--- a/core/http/react-ui/src/pages/ImportModel.jsx
++++ b/core/http/react-ui/src/pages/ImportModel.jsx
+@@ -382,12 +382,22 @@ export default function ImportModel() {
+     if (!yamlContent.trim()) { addToast(t('toasts.noYaml'), 'error'); return }
+     setIsSubmitting(true)
+     try {
+-      await modelsApi.importConfig(yamlContent, 'application/x-yaml')
++      const result = await modelsApi.importConfig(yamlContent, 'application/x-yaml')
++      // A config referencing remote assets comes back as a queued job
++      // (same shape as the URI import) and startJobPolling owns the
++      // submitting state until the job ends; a config-only import
++      // completes synchronously and navigates straight to the model list.
++      const jobId = result?.uuid || result?.ID
++      if (jobId) {
++        addToast(t('toasts.started'), 'success')
++        startJobPolling(jobId)
++        return
++      }
+       addToast(t('toasts.importedYaml'), 'success')
+       navigate('/app/models?view=installed')
++      setIsSubmitting(false)
+     } catch (err) {
+       addToast(t('toasts.importFailed', { message: err.message }), 'error')
+-    } finally {
+       setIsSubmitting(false)
+     }
+   }
+diff --git a/core/http/routes/localai.go b/core/http/routes/localai.go
+index 1d3c7adaf..7e48e8e9e 100644
+--- a/core/http/routes/localai.go
++++ b/core/http/routes/localai.go
+@@ -80,7 +80,7 @@ func RegisterLocalAIRoutes(router *echo.Echo,
+ 		router.POST("/backends/upgrades/check", backendGalleryEndpointService.CheckUpgradesEndpoint(), adminMiddleware)
+ 		router.POST("/backends/upgrade/:name", backendGalleryEndpointService.UpgradeBackendEndpoint(), adminMiddleware)
+ 		// Custom model import endpoint
+-		router.POST("/models/import", localai.ImportModelEndpoint(cl, galleryService, appConfig), adminMiddleware)
++		router.POST("/models/import", localai.ImportModelEndpoint(cl, galleryService, appConfig, opcache), adminMiddleware)
+ 
+ 		// URI model import endpoint
+ 		router.POST("/models/import-uri", localai.ImportModelURIEndpoint(cl, appConfig, galleryService, opcache), adminMiddleware)
