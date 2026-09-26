@@ -69,6 +69,10 @@ src_prepare() {
 	# sources and registers the subdirectory with CMake. It is entirely
 	# offline, so run it as-is instead of replicating logic that shifts
 	# between releases.
+	# Unlike mainline llama-cpp's, this prepare.sh expects the glue
+	# directory to exist — upstream's Makefile mkdirs it before calling
+	# the script.
+	mkdir -p "${S}/examples/grpc-server" || die
 	pushd "${WORKDIR}/LocalAI-${PV}/backend/cpp/ik-llama-cpp" >/dev/null || die
 	bash ./prepare.sh || die "prepare.sh failed"
 	popd >/dev/null || die
