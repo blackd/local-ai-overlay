@@ -9,6 +9,8 @@
 		<remote-id type="github">mudler/LocalAI</remote-id>
 	</upstream>
 	<use>
+		<flag name="acestep-cpp">Install the acestep.cpp music-generation backend (<pkg>app-local-ai/acestep-cpp</pkg>)</flag>
+		<flag name="ik-llama-cpp">Install the ik_llama.cpp text-generation backend (<pkg>app-local-ai/ik-llama-cpp</pkg>)</flag>
 		<flag name="llama-cpp">Install the llama.cpp text-generation backend (<pkg>app-local-ai/llama-cpp</pkg>)</flag>
 		<flag name="audio-cpp">Install the audio backend (<pkg>app-local-ai/audio-cpp</pkg>)</flag>
 		<flag name="bonsai">Install the Bonsai 1-bit/ternary text-generation backend (<pkg>app-local-ai/bonsai</pkg>)</flag>
