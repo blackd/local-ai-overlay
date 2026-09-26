@@ -2,7 +2,10 @@ Manual model imports whose config references remote assets (download_files,
 URI-valued model/mmproj) go through the gallery job queue - job UUID +
 /models/jobs/{uuid} progress, same as gallery installs and URI imports -
 instead of downloading synchronously inside the /models/import request.
-Config-only imports keep the synchronous path. Proposed upstream.
+Config-only imports keep the synchronous path. Also fixes the import
+page's job polling terminal check (raw /models/jobs reports `processed`,
+never `completed`), which left the spinner running after the job ended.
+Proposed upstream.
 
 diff --git a/core/http/endpoints/localai/edit_model_test.go b/core/http/endpoints/localai/edit_model_test.go
 index 223943e46..e09283422 100644
@@ -92,10 +95,48 @@ index b3cf491eb..a0f4224d2 100644
 +	return files
 +}
 diff --git a/core/http/react-ui/src/pages/ImportModel.jsx b/core/http/react-ui/src/pages/ImportModel.jsx
-index c66706f96..74de69a2d 100644
+index c66706f96..cf1345b89 100644
 --- a/core/http/react-ui/src/pages/ImportModel.jsx
 +++ b/core/http/react-ui/src/pages/ImportModel.jsx
-@@ -382,12 +382,22 @@ export default function ImportModel() {
+@@ -241,16 +241,6 @@ export default function ImportModel() {
+     pollRef.current = setInterval(async () => {
+       try {
+         const data = await modelsApi.getJobStatus(jobId)
+-        if (data.completed) {
+-          transferRateRef.current.reset(jobId)
+-          clearInterval(pollRef.current)
+-          pollRef.current = null
+-          setIsSubmitting(false)
+-          setJob(null)
+-          addToast(t('toasts.imported'), 'success')
+-          navigate('/app/models?view=installed')
+-          return
+-        }
+         if (data.error || (data.message && data.message.startsWith('error:'))) {
+           transferRateRef.current.reset(jobId)
+           clearInterval(pollRef.current)
+@@ -265,6 +255,20 @@ export default function ImportModel() {
+           addToast(t('toasts.importFailed', { message: msg }), 'error')
+           return
+         }
++        // The raw /models/jobs endpoint reports `processed`, not the
++        // `completed` the /api/models/job shim synthesizes — checking
++        // only `completed` left the poll spinning after the job ended.
++        // Errors are handled above: failed jobs also set `processed`.
++        if (data.completed || data.processed) {
++          transferRateRef.current.reset(jobId)
++          clearInterval(pollRef.current)
++          pollRef.current = null
++          setIsSubmitting(false)
++          setJob(null)
++          addToast(t('toasts.imported'), 'success')
++          navigate('/app/models?view=installed')
++          return
++        }
+         // Keep the whole status. /api/operations carries the same job (the
+         // import endpoint registers it in the opcache) but drops it the moment
+         // it finishes, which is indistinguishable from a cancel — so terminal
+@@ -382,12 +386,22 @@ export default function ImportModel() {
      if (!yamlContent.trim()) { addToast(t('toasts.noYaml'), 'error'); return }
      setIsSubmitting(true)
      try {
