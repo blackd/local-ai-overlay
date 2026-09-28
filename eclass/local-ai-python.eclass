@@ -71,8 +71,8 @@ RDEPEND="${PYTHON_DEPS}
 	~app-local-ai/python-common-${PV}
 	$(python_gen_cond_dep '
 		sci-ml/pytorch[${PYTHON_SINGLE_USEDEP}]
-		dev-python/safetensors[${PYTHON_USEDEP}]
-		dev-python/tokenizers[${PYTHON_USEDEP}]
+		sci-ml/safetensors[${PYTHON_USEDEP}]
+		sci-ml/tokenizers[${PYTHON_USEDEP}]
 		>=dev-python/grpcio-1.76.0[${PYTHON_USEDEP}]
 		dev-python/protobuf[${PYTHON_USEDEP}]
 		dev-python/anyio[${PYTHON_USEDEP}]

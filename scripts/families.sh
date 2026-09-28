@@ -15,10 +15,7 @@ declare -A FAMILY_DIRS=(
 	[gitea-runner]="dev-util/gitea-runner"
 	[zot]="app-containers/zot"
 	[dagu]="sys-process/dagu"
-	[safetensors]="dev-python/safetensors"
-	[tokenizers]="dev-python/tokenizers"
 	[ormsgpack]="dev-python/ormsgpack"
-	[hf-xet]="dev-python/hf-xet"
 )
 
 # Resolve a family's dirs; the APP_LOCAL_AI_REST marker expands to every

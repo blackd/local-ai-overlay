@@ -3,3 +3,6 @@ move app-localai/audio-cpp app-local-ai/audio-cpp
 move app-localai/piper app-local-ai/piper
 move acct-user/localai acct-user/local-ai
 move acct-group/localai acct-group/local-ai
+move dev-python/safetensors sci-ml/safetensors
+move dev-python/tokenizers sci-ml/tokenizers
+move dev-python/hf-xet sci-ml/hf_xet

@@ -51,7 +51,7 @@ RDEPEND+="
 	$(python_gen_cond_dep '
 		sci-ml/torchaudio[${PYTHON_SINGLE_USEDEP}]
 		app-arch/brotli[python,${PYTHON_USEDEP}]
-		dev-python/hf-xet[${PYTHON_USEDEP}]
+		sci-ml/hf_xet[${PYTHON_USEDEP}]
 		dev-python/llvmlite[${PYTHON_USEDEP}]
 		dev-python/numba[${PYTHON_USEDEP}]
 		dev-python/ormsgpack[${PYTHON_USEDEP}]
