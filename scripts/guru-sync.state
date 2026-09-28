@@ -5,3 +5,4 @@ sci-libs/onnxruntime-bin c728365ec3005437c6d5a2b4619d059a55967b01
 sci-libs/dlpack 0101b5d46c1d8c163d901db1f9e20fde16c8a3b3
 dev-cpp/safeint e20912358a42d926063111e9dc281e1888a0f2b7
 dev-python/tiktoken 3838ee4178a217362cd4008531a66b967f823bc3
+sci-libs/hipSOLVER a2133adce9e603eb73c7b60d90783c36881811a0 gentoo

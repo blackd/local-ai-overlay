@@ -96,26 +96,32 @@ for pkg in $(printf '%s\n' "${!UPSTREAMS[@]}" | sort); do
 	file_issue "${existing}" "update: ${pkg} ${up} is available (have ${cur})" "${body}"
 done
 
-while read -r pkg synced; do
-	latest=$(curl -sf "https://api.github.com/repos/gentoo-mirror/guru/commits?path=${pkg}&per_page=1" | jq -r '.[0].sha // empty')
+while read -r pkg synced src; do
+	src=${src:-guru}
+	case "${src}" in
+		guru) repo=gentoo-mirror/guru ;;
+		gentoo) repo=gentoo/gentoo ;;
+		*) echo "warn: unknown sync source ${src} for ${pkg}"; rc=1; continue ;;
+	esac
+	latest=$(curl -sf "https://api.github.com/repos/${repo}/commits?path=${pkg}&per_page=1" | jq -r '.[0].sha // empty')
 	if [ -z "${latest}" ]; then
-		echo "warn: cannot read GURU history for ${pkg}"
+		echo "warn: cannot read ${src} history for ${pkg}"
 		rc=1
 		continue
 	fi
-	existing=$(open_issue "guru-sync: ${pkg} ")
+	existing=$(open_issue "${src}-sync: ${pkg} ")
 	if [ "${latest}" = "${synced}" ]; then
-		echo "in sync with GURU: ${pkg}"
+		echo "in sync with ${src}: ${pkg}"
 		[ -n "${existing}" ] && close_issue "${existing%% *}"
 		continue
 	fi
-	body="GURU history: https://github.com/gentoo-mirror/guru/commits/master/${pkg}
+	body="Source history: https://github.com/${repo}/commits/master/${pkg}
 
 After copying the changes (minus our deviations), record the sync:
 \`\`\`
-sed -i 's|^${pkg} .*|${pkg} ${latest}|' scripts/guru-sync.state
+sed -i 's|^${pkg} .*|${pkg} ${latest} ${src}|' scripts/guru-sync.state
 \`\`\`"
-	file_issue "${existing}" "guru-sync: ${pkg} changed in GURU (${latest:0:12})" "${body}"
+	file_issue "${existing}" "${src}-sync: ${pkg} changed in ${src} (${latest:0:12})" "${body}"
 done < scripts/guru-sync.state
 
 # System build dependencies: a version bump in ::gentoo can break every
