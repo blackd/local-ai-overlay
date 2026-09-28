@@ -13,8 +13,7 @@ EAPI=8
 
 DISTUTILS_USE_PEP517=hatchling
 DISTUTILS_SINGLE_IMPL=1
-# Upstream tests 3.10-3.12 and enforces requires-python <3.13.
-PYTHON_COMPAT=( python3_12 )
+PYTHON_COMPAT=( python3_{12..14} )
 
 inherit distutils-r1
 
@@ -58,6 +57,13 @@ src_prepare() {
 	# installed metadata, so `soup env check` sees clean bounds.
 	sed -i 's/"typer>=0.9.0,<0.21.0",/"typer>=0.9.0",/' pyproject.toml || die
 	grep -q '"typer>=0.9.0",' pyproject.toml || die "typer pin relax did not apply"
+
+	# Upstream caps requires-python at <3.13 to keep pip users inside its
+	# CI-tested torch-wheel matrix (loader crashes in libc10.so on
+	# untested interpreters, upstream #358). That hazard does not exist
+	# here: sci-ml/pytorch is built from source for the active python.
+	sed -i 's/requires-python = ">=3.10,<3.13"/requires-python = ">=3.10"/' pyproject.toml || die
+	grep -q 'requires-python = ">=3.10"' pyproject.toml || die "requires-python relax did not apply"
 }
 
 pkg_postinst() {
