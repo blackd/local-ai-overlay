@@ -122,6 +122,20 @@ local-ai-python_install_venv() {
 		"${WORKDIR}"/wheels/*.whl || die
 	# The venv's paths must not remember the image root.
 	find "${ED}${BACKEND_DIR}/venv/bin" -type f -exec sed -i "s:${D}::g" {} + || die
+
+	# The 4.x transformers wheels ceiling tokenizers at <=0.23.0, which
+	# predates the tree's 0.23.2; 0.23.0 itself is allowed, so the 0.23
+	# series API is what the ceiling meant to admit. Relax the runtime
+	# dependency check to the next minor — same resolution-and-API-checked
+	# treatment as fish-speech's pydantic relax. The smoke test below
+	# proves the closure imports against the tree tokenizers.
+	local table
+	for table in "${ED}${BACKEND_DIR}"/venv/lib/*/site-packages/transformers/dependency_versions_table.py; do
+		[[ -e ${table} ]] || continue
+		sed -i 's|"tokenizers": "tokenizers>=\([0-9.]*\),<=0\.23\.0"|"tokenizers": "tokenizers>=\1,<0.24"|' "${table}" || die
+		grep -q 'tokenizers>=.*,<0.24' "${table}" || die "tokenizers ceiling relax did not apply"
+	done
+
 	python_optimize "${ED}${BACKEND_DIR}/venv/lib"
 }
 
