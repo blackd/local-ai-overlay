@@ -14,10 +14,10 @@ HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"
 LICENSE="metapackage"
 SLOT="0"
 KEYWORDS="~amd64"
-IUSE="+acestep-cpp +audio-cpp +bonsai +crispasr +depth-anything +diffusers +fish-speech +ik-llama-cpp +llama-cpp +parakeet-cpp +piper +qwen3-tts-cpp +rfdetr-cpp +stablediffusion-ggml +vibevoice-cpp +vllm-cpp +whisper"
+IUSE="+acestep-cpp +audio-cpp +bonsai +crispasr +depth-anything +diffusers +fish-speech +ik-llama-cpp +llama-cpp +parakeet-cpp +piper +qwen3-tts-cpp +rfdetr-cpp +silero-vad +stablediffusion-ggml +vibevoice-cpp +vllm-cpp +whisper"
 # An empty meta package is a configuration error: the whole point is to
 # have at least one inference backend installed.
-REQUIRED_USE="|| ( acestep-cpp audio-cpp bonsai crispasr depth-anything diffusers fish-speech ik-llama-cpp llama-cpp parakeet-cpp piper qwen3-tts-cpp rfdetr-cpp stablediffusion-ggml vibevoice-cpp vllm-cpp whisper )"
+REQUIRED_USE="|| ( acestep-cpp audio-cpp bonsai crispasr depth-anything diffusers fish-speech ik-llama-cpp llama-cpp parakeet-cpp piper qwen3-tts-cpp rfdetr-cpp silero-vad stablediffusion-ggml vibevoice-cpp vllm-cpp whisper )"
 
 RDEPEND="
 	acestep-cpp? ( app-local-ai/acestep-cpp )
@@ -33,6 +33,7 @@ RDEPEND="
 	piper? ( app-local-ai/piper )
 	qwen3-tts-cpp? ( app-local-ai/qwen3-tts-cpp )
 	rfdetr-cpp? ( app-local-ai/rfdetr-cpp )
+	silero-vad? ( app-local-ai/silero-vad )
 	stablediffusion-ggml? ( app-local-ai/stablediffusion-ggml )
 	vibevoice-cpp? ( app-local-ai/vibevoice-cpp )
 	vllm-cpp? ( app-local-ai/vllm-cpp )
