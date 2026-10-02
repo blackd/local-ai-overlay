@@ -58,6 +58,17 @@ LICENSE="MIT"
 SLOT="0"
 
 IUSE="cuda native openblas rocm vulkan video_cards_amdgpu"
+# CPU kernel selection, tree-style (sci-ml/ggml precedent): ggml's
+# AVX-family kernels are option-gated — GGML_AVX512 and friends add
+# dedicated sources and dispatch entries — not merely -march macro-gated,
+# so CFLAGS alone under-builds the CPU backend. The conservative core
+# set mirrors upstream's avx/avx2/avx512 variant matrix; engines with
+# older ggml forks ignore unknown GGML_* options harmlessly. With
+# USE=native, ggml's own -march=native probing runs in addition — the
+# explicit toggles stay authoritative for kernel selection either way.
+_ggml_cpu_flags=( avx avx2 avx512f bmi2 f16c fma3 )
+IUSE+=" ${_ggml_cpu_flags[*]/#/cpu_flags_x86_}"
+unset _ggml_cpu_flags
 # Any selected amdgpu_targets_* flag (typically expanded from AMDGPU_TARGETS
 # in make.conf) requires USE=rocm — otherwise the target flags apply to a
 # non-HIP build and break it. Derive "flag? ( rocm )" for every target the
@@ -114,6 +125,13 @@ local-ai-ggml_src_configure() {
 		# Respect the user's CFLAGS instead of -march=native probing,
 		# unless they opt in via USE=native.
 		-DGGML_NATIVE=$(usex native)
+		# Tree-style CPU kernel gates (see IUSE comment above).
+		-DGGML_AVX=$(usex cpu_flags_x86_avx)
+		-DGGML_AVX2=$(usex cpu_flags_x86_avx2)
+		-DGGML_AVX512=$(usex cpu_flags_x86_avx512f)
+		-DGGML_BMI2=$(usex cpu_flags_x86_bmi2)
+		-DGGML_F16C=$(usex cpu_flags_x86_f16c)
+		-DGGML_FMA=$(usex cpu_flags_x86_fma3)
 		-DGGML_BLAS=$(usex openblas)
 	)
 	local v
