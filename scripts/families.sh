@@ -8,6 +8,7 @@
 # orders that).
 declare -A FAMILY_DIRS=(
 	[local-ai]="sci-ml/local-ai APP_LOCAL_AI_REST"
+	[rerankers]="app-local-ai/rerankers"
 	[python-common]="app-local-ai/python-common"
 	[diffusers]="app-local-ai/diffusers"
 	[fish-speech]="app-local-ai/fish-speech"
