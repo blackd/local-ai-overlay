@@ -8,6 +8,9 @@
 # for whichever python PYTHON_SINGLE_TARGET picked, which is only
 # interpreter-portable for py3-none-any wheels; anything compiled
 # belongs in a system package instead (system-deps-first policy).
+# A "nobin:" prefix on a requirement forces building it from its sdist
+# (--no-binary) instead of accepting PyPI's prebuilt wheel — used for
+# the main package of a tool or backend, which we build, not fetch.
 set -euo pipefail
 
 FAMILY="${1:?usage: gen-wheels.sh <family> <version> <package>...}"
@@ -21,7 +24,10 @@ trap 'rm -rf "$WORK"' EXIT
 
 mkdir "$WORK/wheels"
 for p in "$@"; do
-	python3 -m pip wheel --no-deps --wheel-dir "$WORK/wheels" "$p"
+	case "$p" in
+		nobin:*) python3 -m pip wheel --no-deps --no-binary :all: --wheel-dir "$WORK/wheels" "${p#nobin:}" ;;
+		*) python3 -m pip wheel --no-deps --wheel-dir "$WORK/wheels" "$p" ;;
+	esac
 done
 
 for w in "$WORK"/wheels/*.whl; do
