@@ -32,6 +32,11 @@ LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64"
 IUSE="+cpu cuda native rocm test vulkan"
+# Same CPU kernel gates as local-ai-ggml.eclass (audio-cpp predates it);
+# see that eclass for the option-gated-kernels rationale.
+_ggml_cpu_flags=( avx avx2 avx512f bmi2 f16c fma3 )
+IUSE+=" ${_ggml_cpu_flags[*]/#/cpu_flags_x86_}"
+unset _ggml_cpu_flags
 # Each enabled flag builds its own co-installable backend variant
 # (upstream's model: cpu-/cuda-/rocm-/vulkan-audio-cpp, all aliased to
 # audio-cpp — the server resolves the alias by host capability, and a
@@ -126,6 +131,13 @@ src_configure() {
 			# dlopen-able per-microarch ggml fan-out for fat container images.
 			-DENGINE_ENABLE_CPU_ALL_VARIANTS=OFF
 			-DGGML_NATIVE=$(usex native)
+			# Tree-style CPU kernel gates, matching local-ai-ggml.eclass.
+			-DGGML_AVX=$(usex cpu_flags_x86_avx)
+			-DGGML_AVX2=$(usex cpu_flags_x86_avx2)
+			-DGGML_AVX512=$(usex cpu_flags_x86_avx512f)
+			-DGGML_BMI2=$(usex cpu_flags_x86_bmi2)
+			-DGGML_F16C=$(usex cpu_flags_x86_f16c)
+			-DGGML_FMA=$(usex cpu_flags_x86_fma3)
 			-DENGINE_ENABLE_CUDA=$([[ ${v} == cuda ]] && echo ON || echo OFF)
 			-DENGINE_ENABLE_HIP=$([[ ${v} == rocm ]] && echo ON || echo OFF)
 			-DENGINE_ENABLE_VULKAN=$([[ ${v} == vulkan ]] && echo ON || echo OFF)
