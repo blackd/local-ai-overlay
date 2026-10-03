@@ -8,13 +8,15 @@
 # links separate libggml*.so — installed under lib/ with symlink chains
 # intact (the trellis2cpp layout). The engine's only accelerator is
 # Vulkan (no CUDA/HIP code paths), so those eclass flags are
-# masked in profiles/package.use.mask rather than silently ignored.
+# omitted via the eclass's LOCALAI_GGML_NO_* gates.
 
 EAPI=8
 
 LOCAL_AI_CMAKE_TARGET="kimodo"
 LOCAL_AI_ENGINE_LIB="libkimodo.so"
 LOCAL_AI_VULKAN_CMAKE_VARS="KIMODO_ENABLE_VULKAN"
+LOCALAI_GGML_NO_CUDA=1
+LOCALAI_GGML_NO_ROCM=1
 
 inherit local-ai-ggml-go
 

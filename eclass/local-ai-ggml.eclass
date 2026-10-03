@@ -23,8 +23,26 @@ esac
 if [[ -z ${_LOCAL_AI_GGML_ECLASS} ]]; then
 _LOCAL_AI_GGML_ECLASS=1
 
+# @ECLASS_VARIABLE: LOCALAI_GGML_NO_CUDA
+# @DEFAULT_UNSET
+# @PRE_INHERIT
+# @DESCRIPTION:
+# Set to a non-empty value when the engine has no CUDA code path at
+# all: the cuda USE flag, its dependencies and its prepare/configure
+# handling are omitted entirely, instead of REQUIRED_USE-blocking
+# hosts that set the flag globally.
+
+# @ECLASS_VARIABLE: LOCALAI_GGML_NO_ROCM
+# @DEFAULT_UNSET
+# @PRE_INHERIT
+# @DESCRIPTION:
+# Same for HIP: omits the rocm USE flag, its dependencies and — via
+# ROCM_SKIP_GLOBALS — the whole amdgpu_targets_* USE_EXPAND surface,
+# so a global AMDGPU_TARGETS cannot make the package unresolvable.
+
 # ROCM_VERSION (the rocm eclass key and the HIP/BLAS dependency floor)
 # is pinned overlay-wide in local-ai-rocm.eclass.
+[[ -n ${LOCALAI_GGML_NO_ROCM} ]] && ROCM_SKIP_GLOBALS=1
 inherit check-reqs cmake cuda local-ai-backend local-ai-rocm
 
 # @ECLASS_VARIABLE: CHECKREQS_DISK_BUILD
@@ -57,7 +75,9 @@ HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"
 LICENSE="MIT"
 SLOT="0"
 
-IUSE="cuda native openblas rocm vulkan video_cards_amdgpu"
+IUSE="native openblas vulkan video_cards_amdgpu"
+[[ -n ${LOCALAI_GGML_NO_CUDA} ]] || IUSE+=" cuda"
+[[ -n ${LOCALAI_GGML_NO_ROCM} ]] || IUSE+=" rocm"
 # CPU kernel selection, tree-style (sci-ml/ggml precedent): ggml's
 # AVX-family kernels are option-gated — GGML_AVX512 and friends add
 # dedicated sources and dispatch entries — not merely -march macro-gated,
@@ -73,12 +93,18 @@ unset _ggml_cpu_flags
 # in make.conf) requires USE=rocm — otherwise the target flags apply to a
 # non-HIP build and break it. Derive "flag? ( rocm )" for every target the
 # rocm eclass knows.
-_amdgpu_implies_rocm=""
-for _f in ${ROCM_REQUIRED_USE//[!a-z0-9_ ]/}; do
-	_amdgpu_implies_rocm+=" ${_f}? ( rocm )"
-done
-REQUIRED_USE="?? ( cuda rocm ) rocm? ( ${ROCM_REQUIRED_USE} ) ${_amdgpu_implies_rocm}"
-unset _amdgpu_implies_rocm _f
+REQUIRED_USE=""
+if [[ -z ${LOCALAI_GGML_NO_CUDA} && -z ${LOCALAI_GGML_NO_ROCM} ]]; then
+	REQUIRED_USE="?? ( cuda rocm )"
+fi
+if [[ -z ${LOCALAI_GGML_NO_ROCM} ]]; then
+	_amdgpu_implies_rocm=""
+	for _f in ${ROCM_REQUIRED_USE//[!a-z0-9_ ]/}; do
+		_amdgpu_implies_rocm+=" ${_f}? ( rocm )"
+	done
+	REQUIRED_USE+=" rocm? ( ${ROCM_REQUIRED_USE} ) ${_amdgpu_implies_rocm}"
+	unset _amdgpu_implies_rocm _f
+fi
 
 # The server package provides the local-ai user and discovers backends
 # installed under /usr/libexec via LOCALAI_BACKENDS_SYSTEM_PATH.
@@ -89,7 +115,11 @@ RDEPEND="
 		media-libs/vulkan-loader
 		video_cards_amdgpu? ( media-libs/mesa[vulkan,video_cards_radeonsi] )
 	)
+"
+[[ -n ${LOCALAI_GGML_NO_CUDA} ]] || RDEPEND+="
 	cuda? ( dev-util/nvidia-cuda-toolkit:= )
+"
+[[ -n ${LOCALAI_GGML_NO_ROCM} ]] || RDEPEND+="
 	rocm? (
 		>=dev-util/hip-${ROCM_VERSION}:=
 		>=sci-libs/hipBLAS-${ROCM_VERSION}:=
@@ -113,7 +143,7 @@ local-ai-ggml_pkg_setup() {
 
 local-ai-ggml_src_prepare() {
 	cmake_src_prepare
-	use cuda && cuda_src_prepare
+	[[ -z ${LOCALAI_GGML_NO_CUDA} ]] && use cuda && cuda_src_prepare
 }
 
 local-ai-ggml_src_configure() {
@@ -138,16 +168,20 @@ local-ai-ggml_src_configure() {
 	for v in ${LOCAL_AI_VULKAN_CMAKE_VARS:-GGML_VULKAN}; do
 		mycmakeargs+=( -D${v}=$(usex vulkan) )
 	done
-	for v in ${LOCAL_AI_CUDA_CMAKE_VARS:-GGML_CUDA}; do
-		mycmakeargs+=( -D${v}=$(usex cuda) )
-	done
-	for v in ${LOCAL_AI_HIP_CMAKE_VARS:-GGML_HIP}; do
-		mycmakeargs+=( -D${v}=$(usex rocm) )
-	done
+	if [[ -z ${LOCALAI_GGML_NO_CUDA} ]]; then
+		for v in ${LOCAL_AI_CUDA_CMAKE_VARS:-GGML_CUDA}; do
+			mycmakeargs+=( -D${v}=$(usex cuda) )
+		done
+	fi
+	if [[ -z ${LOCALAI_GGML_NO_ROCM} ]]; then
+		for v in ${LOCAL_AI_HIP_CMAKE_VARS:-GGML_HIP}; do
+			mycmakeargs+=( -D${v}=$(usex rocm) )
+		done
+	fi
 	mycmakeargs+=( "${LOCAL_AI_EXTRA_CMAKE_ARGS[@]}" )
 	use openblas && mycmakeargs+=( -DGGML_BLAS_VENDOR=OpenBLAS )
 
-	if use rocm; then
+	if [[ -z ${LOCALAI_GGML_NO_ROCM} ]] && use rocm; then
 		# Switch to hipcc and strip flags it can't digest; build for the
 		# GPU architectures selected via AMDGPU_TARGETS USE_EXPAND flags
 		# (rocm.eclass) instead of autodetecting the build host's GPU.
@@ -161,7 +195,7 @@ local-ai-ggml_src_configure() {
 		)
 	fi
 
-	if use cuda; then
+	if [[ -z ${LOCALAI_GGML_NO_CUDA} ]] && use cuda; then
 		cuda_add_sandbox -w
 		addpredict "/dev/char/"
 		cuda_sanitize

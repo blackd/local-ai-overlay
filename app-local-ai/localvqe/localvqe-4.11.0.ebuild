@@ -11,7 +11,7 @@
 # USE=cuda exceeds LocalAI's own packaging: its backend Makefile builds
 # CPU/Vulkan only, but the engine carries a LOCALVQE_CUDA path. HIP has
 # no engine code path at all — AMD is served via Vulkan, and USE=rocm is
-# masked in profiles/package.use.mask rather than silently ignored.
+# omitted via the eclass's LOCALAI_GGML_NO_ROCM gate.
 
 EAPI=8
 
@@ -24,6 +24,7 @@ LOCAL_AI_EXTRA_CMAKE_ARGS=(
 	-DGGML_BUILD_EXAMPLES=OFF
 	-DCMAKE_POSITION_INDEPENDENT_CODE=ON
 )
+LOCALAI_GGML_NO_ROCM=1
 
 inherit local-ai-ggml-go
 
