@@ -45,11 +45,15 @@ jobs:
           fi
           echo "family=${FAMILY}" >> "$GITHUB_OUTPUT"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-      - name: "Release ${{ steps.fam.outputs.family }}"
+      # Step names render at job start, before steps.fam has run, so an
+      # output in the name shows as empty - keep it static; the resolved
+      # family is printed by the step and carried in the tag ref.
+      - name: "Release the family resolved from the tag"
         id: "rel"
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         run: >-
+          echo "family=${{ steps.fam.outputs.family }} version=${{ steps.fam.outputs.version }}" &&
           bash scripts/release-family.sh
           "${{ steps.fam.outputs.family }}"
           "${{ steps.fam.outputs.version }}"
