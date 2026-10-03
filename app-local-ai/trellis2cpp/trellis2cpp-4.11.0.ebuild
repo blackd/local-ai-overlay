@@ -22,6 +22,9 @@ LOCAL_AI_EXTRA_CMAKE_ARGS=(
 	-DTRELLIS2_FETCH_PRINT_REMESH_DEPS=OFF
 	-DCMAKE_POSITION_INDEPENDENT_CODE=ON
 )
+# hipcc HIP-compiles the CGAL/boost remesh TU into a frexp ambiguity;
+# upstream's own hipblas recipe exports ROCm clang for this engine.
+LOCAL_AI_ROCM_CLANG=1
 
 inherit local-ai-ggml-go
 

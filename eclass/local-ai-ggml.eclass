@@ -71,6 +71,15 @@ inherit check-reqs cmake cuda local-ai-backend local-ai-rocm
 # ( -DSD_RPC=ON ). May also be extended inside src_configure before
 # calling local-ai-ggml_src_configure (e.g. for usex-derived values).
 
+# @ECLASS_VARIABLE: LOCAL_AI_ROCM_CLANG
+# @DEFAULT_UNSET
+# @DESCRIPTION:
+# Drive the USE=rocm build with ROCm clang instead of hipcc, for
+# engines whose plain C++ TUs cannot survive hipcc's HIP mode (e.g.
+# CGAL/boost::multiprecision: HIP's device math overloads make
+# frexp(long double) ambiguous). Mirrors upstream recipes that export
+# the ROCm llvm clang/clang++ for such engines.
+
 HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"
 LICENSE="MIT"
 SLOT="0"
@@ -182,12 +191,20 @@ local-ai-ggml_src_configure() {
 	use openblas && mycmakeargs+=( -DGGML_BLAS_VENDOR=OpenBLAS )
 
 	if [[ -z ${LOCALAI_GGML_NO_ROCM} ]] && use rocm; then
-		# Switch to hipcc and strip flags it can't digest; build for the
-		# GPU architectures selected via AMDGPU_TARGETS USE_EXPAND flags
-		# (rocm.eclass) instead of autodetecting the build host's GPU.
-		# GPU_TARGETS is ROCm >=6's name for AMDGPU_TARGETS; pass both so
-		# the build survives when the legacy name is dropped.
-		rocm_use_hipcc
+		if [[ -n ${LOCAL_AI_ROCM_CLANG} ]]; then
+			local hipclang
+			hipclang=$(hipconfig --hipclangpath) && [[ -n ${hipclang} ]] \
+				|| die "hipconfig --hipclangpath failed"
+			local -x CC="${hipclang}/clang" CXX="${hipclang}/clang++"
+		else
+			# Switch to hipcc and strip flags it can't digest.
+			rocm_use_hipcc
+		fi
+		# Build for the GPU architectures selected via AMDGPU_TARGETS
+		# USE_EXPAND flags (rocm.eclass) instead of autodetecting the
+		# build host's GPU. GPU_TARGETS is ROCm >=6's name for
+		# AMDGPU_TARGETS; pass both so the build survives when the
+		# legacy name is dropped.
 		mycmakeargs+=(
 			-DAMDGPU_TARGETS="$(get_amdgpu_flags)"
 			-DGPU_TARGETS="$(get_amdgpu_flags)"
