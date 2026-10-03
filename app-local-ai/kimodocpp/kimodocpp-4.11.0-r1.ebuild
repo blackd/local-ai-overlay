@@ -8,7 +8,7 @@
 # links separate libggml*.so — installed under lib/ with symlink chains
 # intact (the trellis2cpp layout). The engine's only accelerator is
 # Vulkan (no CUDA/HIP code paths), so those eclass flags are
-# REQUIRED_USE-disabled rather than silently ignored.
+# masked in profiles/package.use.mask rather than silently ignored.
 
 EAPI=8
 
@@ -34,8 +34,6 @@ S="${WORKDIR}/LocalAI-${PV}/backend/go/kimodocpp"
 
 LICENSE="MIT Apache-2.0"
 KEYWORDS="~amd64"
-# No CUDA/HIP code paths exist in the engine; Vulkan serves every GPU.
-REQUIRED_USE+=" !cuda !rocm"
 
 src_unpack() {
 	local-ai-backend_go_unpack

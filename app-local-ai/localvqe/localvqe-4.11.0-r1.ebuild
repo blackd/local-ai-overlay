@@ -11,7 +11,7 @@
 # USE=cuda exceeds LocalAI's own packaging: its backend Makefile builds
 # CPU/Vulkan only, but the engine carries a LOCALVQE_CUDA path. HIP has
 # no engine code path at all — AMD is served via Vulkan, and USE=rocm is
-# REQUIRED_USE-disabled rather than silently ignored.
+# masked in profiles/package.use.mask rather than silently ignored.
 
 EAPI=8
 
@@ -44,8 +44,6 @@ CMAKE_USE_DIR="${S}/sources/LocalVQE/ggml"
 
 LICENSE="MIT Apache-2.0"
 KEYWORDS="~amd64"
-# No HIP code path exists in the engine; AMD is served via Vulkan.
-REQUIRED_USE+=" !rocm"
 
 src_unpack() {
 	local-ai-backend_go_unpack

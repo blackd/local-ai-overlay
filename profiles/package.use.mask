@@ -1,0 +1,12 @@
+# Flags masked where the engine has no such code path at all: a global
+# USE from make.conf would otherwise trip the package's REQUIRED_USE on
+# every host that sets it. Masking forces the flag off (shown as
+# parenthesized in emerge output) instead of failing the resolution.
+
+# kimodo.cpp carries CPU and Vulkan backends only; AMD and NVIDIA GPUs
+# are both served via Vulkan.
+app-local-ai/kimodocpp cuda rocm
+
+# LocalVQE has no HIP code path; AMD is served via Vulkan. (CUDA exists
+# and stays available.)
+app-local-ai/localvqe rocm
