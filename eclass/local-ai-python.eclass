@@ -65,7 +65,9 @@ BACKEND_DIR="/usr/libexec/local-ai/backends/${PN}"
 # The baseline every python backend's resolution contains: torch, the
 # HF tokenizer/safetensors pair, gRPC + protobuf for the wire, and the
 # huggingface-hub HTTP stack. Backend-specific tree deps go in the
-# ebuild's own RDEPEND.
+# ebuild's own RDEPEND. The grpcio floor follows the grpcio-tools pin
+# in gen-python-common-distfiles.sh: the generated stubs refuse to
+# import on an older grpcio (GRPC_GENERATED_VERSION guard).
 RDEPEND="${PYTHON_DEPS}
 	sci-ml/local-ai
 	~app-local-ai/python-common-${PV}
@@ -73,9 +75,6 @@ RDEPEND="${PYTHON_DEPS}
 		sci-ml/pytorch[${PYTHON_SINGLE_USEDEP}]
 		sci-ml/safetensors[${PYTHON_USEDEP}]
 		sci-ml/tokenizers[${PYTHON_SINGLE_USEDEP}]
-		# Floor follows the grpcio-tools pin in
-		# gen-python-common-distfiles.sh: the generated stubs refuse
-		# to import on an older grpcio (GRPC_GENERATED_VERSION guard).
 		>=dev-python/grpcio-1.84.0[${PYTHON_USEDEP}]
 		dev-python/protobuf[${PYTHON_USEDEP}]
 		dev-python/anyio[${PYTHON_USEDEP}]
