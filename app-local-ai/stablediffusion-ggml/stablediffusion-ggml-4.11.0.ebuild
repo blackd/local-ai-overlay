@@ -24,8 +24,8 @@ inherit local-ai-ggml-go
 # truth: backend/go/stablediffusion-ggml/Makefile
 # (STABLEDIFFUSION_GGML_VERSION) at the upstream release tag; the ggml pin
 # is that commit's submodule gitlink (leejet's ggml fork).
-SD_COMMIT="59c23bce0d82be3a922023ab811194f05b3e2faa"
-GGML_COMMIT="e20c3a14aa70ee84ca58499814206dd08d8026bc"
+SD_COMMIT="3f8527a46c54ecf4cb4ed6003da8e8982283c73c"
+GGML_COMMIT="89c4413f5da6fb20cc796f16033d37f129be81fd"
 
 DESCRIPTION="LocalAI image-generation backend (stable-diffusion.cpp gRPC server)"
 SRC_URI="

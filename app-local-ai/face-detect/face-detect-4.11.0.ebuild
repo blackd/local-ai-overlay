@@ -37,7 +37,7 @@ LOCAL_AI_EXTRA_CMAKE_ARGS=(
 
 inherit local-ai-ggml-go
 
-# The face-detect.cpp commit LocalAI v4.10.0 builds against. Source of
+# The face-detect.cpp commit LocalAI v4.11.0 builds against. Source of
 # truth: backend/go/face-detect/Makefile (FACEDETECT_VERSION) at the
 # upstream release tag; the ggml pin is that commit's third_party/ggml
 # gitlink.

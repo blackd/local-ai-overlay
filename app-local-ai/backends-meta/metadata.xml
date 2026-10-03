@@ -10,7 +10,10 @@
 	</upstream>
 	<use>
 		<flag name="acestep-cpp">Install the acestep.cpp music-generation backend (<pkg>app-local-ai/acestep-cpp</pkg>)</flag>
+		<flag name="ced">Install the ced.cpp audio-event-detection backend (<pkg>app-local-ai/ced</pkg>)</flag>
+		<flag name="face-detect">Install the face-detect.cpp face-detection backend (<pkg>app-local-ai/face-detect</pkg>)</flag>
 		<flag name="ik-llama-cpp">Install the ik_llama.cpp text-generation backend (<pkg>app-local-ai/ik-llama-cpp</pkg>)</flag>
+		<flag name="kimodocpp">Install the kimodo.cpp skeleton-animation backend (<pkg>app-local-ai/kimodocpp</pkg>)</flag>
 		<flag name="llama-cpp">Install the llama.cpp text-generation backend (<pkg>app-local-ai/llama-cpp</pkg>)</flag>
 		<flag name="audio-cpp">Install the audio backend (<pkg>app-local-ai/audio-cpp</pkg>)</flag>
 		<flag name="bonsai">Install the Bonsai 1-bit/ternary text-generation backend (<pkg>app-local-ai/bonsai</pkg>)</flag>
@@ -18,8 +21,13 @@
 		<flag name="depth-anything">Install the depth-anything.cpp depth-estimation backend (<pkg>app-local-ai/depth-anything</pkg>)</flag>
 		<flag name="diffusers">Install the diffusers image/video-generation backend (<pkg>app-local-ai/diffusers</pkg>)</flag>
 		<flag name="fish-speech">Install the fish-speech text-to-speech backend (<pkg>app-local-ai/fish-speech</pkg>)</flag>
+		<flag name="localvqe">Install the LocalVQE voice-quality-enhancement backend (<pkg>app-local-ai/localvqe</pkg>)</flag>
+		<flag name="locate-anything-cpp">Install the locate-anything.cpp open-vocabulary detection backend (<pkg>app-local-ai/locate-anything-cpp</pkg>)</flag>
 		<flag name="parakeet-cpp">Install the parakeet.cpp speech-to-text backend (<pkg>app-local-ai/parakeet-cpp</pkg>)</flag>
 		<flag name="qwen3-tts-cpp">Install the qwentts.cpp text-to-speech backend (<pkg>app-local-ai/qwen3-tts-cpp</pkg>)</flag>
+		<flag name="rerankers">Install the rerankers reranking backend (<pkg>app-local-ai/rerankers</pkg>)</flag>
+		<flag name="sam3-cpp">Install the sam3.cpp image-segmentation backend (<pkg>app-local-ai/sam3-cpp</pkg>)</flag>
+		<flag name="trellis2cpp">Install the trellis2cpp 3D-generation backend (<pkg>app-local-ai/trellis2cpp</pkg>)</flag>
 		<flag name="vllm-cpp">Install the vllm.cpp text-generation backend (<pkg>app-local-ai/vllm-cpp</pkg>)</flag>
 		<flag name="rfdetr-cpp">Install the rf-detr.cpp object-detection backend (<pkg>app-local-ai/rfdetr-cpp</pkg>)</flag>
 		<flag name="piper">Install the piper text-to-speech backend (<pkg>app-local-ai/piper</pkg>)</flag>

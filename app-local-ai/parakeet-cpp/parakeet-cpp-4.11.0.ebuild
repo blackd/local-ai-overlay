@@ -29,17 +29,28 @@ LOCAL_AI_EXTRA_CMAKE_ARGS=(
 
 inherit local-ai-ggml-go
 
-# The parakeet.cpp commit LocalAI v4.9.0 builds against. Source of truth:
+# The parakeet.cpp commit LocalAI v4.11.0 builds against. Source of truth:
 # backend/go/parakeet-cpp/Makefile (PARAKEET_VERSION) at the upstream
-# release tag; the ggml pin is that commit's third_party/ggml gitlink.
-PARAKEET_COMMIT="e75de9b6b9b688fd293aa22f7e27aa724ea286f8"
+# release tag; the ggml, ced.cpp and voice-detect.cpp pins are that
+# commit's third_party/* gitlinks.
+PARAKEET_COMMIT="bee7c14dfcc23613df58176c59a40459e7b47095"
 GGML_COMMIT="e705c5fed490514458bdd2eaddc43bd098fcce9b"
+# Subengines (PARAKEET_WITH_CED / PARAKEET_WITH_VOICEDETECT, default ON,
+# hard-required by the engine's CMake): built as static libs inside
+# parakeet. Both guard their own ggml behind if(NOT TARGET ggml), so they
+# link parakeet's patched ggml and their empty third_party/ggml
+# placeholders are never configured. ced.cpp is the same commit the ced
+# backend pins — one shared distfile.
+CED_COMMIT="61dec2ab0106f2047ee40062a7075dbf08c523d0"
+VOICEDETECT_COMMIT="b74a896f47c6d04fcca0a962ff317528fd0b0019"
 
 DESCRIPTION="LocalAI speech-to-text backend (parakeet.cpp gRPC server)"
 SRC_URI="
 	${LOCAL_AI_GO_SRC_URI}
 	https://github.com/mudler/parakeet.cpp/archive/${PARAKEET_COMMIT}.tar.gz -> parakeet.cpp-${PARAKEET_COMMIT}.tar.gz
 	https://github.com/ggml-org/ggml/archive/${GGML_COMMIT}.tar.gz -> ggml-org-ggml-${GGML_COMMIT}.tar.gz
+	https://github.com/localai-org/ced.cpp/archive/${CED_COMMIT}.tar.gz -> ced.cpp-${CED_COMMIT}.tar.gz
+	https://github.com/localai-org/voice-detect.cpp/archive/${VOICEDETECT_COMMIT}.tar.gz -> voice-detect.cpp-${VOICEDETECT_COMMIT}.tar.gz
 "
 S="${WORKDIR}/LocalAI-${PV}/backend/go/parakeet-cpp"
 CMAKE_USE_DIR="${S}/sources/parakeet.cpp"
@@ -50,7 +61,10 @@ src_unpack() {
 	local-ai-backend_go_unpack
 
 	local ggml=( "ggml-org-ggml-${GGML_COMMIT}.tar.gz" "ggml-${GGML_COMMIT}" third_party/ggml )
-	local-ai-backend_engine_unpack "parakeet.cpp-${PARAKEET_COMMIT}.tar.gz" parakeet.cpp "${ggml[@]}"
+	local ced=( "ced.cpp-${CED_COMMIT}.tar.gz" "ced.cpp-${CED_COMMIT}" third_party/ced.cpp )
+	local vd=( "voice-detect.cpp-${VOICEDETECT_COMMIT}.tar.gz" "voice-detect.cpp-${VOICEDETECT_COMMIT}" third_party/voice-detect.cpp )
+	local-ai-backend_engine_unpack "parakeet.cpp-${PARAKEET_COMMIT}.tar.gz" parakeet.cpp \
+		"${ggml[@]}" "${ced[@]}" "${vd[@]}"
 }
 
 src_prepare() {

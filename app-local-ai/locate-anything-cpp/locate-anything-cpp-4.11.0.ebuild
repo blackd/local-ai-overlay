@@ -23,7 +23,7 @@ LOCAL_AI_HIP_CMAKE_VARS="GGML_HIP"
 
 inherit local-ai-ggml-go
 
-# The locate-anything.cpp commit LocalAI v4.10.0 builds against. Source
+# The locate-anything.cpp commit LocalAI v4.11.0 builds against. Source
 # of truth: backend/go/locate-anything-cpp/Makefile
 # (LOCATEANYTHING_VERSION) at the upstream release tag; the ggml pin is
 # that commit's third_party/ggml gitlink.

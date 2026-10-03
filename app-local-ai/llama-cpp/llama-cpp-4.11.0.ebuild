@@ -23,7 +23,7 @@ inherit local-ai-ggml
 
 # The llama.cpp commit LocalAI v4.9.0 builds against. Source of truth:
 # backend/cpp/llama-cpp/Makefile (LLAMA_VERSION) at the upstream release tag.
-LLAMA_COMMIT="38a5b42d9a3e82e0a586bcd1caed121f36c87a73"
+LLAMA_COMMIT="a868c3e3c56657f7e8a6231190dbbe90e7dd86c0"
 
 DESCRIPTION="LocalAI text-generation backend (llama.cpp gRPC server)"
 SRC_URI="

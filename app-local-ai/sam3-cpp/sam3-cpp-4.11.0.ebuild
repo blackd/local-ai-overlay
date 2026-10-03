@@ -14,7 +14,7 @@ LOCAL_AI_ENGINE_LIB_ENV="SAM3_LIBRARY"
 
 inherit local-ai-ggml-go
 
-# The sam3.cpp commit LocalAI v4.10.0 builds against. Source of truth:
+# The sam3.cpp commit LocalAI v4.11.0 builds against. Source of truth:
 # backend/go/sam3-cpp/Makefile (SAM3_VERSION) at the upstream release
 # tag; the ggml pin is that commit's submodule gitlink (PABannier's
 # ggml fork).

@@ -73,7 +73,10 @@ RDEPEND="${PYTHON_DEPS}
 		sci-ml/pytorch[${PYTHON_SINGLE_USEDEP}]
 		sci-ml/safetensors[${PYTHON_USEDEP}]
 		sci-ml/tokenizers[${PYTHON_SINGLE_USEDEP}]
-		>=dev-python/grpcio-1.76.0[${PYTHON_USEDEP}]
+		# Floor follows the grpcio-tools pin in
+		# gen-python-common-distfiles.sh: the generated stubs refuse
+		# to import on an older grpcio (GRPC_GENERATED_VERSION guard).
+		>=dev-python/grpcio-1.84.0[${PYTHON_USEDEP}]
 		dev-python/protobuf[${PYTHON_USEDEP}]
 		dev-python/anyio[${PYTHON_USEDEP}]
 		dev-python/certifi[${PYTHON_USEDEP}]

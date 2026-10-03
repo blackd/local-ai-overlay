@@ -9,9 +9,9 @@ EAPI=8
 
 inherit cmake local-ai-backend local-ai-rocm
 
-# The audio.cpp commit LocalAI v4.10.0 builds against. Source of truth:
+# The audio.cpp commit LocalAI v4.11.0 builds against. Source of truth:
 # backend/cpp/audio-cpp/Makefile (AUDIO_CPP_VERSION) at the release tag.
-AUDIOCPP_COMMIT="4af143229384fb6da3f373dc87de145ae954609b"
+AUDIOCPP_COMMIT="9a02e61326aaaf9d462b584ca5e0daba22c0abfc"
 
 DESCRIPTION="LocalAI audio backend (audio.cpp gRPC server)"
 HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"
@@ -23,10 +23,6 @@ SRC_URI="
 # The backend directory is itself the CMake project root; it expects the
 # engine checkout at ./audio.cpp (moved into place in src_unpack).
 S="${WORKDIR}/LocalAI-${PV}/backend/cpp/audio-cpp"
-
-# Backend option env fallback (AUDIOCPP_DEFAULT_BACKEND) — proposed
-# upstream; see the patch header.
-PATCHES=( "${FILESDIR}/${P}-default-backend-env.patch" )
 
 LICENSE="MIT"
 SLOT="0"

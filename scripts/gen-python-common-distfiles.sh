@@ -31,7 +31,7 @@ tar -xzOf "$WORK/local-ai-${VERSION}.tar.gz" \
 	"LocalAI-${VERSION}/backend/backend.proto" > "$WORK/backend.proto"
 
 python3 -m venv "$WORK/genvenv"
-"$WORK/genvenv/bin/pip" install --quiet grpcio-tools==1.83.1
+"$WORK/genvenv/bin/pip" install --quiet grpcio-tools==1.84.0
 mkdir "$WORK/stubs"
 "$WORK/genvenv/bin/python" -m grpc_tools.protoc -I "$WORK" \
 	--python_out="$WORK/stubs" --grpc_python_out="$WORK/stubs" backend.proto

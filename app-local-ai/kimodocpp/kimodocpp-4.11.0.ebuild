@@ -18,7 +18,7 @@ LOCAL_AI_VULKAN_CMAKE_VARS="KIMODO_ENABLE_VULKAN"
 
 inherit local-ai-ggml-go
 
-# The kimodo.cpp commit LocalAI v4.10.0 builds against. Source of truth:
+# The kimodo.cpp commit LocalAI v4.11.0 builds against. Source of truth:
 # backend/go/kimodocpp/Makefile (KIMODO_VERSION) at the upstream release
 # tag; the ggml pin is that commit's ggml gitlink.
 KIMODO_COMMIT="5679ff19ba0a522c0b0516e9a9d402fe1af2c027"

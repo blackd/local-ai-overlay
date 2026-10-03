@@ -25,7 +25,7 @@ LOCAL_AI_EXTRA_CMAKE_ARGS=(
 
 inherit local-ai-ggml-go
 
-# The trellis2cpp commit LocalAI v4.10.0 builds against. Source of
+# The trellis2cpp commit LocalAI v4.11.0 builds against. Source of
 # truth: backend/go/trellis2cpp/Makefile (TRELLIS2CPP_VERSION) at the
 # upstream release tag; the ggml pin is that commit's gitlink
 # (PABannier's fork — same commit as app-local-ai/sam3-cpp, the

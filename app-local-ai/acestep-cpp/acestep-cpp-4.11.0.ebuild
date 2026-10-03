@@ -14,7 +14,7 @@ LOCAL_AI_ENGINE_LIB_ENV="ACESTEP_LIBRARY"
 
 inherit local-ai-ggml-go
 
-# The acestep.cpp commit LocalAI v4.10.0 builds against. Source of truth:
+# The acestep.cpp commit LocalAI v4.11.0 builds against. Source of truth:
 # backend/go/acestep-cpp/Makefile (ACESTEP_CPP_VERSION) at the upstream
 # release tag; the ggml pin is that commit's submodule gitlink
 # (ServeurpersoCom's ggml fork).
