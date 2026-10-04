@@ -196,6 +196,9 @@ local-ai-ggml_src_configure() {
 			hipclang=$(hipconfig --hipclangpath) && [[ -n ${hipclang} ]] \
 				|| die "hipconfig --hipclangpath failed"
 			local -x CC="${hipclang}/clang" CXX="${hipclang}/clang++"
+			# The user's *FLAGS are GCC-tuned; drop what clang rejects
+			# (e.g. -mfpmath=both), as rocm_use_hipcc does for hipcc.
+			strip-unsupported-flags
 		else
 			# Switch to hipcc and strip flags it can't digest.
 			rocm_use_hipcc
