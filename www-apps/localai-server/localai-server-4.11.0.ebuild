@@ -4,7 +4,7 @@
 # LocalAI is a self-hosted, OpenAI-API-compatible AI server. This package
 # builds the core server only: the HTTP API, the web UI and the
 # model/backend manager. Model inference happens in backend programs
-# packaged separately under the app-local-ai/ category.
+# packaged separately under the localai-backend/ category.
 
 EAPI=8
 
@@ -25,13 +25,17 @@ pkg_setup() {
 # metadata as upstream's official builds.
 LOCAL_AI_COMMIT="58830f7ac508845a6f4efa32cfca06af422d4d82"
 
+# Distfiles keep the historical local-ai naming: the local-ai-v${PV}
+# release and its assets predate the rename to localai-server.
+MY_P="local-ai-${PV}"
+
 DESCRIPTION="Self-hosted, OpenAI-compatible AI server (core, without inference backends)"
 HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"
 SRC_URI="
-	https://github.com/mudler/LocalAI/archive/refs/tags/v${PV}.tar.gz -> ${P}.tar.gz
-	${DISTFILES_BASE}/${P}-deps.tar.xz
-	${DISTFILES_BASE}/${P}-node_modules.tar.xz
-	${DISTFILES_BASE}/${P}-prebuilt.tar.xz
+	https://github.com/mudler/LocalAI/archive/refs/tags/v${PV}.tar.gz -> ${MY_P}.tar.gz
+	${DISTFILES_BASE}/${MY_P}-deps.tar.xz
+	${DISTFILES_BASE}/${MY_P}-node_modules.tar.xz
+	${DISTFILES_BASE}/${MY_P}-prebuilt.tar.xz
 "
 S="${WORKDIR}/LocalAI-${PV}"
 
@@ -48,17 +52,10 @@ LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64"
 
-# The flag does not change how the core is built; it pulls in the
-# app-local-ai/backends-meta package, whose own USE flags select the
-# inference backends — so backend choices never rebuild the server.
-IUSE="+backends"
-
 RDEPEND="
 	acct-group/local-ai
 	acct-user/local-ai
-"
-PDEPEND="
-	backends? ( app-local-ai/backends-meta )
+	!<sci-ml/localai-4.11.0
 "
 # go.mod declares `go 1.26.0`. nodejs[npm] builds the web UI; the UI's
 # dependencies come from the node_modules tarball, not the network.
@@ -69,23 +66,19 @@ BDEPEND="
 
 DOCS=( README.md )
 
-# Adds a persistent "Focus mode" toggle to the chat settings drawer so the
-# sidebar auto-collapse can be switched off. Merged upstream — this patch
-# is 4.9.0-only: drop it (and the file in files/) at the next version bump.
-
 src_unpack() {
-	# ${P}-deps.tar.xz unpacks to ${WORKDIR}/go-mod — exactly where
+	# ${MY_P}-deps.tar.xz unpacks to ${WORKDIR}/go-mod — exactly where
 	# go-module.eclass points GOMODCACHE, so Go finds every dependency
 	# offline with no further setup.
-	unpack "${P}.tar.gz" "${P}-deps.tar.xz"
+	unpack "${MY_P}.tar.gz" "${MY_P}-deps.tar.xz"
 
 	# The remaining two tarballs are rooted at the repository top level
 	# (core/http/react-ui/node_modules/, pkg/grpc/proto/), so they unpack
 	# inside the source tree. This layout is the contract with
 	# scripts/gen-distfiles.sh.
 	cd "${S}" || die
-	unpack "${P}-node_modules.tar.xz"
-	unpack "${P}-prebuilt.tar.xz"
+	unpack "${MY_P}-node_modules.tar.xz"
+	unpack "${MY_P}-prebuilt.tar.xz"
 }
 
 src_compile() {
@@ -131,10 +124,11 @@ src_install() {
 
 pkg_postinst() {
 	elog "The LocalAI core server is installed. Inference backends are separate"
-	elog "packages — see the app-local-ai category (llama-cpp for text"
+	elog "packages — see the localai-backend category (llama-cpp for text"
 	elog "generation, stablediffusion-ggml for images, whisper for"
-	elog "speech-to-text, and more). USE flags on the app-local-ai/backends-meta"
-	elog "package select which ones are installed."
+	elog "speech-to-text, and more). Install sci-ml/localai and set its USE"
+	elog "flags to select which ones are installed; it pulls this server, so"
+	elog "it is the one package to keep in world for a full stack."
 	elog "Models needing a backend that is not installed through Portage make"
 	elog "the server download upstream's prebuilt binary variant into"
 	elog "/var/lib/local-ai/backends instead."

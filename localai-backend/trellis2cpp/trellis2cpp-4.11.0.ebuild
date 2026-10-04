@@ -31,7 +31,7 @@ inherit local-ai-ggml-go
 # The trellis2cpp commit LocalAI v4.11.0 builds against. Source of
 # truth: backend/go/trellis2cpp/Makefile (TRELLIS2CPP_VERSION) at the
 # upstream release tag; the ggml pin is that commit's gitlink
-# (PABannier's fork — same commit as app-local-ai/sam3-cpp, the
+# (PABannier's fork — same commit as localai-backend/sam3-cpp, the
 # distfile is shared).
 TRELLIS2_COMMIT="2f3e6e26edbbaaf8ce93d092f16f46968a366a6a"
 GGML_COMMIT="331b9cba52b23d895bc4ad218c007eb5e667540f"

@@ -8,7 +8,4 @@
 	<upstream>
 		<remote-id type="github">mudler/LocalAI</remote-id>
 	</upstream>
-	<use>
-		<flag name="backends">Pull in the <pkg>app-local-ai/backends-meta</pkg> meta package selecting inference backends</flag>
-	</use>
 </pkgmetadata>

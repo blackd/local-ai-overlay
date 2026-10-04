@@ -7,11 +7,11 @@
 # (their runs also need local-ai's manifests to exist — release-localai
 # orders that).
 declare -A FAMILY_DIRS=(
-	[local-ai]="sci-ml/local-ai APP_LOCAL_AI_REST"
-	[rerankers]="app-local-ai/rerankers"
-	[python-common]="app-local-ai/python-common"
-	[diffusers]="app-local-ai/diffusers"
-	[fish-speech]="app-local-ai/fish-speech"
+	[local-ai]="www-apps/localai-server sci-ml/localai LOCALAI_BACKEND_REST"
+	[rerankers]="localai-backend/rerankers"
+	[python-common]="localai-backend/python-common"
+	[diffusers]="localai-backend/diffusers"
+	[fish-speech]="localai-backend/fish-speech"
 	[opencode]="dev-util/opencode"
 	[gitea-runner]="dev-util/gitea-runner"
 	[zot]="app-containers/zot"
@@ -19,22 +19,22 @@ declare -A FAMILY_DIRS=(
 	[ormsgpack]="dev-python/ormsgpack"
 )
 
-# Resolve a family's dirs; the APP_LOCAL_AI_REST marker expands to every
-# app-local-ai package that no OTHER family owns — a new backend is
+# Resolve a family's dirs; the LOCALAI_BACKEND_REST marker expands to every
+# localai-backend package that no OTHER family owns — a new backend is
 # picked up automatically, and a new python family added to the registry
 # above is excluded automatically.
 family_dirs() {
 	local dirs="${FAMILY_DIRS[$1]:?unknown family: $1}"
-	if [[ ${dirs} == *APP_LOCAL_AI_REST* ]]; then
+	if [[ ${dirs} == *LOCALAI_BACKEND_REST* ]]; then
 		local owned=" " f d rest=""
 		for f in "${!FAMILY_DIRS[@]}"; do
 			[[ ${f} == "$1" ]] && continue
 			for d in ${FAMILY_DIRS[$f]}; do owned+="${d%/} "; done
 		done
-		for d in app-local-ai/*/; do
+		for d in localai-backend/*/; do
 			[[ ${owned} == *" ${d%/} "* ]] || rest+="${d%/} "
 		done
-		dirs="${dirs/APP_LOCAL_AI_REST/${rest}}"
+		dirs="${dirs/LOCALAI_BACKEND_REST/${rest}}"
 	fi
 	echo "${dirs}"
 }

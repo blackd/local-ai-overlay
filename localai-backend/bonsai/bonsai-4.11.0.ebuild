@@ -3,7 +3,7 @@
 
 # LocalAI text-generation backend for Bonsai 1-bit/ternary models:
 # PrismML's llama.cpp fork (Q1_0/Q2_0 weight-quantization kernels),
-# compiled with the SAME gRPC glue as app-local-ai/llama-cpp — upstream
+# compiled with the SAME gRPC glue as localai-backend/llama-cpp — upstream
 # reuses backend/cpp/llama-cpp wholesale and only swaps the engine, and
 # so does this ebuild.
 #

@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "LocalAI version (default: newest sci-ml/local-ai ebuild)"
+        description: "LocalAI version (default: newest www-apps/localai-server ebuild)"
         default: ""
       rerelease:
         description: "Regenerate and REPLACE releases that already exist"
@@ -32,7 +32,7 @@ jobs:
         id: "ver"
         run: |
           V="${{ inputs.version }}"
-          [ -n "$V" ] || V=$(basename -s .ebuild sci-ml/local-ai/local-ai-*.ebuild | sed 's/^local-ai-//' | sort -V | tail -n1)
+          [ -n "$V" ] || V=$(basename -s .ebuild www-apps/localai-server/localai-server-*.ebuild | sed 's/^localai-server-//' | sort -V | tail -n1)
           echo "version=$V" >> "$GITHUB_OUTPUT"
       - name: "Release local-ai"
         id: "rel"

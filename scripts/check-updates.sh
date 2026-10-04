@@ -11,11 +11,11 @@ set -euo pipefail
 API="${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}"
 AUTH="Authorization: token ${GITHUB_TOKEN}"
 
-# app-local-ai/* and the acct packages follow sci-ml/local-ai and need
+# localai-backend/* and the acct packages follow www-apps/localai-server and need
 # no entries of their own; the vendored GURU copies follow GURU, not
 # their real upstream, and are covered by the guru-sync check below.
 declare -A UPSTREAMS=(
-	[sci-ml/local-ai]=github:mudler/LocalAI
+	[www-apps/localai-server]=github:mudler/LocalAI
 	[dev-util/opencode]=github:anomalyco/opencode
 	[dev-util/gitea-runner]=gitea:gitea.com/gitea/runner
 	[app-containers/zot]=github:project-zot/zot
@@ -89,7 +89,7 @@ for pkg in $(printf '%s\n' "${!UPSTREAMS[@]}" | sort); do
 		continue
 	fi
 	body="Upstream: ${UPSTREAMS[${pkg}]#*:} — newest ebuild is ${cur}, latest upstream release is ${up}."
-	[ "${pkg}" = sci-ml/local-ai ] && body+=" The app-local-ai backends follow this version."
+	[ "${pkg}" = www-apps/localai-server ] && body+=" The localai-backend packages follow this version."
 	file_issue "${existing}" "update: ${pkg} ${up} is available (have ${cur})" "${body}"
 done
 

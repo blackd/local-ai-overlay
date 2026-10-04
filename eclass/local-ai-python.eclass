@@ -14,7 +14,7 @@
 # tree-provided package — torch included — as a real Portage package
 # (the parity rule: the venv ships everything upstream's install
 # resolves, minus what the tree provides). Shared helpers and gRPC
-# stubs come from app-local-ai/python-common via run.sh's PYTHONPATH.
+# stubs come from localai-backend/python-common via run.sh's PYTHONPATH.
 #
 # The eclass provides the wheels SRC_URI (release family = ${PN}),
 # the common dependency baseline (torch, the tokenizer/safetensors
@@ -22,7 +22,7 @@
 # resolution contains), the no-op src_compile, a generated run.sh,
 # and the src_install venv dance ending in the build-time import
 # smoke test. Backends with extra sources or install steps override
-# the phase and compose the helpers (see app-local-ai/fish-speech).
+# the phase and compose the helpers (see localai-backend/fish-speech).
 
 case ${EAPI} in
 	8) ;;
@@ -69,7 +69,7 @@ BACKEND_DIR="/usr/libexec/local-ai/backends/${PN}"
 # in gen-python-common-distfiles.sh: the generated stubs refuse to
 # import on an older grpcio (GRPC_GENERATED_VERSION guard).
 RDEPEND="${PYTHON_DEPS}
-	~app-local-ai/python-common-${PV}
+	~localai-backend/python-common-${PV}
 	$(python_gen_cond_dep '
 		sci-ml/pytorch[${PYTHON_SINGLE_USEDEP}]
 		sci-ml/safetensors[${PYTHON_USEDEP}]
@@ -149,7 +149,7 @@ local-ai-python_install_meta() {
 	#!/bin/sh
 	# Entry point the LocalAI server invokes to start this backend.
 	CURDIR=\$(dirname "\$(readlink -f "\$0")")
-	# Shared helpers and gRPC stubs from app-local-ai/python-common.
+	# Shared helpers and gRPC stubs from localai-backend/python-common.
 	PYTHONPATH="/usr/libexec/local-ai/python-common\${PYTHONPATH:+:\${PYTHONPATH}}"
 	export PYTHONPATH
 	exec "\${CURDIR}/venv/bin/python" "\${CURDIR}/backend.py" "\$@"

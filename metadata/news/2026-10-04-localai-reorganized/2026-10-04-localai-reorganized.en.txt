@@ -1,0 +1,39 @@
+Title: LocalAI packages reorganized
+Author: Plamen K. Kosseff <plamen@ipnmod.org>
+Posted: 2026-10-04
+Revision: 1
+News-Item-Format: 2.0
+Display-If-Installed: sci-ml/local-ai
+Display-If-Installed: sci-ml/localai
+
+The LocalAI packages of this overlay have been renamed and
+recategorized. Package moves migrate installed systems and world
+entries automatically:
+
+  sci-ml/local-ai            -> sci-ml/localai
+  app-local-ai/backends-meta -> www-apps/localai-server
+  app-local-ai/<backend>     -> localai-backend/<backend>
+
+The two top-level names also swap roles. sci-ml/localai - the atom
+your world file now holds - is a meta package: it installs the server
+(www-apps/localai-server) plus the inference backends selected by its
+USE flags, which all default to on. The server package itself no
+longer references any backend package. Removing sci-ml/localai from
+the world file lets emerge --depclean remove the server and every
+backend in one sweep.
+
+If you run a full LocalAI stack, no action is needed: the next world
+update follows the moves and keeps everything installed.
+
+If you run the server WITHOUT backends, pick one before your next
+world update:
+
+  * keep sci-ml/localai in world and disable its backend flags, e.g.
+    echo "sci-ml/localai -*" >> /etc/portage/package.use/localai
+
+  * or anchor the server directly:
+    emerge --deselect sci-ml/localai
+    emerge --noreplace www-apps/localai-server
+
+Otherwise the meta package's default USE flags will schedule every
+backend for installation.

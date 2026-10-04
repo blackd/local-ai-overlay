@@ -1,5 +1,5 @@
 #!/bin/bash
-# gRPC stubs for app-local-ai/python-common: backend_pb2*.py generated
+# gRPC stubs for localai-backend/python-common: backend_pb2*.py generated
 # from backend/backend.proto — identical for every python backend.
 # The tree has no dev-python/grpcio-tools and the system grpc builds no
 # python plugin, so they are generated here. grpcio-tools is pinned to
@@ -19,7 +19,7 @@ trap 'rm -rf "$WORK"' EXIT
 # it against the digest the overlay already pins before extracting.
 curl -fsSL "https://github.com/mudler/LocalAI/archive/refs/tags/v${VERSION}.tar.gz" \
 	-o "$WORK/local-ai-${VERSION}.tar.gz"
-recorded=$(grep -h "^DIST local-ai-${VERSION}.tar.gz " "${REPO}"/app-local-ai/*/Manifest 2>/dev/null | awk '{print $7}' | sort -u | head -n1 || true)
+recorded=$(grep -h "^DIST local-ai-${VERSION}.tar.gz " "${REPO}"/localai-backend/*/Manifest 2>/dev/null | awk '{print $7}' | sort -u | head -n1 || true)
 actual=$(sha512sum "$WORK/local-ai-${VERSION}.tar.gz" | cut -d' ' -f1)
 if [ -z "$recorded" ] || [ "$recorded" != "$actual" ]; then
 	echo "local-ai-${VERSION}.tar.gz does not match the Manifest-pinned digest" >&2

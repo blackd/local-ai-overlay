@@ -9,7 +9,7 @@
 # @DESCRIPTION:
 # LocalAI is a self-hosted AI server whose model inference runs in separate
 # backend programs. This eclass is shared by the core server package
-# (sci-ml/local-ai) and every backend package (app-local-ai/*). It defines
+# (www-apps/localai-server) and every backend package (localai-backend/*). It defines
 # where backends install, where the maintainer-generated dependency tarballs
 # are hosted, and the install helper that gives every backend the layout the
 # server expects (a directory containing run.sh, discovered by scanning
@@ -197,7 +197,7 @@ local-ai-backend_install_meta() {
 # with run.sh and metadata.json (--alias registers the directory as an
 # alias candidate, see local-ai-backend_install_meta). The server
 # discovers this directory via LOCALAI_BACKENDS_SYSTEM_PATH (set in
-# sci-ml/local-ai's service config); symlinking into /var/lib is neither
+# www-apps/localai-server's service config); symlinking into /var/lib is neither
 # needed nor seen by discovery, which skips symlinked entries.
 local-ai-backend_install() {
 	local name=$1; shift

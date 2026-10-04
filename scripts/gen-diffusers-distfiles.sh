@@ -1,9 +1,9 @@
 #!/bin/bash
-# Wheels for the venv layer of app-local-ai/diffusers. Everything
+# Wheels for the venv layer of localai-backend/diffusers. Everything
 # compiled (torch, tokenizers, safetensors, sentencepiece, opencv, av,
 # grpcio…) comes from system packages instead and is EXCLUDED here —
 # hence --no-deps with a curated list, not resolver output. The shared
-# helpers and gRPC stubs live in app-local-ai/python-common.
+# helpers and gRPC stubs live in localai-backend/python-common.
 # Upload the result as an asset of a release tagged diffusers-v<version>
 # on this repository.
 

@@ -1,8 +1,8 @@
 # Build-Machine Test Checklist
 
 This overlay (a third-party Gentoo package repository) provides
-`sci-ml/local-ai` — LocalAI, a self-hosted AI server with an
-OpenAI-compatible API — and `app-local-ai/llama-cpp`, its text-generation
+`www-apps/localai-server` — LocalAI, a self-hosted AI server with an
+OpenAI-compatible API — and `localai-backend/llama-cpp`, its text-generation
 backend (a gRPC server embedding the llama.cpp inference library). The
 packages were authored and manifested on a machine that cannot compile them
 (binary-package-only host), so the checks below must run once on a normal
@@ -15,9 +15,9 @@ be asserted by reading code, not by building it.
   git.ipnmod.org/packages/local-ai-overlay with its three tarball assets
   (`local-ai-4.8.2-deps.tar.xz`, `-node_modules.tar.xz`, `-prebuilt.tar.xz`).
 
-## 1. Core server (sci-ml/local-ai)
+## 1. Core server (www-apps/localai-server)
 
-1. `emerge -1v sci-ml/local-ai`
+1. `emerge -1v www-apps/localai-server`
    - Must succeed with Portage's network sandbox active (no network during
      build). Watch: the web UI builds offline from the unpacked
      node_modules (esbuild/rollup native binaries were force-installed for
@@ -32,9 +32,9 @@ be asserted by reading code, not by building it.
    extend the ebuild's `LICENSE="MIT"` with the licenses of statically
    linked Go dependencies it reports.
 
-## 2. Backend (app-local-ai/llama-cpp)
+## 2. Backend (localai-backend/llama-cpp)
 
-1. `emerge -1v app-local-ai/llama-cpp`
+1. `emerge -1v localai-backend/llama-cpp`
    - This is the verdict on the "system gRPC only" decision: CMake must
      resolve gRPC/Protobuf/absl from Portage and build the `grpc-server`
      target. If `find_package(gRPC CONFIG)` fails or version skew breaks

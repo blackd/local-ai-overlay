@@ -31,7 +31,7 @@ session (human or AI-assisted) can pick up where the last one stopped.
 ## Candidate packages
 
 - https://github.com/mudler/LocalAGI — mudler's autonomous-agent
-  platform (Go, web UI), natural companion to sci-ml/local-ai; would
+  platform (Go, web UI), natural companion to www-apps/localai-server; would
   follow the standard Go + node_modules pipeline as its own family.
 
 ## Runner infrastructure (gitea-gentoo-runner)
@@ -68,7 +68,7 @@ session (human or AI-assisted) can pick up where the last one stopped.
     2026-09-05).
   - app-containers/zot: zui node_modules tarred under zui-<pin>/,
     ebuild drops src_prepare.
-  - sci-ml/local-ai: node_modules + prebuilt tarballs get the repo
+  - www-apps/localai-server: node_modules + prebuilt tarballs get the repo
     prefix, ebuild drops src_unpack — fold into the next-release batch
     below. The backend engine tarballs stay eclass-managed on purpose
     (per-backend destination layout lives in ebuild args, not the gen

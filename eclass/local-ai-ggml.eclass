@@ -115,9 +115,9 @@ if [[ -z ${LOCALAI_GGML_NO_ROCM} ]]; then
 	unset _amdgpu_implies_rocm _f
 fi
 
-# Deliberately no dependency on sci-ml/local-ai: a backend is inert
+# Deliberately no dependency on www-apps/localai-server: a backend is inert
 # files the server discovers via LOCALAI_BACKENDS_SYSTEM_PATH, and the
-# missing dep lets depclean sweep backends once local-ai-meta is gone.
+# missing dep lets depclean sweep backends once the sci-ml/localai meta is gone.
 RDEPEND="
 	openblas? ( sci-libs/openblas )
 	vulkan? (

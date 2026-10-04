@@ -27,7 +27,7 @@ inherit local-ai-ggml-go
 # The ced.cpp commit LocalAI v4.11.0 builds against. Source of truth:
 # backend/go/ced/Makefile (CED_VERSION) at the upstream release tag; the
 # ggml pin is that commit's third_party/ggml gitlink (same ggml commit
-# as app-local-ai/parakeet-cpp — the distfile is shared).
+# as localai-backend/parakeet-cpp — the distfile is shared).
 CED_COMMIT="61dec2ab0106f2047ee40062a7075dbf08c523d0"
 GGML_COMMIT="e705c5fed490514458bdd2eaddc43bd098fcce9b"
 

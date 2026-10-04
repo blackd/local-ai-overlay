@@ -20,7 +20,7 @@ listed in the ebuild's `SRC_URI`. Sources come from two places:
   version.
 
 A "family" is a group of packages sharing one release cycle. Current
-families: `local-ai` (sci-ml/local-ai + every app-local-ai backend),
+families: `local-ai` (www-apps/localai-server + every localai-backend backend),
 `opencode`, `gitea-runner`, `zot`, `dagu`.
 
 ### Dependency policy: system libraries first
@@ -106,7 +106,7 @@ during the build. Current deliberate exceptions:
 
 Per-package notes below list everything that deviates from this.
 
-## Family: local-ai (sci-ml/local-ai + app-local-ai/*)
+## Family: local-ai (www-apps/localai-server + localai-backend/*)
 
 All packages in this family carry the same version as the LocalAI
 release and are bumped together. The backends compile "engine"
@@ -127,10 +127,10 @@ At every family bump:
 - Planned for the next bump (details in metadata/docs/TODO.md): rename
   the tag scheme to `local-ai-distfiles-v*` / `local-ai-v*` (workflow +
   eclass `DISTFILES_BASE`), drop the 4.9.0-only focus-mode patch in
-  sci-ml/local-ai, and switch the node_modules/prebuilt tarballs to the
+  www-apps/localai-server, and switch the node_modules/prebuilt tarballs to the
   prefixed layout (gen script + ebuild `src_unpack` removal together).
 
-### app-local-ai/parakeet-cpp
+### localai-backend/parakeet-cpp
 
 The engine (mudler/parakeet.cpp) carries a PATCH STACK for its ggml
 submodule in `third_party/ggml-patches/`. Upstream applies it during
@@ -141,7 +141,7 @@ unpatched ggml. The ebuild therefore replays the stack with `eapply` in
 carries; just expect the patch content to change between engine pins,
 and verify the script still targets `third_party/ggml`.
 
-### app-local-ai/whisper
+### localai-backend/whisper
 
 whisper.cpp vendors ggml in-tree (single tarball, no submodule). The
 upstream Makefile passes `GGML_HIPBLAS` for ROCm — a toggle this ggml
@@ -149,7 +149,7 @@ no longer understands (build silently ends up CPU-only). The eclass
 default `GGML_HIP` is correct; do not "fix" the ebuild to match the
 Makefile.
 
-### app-local-ai/crispasr
+### localai-backend/crispasr
 
 Two submodules (a ggml fork + c2pa-audio). Upstream's clone recipe
 hides a sed rewriting `CMAKE_SOURCE_DIR` to `PROJECT_SOURCE_DIR` in the
@@ -158,7 +158,7 @@ re-read the recipe for new embedded seds. The `+ffmpeg` USE flag is a
 deliberate deviation from upstream's default (they disable it only for
 container-size reasons).
 
-### app-local-ai/audio-cpp, llama-cpp, piper, stablediffusion-ggml, vibevoice-cpp, depth-anything
+### localai-backend/audio-cpp, llama-cpp, piper, stablediffusion-ggml, vibevoice-cpp, depth-anything
 
 No special steps beyond re-deriving pins. Standing deviations worth
 knowing: piper builds against the system onnxruntime (GURU-mirrored,
@@ -167,7 +167,7 @@ see below) instead of upstream's bundled copy; llama-cpp applies
 CMake wants `DA_GGML_*` toggle names; vibevoice wants both `GGML_*` and
 `VIBEVOICE_GGML_*`. Each ebuild's comments are authoritative.
 
-### app-local-ai/backends-meta
+### sci-ml/localai
 
 Pure metapackage. When a NEW backend is added: add its default-on USE
 flag, its entry in the `REQUIRED_USE` at-least-one list, and its

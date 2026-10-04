@@ -1,5 +1,5 @@
 #!/bin/bash
-# Wheels for the venv layer of app-local-ai/fish-speech. Parity rule:
+# Wheels for the venv layer of localai-backend/fish-speech. Parity rule:
 # the venv ships everything upstream's install.sh resolves (the full
 # fish-speech pyproject, train/webui extras included), MINUS what the
 # portage tree or this overlay provides as system packages — those

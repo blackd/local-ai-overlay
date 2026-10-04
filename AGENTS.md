@@ -37,6 +37,6 @@ libraries from Gentoo's package tree (Portage) wherever possible.
 ## Layout
 
 - `metadata/docs/specs/` — design documents.
-- `sci-ml/local-ai/` — the core LocalAI server package.
-- `app-local-ai/*` — one package per inference backend (e.g. `llama-cpp`).
+- `www-apps/localai-server/` — the core LocalAI server package.
+- `localai-backend/*` — one package per inference backend (e.g. `llama-cpp`).
 - `scripts/` — maintainer tooling (distfile tarball generation).

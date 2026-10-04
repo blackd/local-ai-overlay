@@ -6,7 +6,7 @@
 # github.com/streamer45/silero-vad-go). No engine tree and no bundled
 # runtime: upstream's Makefile downloads Microsoft's prebuilt
 # onnxruntime, this build links the system library instead (same
-# system-onnxruntime policy as app-local-ai/piper). The .onnx model
+# system-onnxruntime policy as localai-backend/piper). The .onnx model
 # itself is fetched by the server at model-install time.
 
 EAPI=8

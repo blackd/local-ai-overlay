@@ -4,8 +4,8 @@ This overlay packages tools for self-hosted AI, built from source against
 system libraries wherever possible:
 
 - [LocalAI](https://localai.io), a self-hosted, OpenAI-API-compatible AI
-  server — the centerpiece: the server core (`sci-ml/local-ai`) and each
-  inference backend (`app-local-ai/*`) are separate packages
+  server — the centerpiece: the server core (`www-apps/localai-server`) and each
+  inference backend (`localai-backend/*`) are separate packages
 - `dev-util/opencode` — an AI coding agent
 - `app-containers/zot` — an OCI-native container image registry
 - `dev-util/gitea-runner` — the Gitea Actions CI runner
@@ -36,7 +36,7 @@ strongly suggest enabling it as well:
 
 ## Why a dedicated backend category
 
-The packages under `app-local-ai/` may look like duplicates of software
+The packages under `localai-backend/` may look like duplicates of software
 Gentoo already ships (for example llama.cpp), but they are not
 interchangeable with the regular packages:
 
@@ -62,8 +62,8 @@ engines themselves are built at their pinned commits.
 ## Version bumps
 
 1. Copy the ebuilds to the new version.
-2. Update the commit pins: `LOCAL_AI_COMMIT` in `sci-ml/local-ai`,
-   `LLAMA_COMMIT` in `app-local-ai/llama-cpp` (read `LLAMA_VERSION` from
+2. Update the commit pins: `LOCAL_AI_COMMIT` in `www-apps/localai-server`,
+   `LLAMA_COMMIT` in `localai-backend/llama-cpp` (read `LLAMA_VERSION` from
    `backend/cpp/llama-cpp/Makefile` at the new upstream tag).
 3. Commit and push, then push a tag `distfiles-v<version>` — the
    release-distfiles Gitea Action generates the dependency tarballs on the

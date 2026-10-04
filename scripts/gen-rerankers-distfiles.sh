@@ -1,5 +1,5 @@
 #!/bin/bash
-# Wheels for the venv layer of app-local-ai/rerankers. Parity rule: the
+# Wheels for the venv layer of localai-backend/rerankers. Parity rule: the
 # venv ships everything upstream's install resolves, MINUS what the
 # portage tree provides as system packages — which here is everything
 # except the rerankers package itself (torch, transformers, accelerate,
