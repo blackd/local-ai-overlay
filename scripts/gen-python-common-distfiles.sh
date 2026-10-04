@@ -18,16 +18,16 @@ trap 'rm -rf "$WORK"' EXIT
 # against: tags can move, so fetch the full source tarball and verify
 # it against the digest the overlay already pins before extracting.
 curl -fsSL "https://github.com/mudler/LocalAI/archive/refs/tags/v${VERSION}.tar.gz" \
-	-o "$WORK/local-ai-${VERSION}.tar.gz"
-recorded=$(grep -h "^DIST local-ai-${VERSION}.tar.gz " "${REPO}"/localai-backend/*/Manifest 2>/dev/null | awk '{print $7}' | sort -u | head -n1 || true)
-actual=$(sha512sum "$WORK/local-ai-${VERSION}.tar.gz" | cut -d' ' -f1)
+	-o "$WORK/localai-${VERSION}.tar.gz"
+recorded=$(grep -h "^DIST localai-${VERSION}.tar.gz " "${REPO}"/localai-backend/*/Manifest 2>/dev/null | awk '{print $7}' | sort -u | head -n1 || true)
+actual=$(sha512sum "$WORK/localai-${VERSION}.tar.gz" | cut -d' ' -f1)
 if [ -z "$recorded" ] || [ "$recorded" != "$actual" ]; then
-	echo "local-ai-${VERSION}.tar.gz does not match the Manifest-pinned digest" >&2
+	echo "localai-${VERSION}.tar.gz does not match the Manifest-pinned digest" >&2
 	echo "  recorded: ${recorded:-none}" >&2
 	echo "  actual:   ${actual}" >&2
 	exit 1
 fi
-tar -xzOf "$WORK/local-ai-${VERSION}.tar.gz" \
+tar -xzOf "$WORK/localai-${VERSION}.tar.gz" \
 	"LocalAI-${VERSION}/backend/backend.proto" > "$WORK/backend.proto"
 
 python3 -m venv "$WORK/genvenv"

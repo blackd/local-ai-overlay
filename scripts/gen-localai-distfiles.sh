@@ -5,20 +5,20 @@
 # would download must be packed ahead of time. This script produces, for a
 # given LocalAI release:
 #
-#   local-ai-<v>-deps.tar.xz          Go module cache (go-module.eclass format)
-#   local-ai-<v>-node_modules.tar.xz  npm dependencies of the React web UI
-#   local-ai-<v>-prebuilt.tar.xz      the two generated protobuf Go files
+#   localai-<v>-deps.tar.xz          Go module cache (go-module.eclass format)
+#   localai-server-<v>-node_modules.tar.xz  npm dependencies of the React web UI
+#   localai-<v>-prebuilt.tar.xz      the two generated protobuf Go files
 #
 # The node_modules and prebuilt tarball paths are rooted at the LocalAI
 # source tree top level, so ebuilds unpack them directly inside ${S}; the
 # deps tarball is rooted at go-mod/ as go-module.eclass expects. Upload the
 # results manually.
 #
-# Usage: gen-distfiles.sh <local-ai-version>
+# Usage: gen-localai-distfiles.sh <localai-version>
 # Example: gen-distfiles.sh 4.8.2
 set -euo pipefail
 
-VERSION=${1:?usage: gen-distfiles.sh <local-ai-version>}
+VERSION=${1:?usage: gen-localai-distfiles.sh <localai-version>}
 
 OUT=$(pwd)
 WORK=$(mktemp -d)
@@ -43,7 +43,7 @@ fi
 echo ">>> plugin pins: protoc-gen-go@${PROTOC_GEN_GO_VERSION}, protoc-gen-go-grpc@${PROTOC_GEN_GO_GRPC_VERSION}"
 
 echo ">>> Go module cache (go-module.eclass -deps format)"
-bash "$(dirname "$(realpath "$0")")/gen-go-deps.sh" "${SRC}" "${SRC}" "${OUT}/local-ai-${VERSION}-deps.tar.xz"
+bash "$(dirname "$(realpath "$0")")/gen-go-deps.sh" "${SRC}" "${SRC}" "${OUT}/localai-${VERSION}-deps.tar.xz"
 
 echo ">>> React UI node_modules"
 ( cd "${SRC}/core/http/react-ui" && npm ci )
@@ -51,14 +51,14 @@ echo ">>> React UI node_modules"
 # optional dependency packages chosen at *install* time. Force both Linux
 # arches in so one tarball serves amd64 and arm64 builds.
 ( cd "${SRC}/core/http/react-ui" && npm install --no-save --force @esbuild/linux-x64 @esbuild/linux-arm64 @rollup/rollup-linux-x64-gnu @rollup/rollup-linux-arm64-gnu )
-tar -C "${SRC}" -cJf "${OUT}/local-ai-${VERSION}-node_modules.tar.xz" core/http/react-ui/node_modules
+tar -C "${SRC}" -cJf "${OUT}/localai-server-${VERSION}-node_modules.tar.xz" core/http/react-ui/node_modules
 
 echo ">>> Generated protobuf Go code"
 GOBIN="${WORK}/gobin" go install "google.golang.org/protobuf/cmd/protoc-gen-go@${PROTOC_GEN_GO_VERSION}"
 GOBIN="${WORK}/gobin" go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@${PROTOC_GEN_GO_GRPC_VERSION}"
 mkdir -p "${SRC}/pkg/grpc/proto"
 ( cd "${SRC}" && PATH="${WORK}/gobin:${PATH}" protoc -I backend --go_out=paths=source_relative:pkg/grpc/proto --go-grpc_out=paths=source_relative:pkg/grpc/proto backend/backend.proto )
-tar -C "${SRC}" -cJf "${OUT}/local-ai-${VERSION}-prebuilt.tar.xz" pkg/grpc/proto
+tar -C "${SRC}" -cJf "${OUT}/localai-${VERSION}-prebuilt.tar.xz" pkg/grpc/proto
 
 echo ">>> Done. Upload these to the distfiles server:"
 ( cd "${OUT}" && sha256sum ./*.tar.xz )

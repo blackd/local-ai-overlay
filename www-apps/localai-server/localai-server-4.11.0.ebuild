@@ -25,27 +25,24 @@ pkg_setup() {
 # metadata as upstream's official builds.
 LOCAL_AI_COMMIT="58830f7ac508845a6f4efa32cfca06af422d4d82"
 
-# Distfiles keep the historical local-ai naming: the local-ai-v${PV}
-# release and its assets predate the rename to localai-server.
-MY_P="local-ai-${PV}"
-
 DESCRIPTION="Self-hosted, OpenAI-compatible AI server (core, without inference backends)"
 HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"
+# The localai-${PV} distfiles are the shared LocalAI source-release
+# artifacts: the tree, -deps and -prebuilt also feed every Go backend
+# (LOCAL_AI_GO_SRC_URI); only -node_modules is server-specific.
 SRC_URI="
-	https://github.com/mudler/LocalAI/archive/refs/tags/v${PV}.tar.gz -> ${MY_P}.tar.gz
-	${DISTFILES_BASE}/${MY_P}-deps.tar.xz
-	${DISTFILES_BASE}/${MY_P}-node_modules.tar.xz
-	${DISTFILES_BASE}/${MY_P}-prebuilt.tar.xz
+	${LOCAL_AI_GO_SRC_URI}
+	${DISTFILES_BASE}/${P}-node_modules.tar.xz
 "
 S="${WORKDIR}/LocalAI-${PV}"
 
 PATCHES=(
 	# OCI downloads stage beside the destination, not tmpfs /tmp —
 	# PR #12280, open; see the patch header.
-	"${FILESDIR}/local-ai-4.11.0-oci-staging-dir.patch"
+	"${FILESDIR}/localai-4.11.0-oci-staging-dir.patch"
 	# Manual model imports with remote assets download through the
 	# gallery job queue — PR pending; see the patch header.
-	"${FILESDIR}/local-ai-4.11.0-manual-import-job-queue.patch"
+	"${FILESDIR}/localai-4.11.0-manual-import-job-queue.patch"
 )
 
 LICENSE="MIT"
@@ -67,18 +64,11 @@ BDEPEND="
 DOCS=( README.md )
 
 src_unpack() {
-	# ${MY_P}-deps.tar.xz unpacks to ${WORKDIR}/go-mod — exactly where
-	# go-module.eclass points GOMODCACHE, so Go finds every dependency
-	# offline with no further setup.
-	unpack "${MY_P}.tar.gz" "${MY_P}-deps.tar.xz"
-
-	# The remaining two tarballs are rooted at the repository top level
-	# (core/http/react-ui/node_modules/, pkg/grpc/proto/), so they unpack
-	# inside the source tree. This layout is the contract with
-	# scripts/gen-distfiles.sh.
+	local-ai-backend_go_unpack
+	# node_modules is rooted at the repository top level
+	# (core/http/react-ui/node_modules/), so it unpacks inside the tree.
 	cd "${S}" || die
-	unpack "${MY_P}-node_modules.tar.xz"
-	unpack "${MY_P}-prebuilt.tar.xz"
+	unpack "${P}-node_modules.tar.xz"
 }
 
 src_compile() {

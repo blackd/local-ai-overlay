@@ -7,7 +7,7 @@
 # (their runs also need local-ai's manifests to exist — release-localai
 # orders that).
 declare -A FAMILY_DIRS=(
-	[local-ai]="www-apps/localai-server sci-ml/localai LOCALAI_BACKEND_REST"
+	[localai]="www-apps/localai-server sci-ml/localai LOCALAI_BACKEND_REST"
 	[rerankers]="localai-backend/rerankers"
 	[python-common]="localai-backend/python-common"
 	[diffusers]="localai-backend/diffusers"

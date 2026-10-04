@@ -102,7 +102,7 @@ RDEPEND="${PYTHON_DEPS}
 DEPEND="${RDEPEND}"
 
 local-ai-python_src_unpack() {
-	unpack "local-ai-${PV}.tar.gz" "${PN}-${PV}-wheels.tar.xz"
+	unpack "localai-${PV}.tar.gz" "${PN}-${PV}-wheels.tar.xz"
 }
 
 local-ai-python_src_compile() {

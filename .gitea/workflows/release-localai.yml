@@ -39,15 +39,15 @@ jobs:
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         run: >-
-          bash scripts/release-family.sh local-ai
+          bash scripts/release-family.sh localai
           "${{ steps.ver.outputs.version }}" "${{ inputs.rerelease }}"
       - name: "Manifests"
         env:
-          RELEASE_TAG: "local-ai-v${{ steps.ver.outputs.version }}"
+          RELEASE_TAG: "localai-v${{ steps.ver.outputs.version }}"
           FORCE: "${{ steps.rel.outputs.released == \'true\' && \'--force\' || \'\' }}"
         run: |
           source scripts/families.sh
-          bash scripts/manifest-and-push.sh $(family_dirs local-ai)
+          bash scripts/manifest-and-push.sh $(family_dirs localai)
 
   python-families:
     needs: "local-ai"

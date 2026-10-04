@@ -28,12 +28,12 @@ _LOCAL_AI_BACKEND_ECLASS=1
 # Base URL of the maintainer-generated dependency tarballs (Go module cache,
 # npm node_modules, pre-generated protobuf Go code); produced by
 # scripts/gen-local-ai-distfiles.sh.
-DISTFILES_BASE="https://git.ipnmod.org/packages/local-ai-overlay/releases/download/local-ai-v${PV}"
+DISTFILES_BASE="https://git.ipnmod.org/packages/local-ai-overlay/releases/download/localai-v${PV}"
 
 # @ECLASS_VARIABLE: LOCAL_AI_SRC_URI
 # @DESCRIPTION:
 # SRC_URI fragment fetching the LocalAI source tree at this version.
-LOCAL_AI_SRC_URI="https://github.com/mudler/LocalAI/archive/refs/tags/v${PV}.tar.gz -> local-ai-${PV}.tar.gz"
+LOCAL_AI_SRC_URI="https://github.com/mudler/LocalAI/archive/refs/tags/v${PV}.tar.gz -> localai-${PV}.tar.gz"
 
 # @ECLASS_VARIABLE: LOCAL_AI_GO_SRC_URI
 # @DESCRIPTION:
@@ -42,8 +42,8 @@ LOCAL_AI_SRC_URI="https://github.com/mudler/LocalAI/archive/refs/tags/v${PV}.tar
 # protobuf Go code (-prebuilt) that module needs to build offline.
 LOCAL_AI_GO_SRC_URI="
 	${LOCAL_AI_SRC_URI}
-	${DISTFILES_BASE}/local-ai-${PV}-deps.tar.xz
-	${DISTFILES_BASE}/local-ai-${PV}-prebuilt.tar.xz
+	${DISTFILES_BASE}/localai-${PV}-deps.tar.xz
+	${DISTFILES_BASE}/localai-${PV}-prebuilt.tar.xz
 "
 
 # @FUNCTION: local-ai-backend_go_unpack
@@ -54,9 +54,9 @@ LOCAL_AI_GO_SRC_URI="
 # ${WORKDIR} as the working directory; engine sources stay the ebuild's
 # job.
 local-ai-backend_go_unpack() {
-	unpack "local-ai-${PV}.tar.gz" "local-ai-${PV}-deps.tar.xz"
+	unpack "localai-${PV}.tar.gz" "localai-${PV}-deps.tar.xz"
 	cd "${WORKDIR}/LocalAI-${PV}" || die
-	unpack "local-ai-${PV}-prebuilt.tar.xz"
+	unpack "localai-${PV}-prebuilt.tar.xz"
 	cd "${WORKDIR}" || die
 }
 
