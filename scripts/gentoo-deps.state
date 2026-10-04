@@ -6,5 +6,5 @@ net-libs/nodejs 26.10.0-r2
 net-misc/curl 8.22.0
 sci-libs/openblas 0.3.34
 media-libs/shaderc 2026.3
-sci-ml/pytorch 2.14.0-r4
+sci-ml/pytorch 2.14.1
 sci-libs/hipSOLVER 7.2.0
