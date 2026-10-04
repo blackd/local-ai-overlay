@@ -37,3 +37,14 @@ world update:
 
 Otherwise the meta package's default USE flags will schedule every
 backend for installation.
+
+If the update aborts with file collisions on the server's files
+(/usr/bin/local-ai and the service files), unmerge the old server
+install - it carries the meta's new name in the package database -
+while keeping the world entry, then run the update again:
+
+  emerge -C --deselect=n sci-ml/localai
+  emerge -uDN @world
+
+This is safe: the update reinstalls the server and the backends
+immediately, and /var/lib/local-ai (models, state) is untouched.
