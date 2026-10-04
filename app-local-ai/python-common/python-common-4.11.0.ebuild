@@ -25,8 +25,6 @@ LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64"
 
-RDEPEND="sci-ml/local-ai"
-
 src_install() {
 	# The whole directory, tests and all: carrying a few inert files
 	# beats re-auditing the import closure at every bump.

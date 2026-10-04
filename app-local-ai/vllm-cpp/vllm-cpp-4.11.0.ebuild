@@ -38,7 +38,6 @@ KEYWORDS="~amd64"
 IUSE="vulkan video_cards_amdgpu"
 
 RDEPEND="
-	sci-ml/local-ai
 	vulkan? (
 		media-libs/vulkan-loader
 		video_cards_amdgpu? ( media-libs/mesa[vulkan,video_cards_radeonsi] )

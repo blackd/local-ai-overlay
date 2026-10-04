@@ -46,7 +46,6 @@ REQUIRED_USE="
 RESTRICT="!test? ( test )"
 
 RDEPEND="
-	sci-ml/local-ai
 	dev-cpp/abseil-cpp:=
 	dev-libs/protobuf:=
 	net-libs/grpc:=

@@ -1,14 +1,17 @@
 # Copyright 2026 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-# Meta package selecting which LocalAI inference backends are installed.
-# Backend selection lives here rather than on sci-ml/local-ai so that
-# toggling a backend never rebuilds the server: this package installs no
-# files, so USE changes only add or remove the backend packages.
+# The single world entry for a LocalAI host: hard-depends on the server
+# and selects which inference backends are installed. Selection lives
+# here rather than on sci-ml/local-ai so that toggling a backend never
+# rebuilds the server: this package installs no files, so USE changes
+# only add or remove the backend packages. The backends carry no server
+# dependency of their own — removing this package from world lets
+# depclean sweep the whole stack.
 
 EAPI=8
 
-DESCRIPTION="Meta package selecting LocalAI inference backends"
+DESCRIPTION="Meta package pulling the LocalAI server and selected inference backends"
 HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"
 
 LICENSE="metapackage"
@@ -20,6 +23,7 @@ IUSE="+acestep-cpp +audio-cpp +bonsai +ced +crispasr +depth-anything +diffusers 
 REQUIRED_USE="|| ( acestep-cpp audio-cpp bonsai ced crispasr depth-anything diffusers face-detect fish-speech ik-llama-cpp kimodocpp llama-cpp localvqe locate-anything-cpp parakeet-cpp piper qwen3-tts-cpp rerankers rfdetr-cpp sam3-cpp silero-vad stablediffusion-ggml trellis2cpp vibevoice-cpp vllm-cpp whisper )"
 
 RDEPEND="
+	sci-ml/local-ai
 	acestep-cpp? ( app-local-ai/acestep-cpp )
 	audio-cpp? ( app-local-ai/audio-cpp )
 	bonsai? ( app-local-ai/bonsai )

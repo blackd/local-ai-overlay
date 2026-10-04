@@ -23,7 +23,6 @@ SLOT="0"
 KEYWORDS="~amd64"
 
 RDEPEND="
-	sci-ml/local-ai
 	|| (
 		sci-libs/onnxruntime
 		sci-libs/onnxruntime-bin

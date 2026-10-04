@@ -115,10 +115,10 @@ if [[ -z ${LOCALAI_GGML_NO_ROCM} ]]; then
 	unset _amdgpu_implies_rocm _f
 fi
 
-# The server package provides the local-ai user and discovers backends
-# installed under /usr/libexec via LOCALAI_BACKENDS_SYSTEM_PATH.
+# Deliberately no dependency on sci-ml/local-ai: a backend is inert
+# files the server discovers via LOCALAI_BACKENDS_SYSTEM_PATH, and the
+# missing dep lets depclean sweep backends once local-ai-meta is gone.
 RDEPEND="
-	sci-ml/local-ai
 	openblas? ( sci-libs/openblas )
 	vulkan? (
 		media-libs/vulkan-loader

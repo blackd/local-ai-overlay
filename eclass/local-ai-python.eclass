@@ -69,7 +69,6 @@ BACKEND_DIR="/usr/libexec/local-ai/backends/${PN}"
 # in gen-python-common-distfiles.sh: the generated stubs refuse to
 # import on an older grpcio (GRPC_GENERATED_VERSION guard).
 RDEPEND="${PYTHON_DEPS}
-	sci-ml/local-ai
 	~app-local-ai/python-common-${PV}
 	$(python_gen_cond_dep '
 		sci-ml/pytorch[${PYTHON_SINGLE_USEDEP}]
