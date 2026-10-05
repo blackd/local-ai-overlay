@@ -24,7 +24,10 @@ jobs:
           API="${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}"
           AUTH="Authorization: token ${GITHUB_TOKEN}"
           CUTOFF=$(date -u -d '30 days ago' +%s)
-          declare -A FAMILIES=( [localai]=www-apps/localai-server [opencode]=dev-util/opencode [gitea-runner]=dev-util/gitea-runner [zot]=app-containers/zot [dagu]=sys-process/dagu [diffusers]=localai-backend/diffusers [fish-speech]=localai-backend/fish-speech [ormsgpack]=dev-python/ormsgpack [python-common]=localai-backend/python-common [rerankers]=localai-backend/rerankers [speaker-recognition]=localai-backend/speaker-recognition )
+          # local-ai is the pre-rename alias: old releases/tags carry it,
+          # and the ebuild check against the new pkgdir never matches, so
+          # they age out and get deleted like any other stale version.
+          declare -A FAMILIES=( [localai]=www-apps/localai-server [local-ai]=www-apps/localai-server [opencode]=dev-util/opencode [gitea-runner]=dev-util/gitea-runner [zot]=app-containers/zot [dagu]=sys-process/dagu [diffusers]=localai-backend/diffusers [fish-speech]=localai-backend/fish-speech [ormsgpack]=dev-python/ormsgpack [python-common]=localai-backend/python-common [rerankers]=localai-backend/rerankers [speaker-recognition]=localai-backend/speaker-recognition )
           page=1
           while :; do
             rels=$(curl -sf -H "${AUTH}" "${API}/releases?limit=50&page=${page}")
@@ -44,13 +47,44 @@ jobs:
                 echo "keep (younger than 30 days): ${tag}"; continue
               fi
               if [ "${DRY_RUN}" != "false" ]; then
-                echo "would delete: release ${tag}, tags ${tag} + ${trigger}"; continue
+                echo "would delete: release ${tag} + trigger tag ${trigger}"; continue
               fi
-              echo "deleting: release ${tag}, tags ${tag} + ${trigger}"
+              # The release tag stays: it marks the overlay tree that
+              # built the release, the path to re-running the train and
+              # making the old version installable again. Trigger tags
+              # are pure CI levers and re-fire workflows, so they go.
+              echo "deleting: release ${tag} + trigger tag ${trigger}"
               curl -sf -X DELETE -H "${AUTH}" "${API}/releases/${id}"
-              curl -s -X DELETE -H "${AUTH}" "${API}/tags/${tag}"
               curl -s -X DELETE -H "${AUTH}" "${API}/tags/${trigger}"
             done < <(jq -r '.[] | "\(.id) \(.tag_name) \(.created_at)"' <<<"${rels}")
+            page=$((page+1))
+          done
+          # Trigger tags have no release of their own, so the loop above
+          # only deletes them paired with one. Sweep true orphans: a
+          # *-distfiles-v* tag whose family release is gone AND whose
+          # version no ebuild references (a freshly pushed trigger always
+          # has its ebuild in the tree, so running builds are safe).
+          page=1
+          while :; do
+            tags=$(curl -sf -H "${AUTH}" "${API}/tags?limit=50&page=${page}")
+            [ "$(jq length <<<"${tags}")" -eq 0 ] && break
+            while read -r tag; do
+              case "${tag}" in
+                distfiles-v[0-9]*) family=local-ai; version=${tag#distfiles-v}; reltag=v${version} ;;
+                *-distfiles-v[0-9]*) version=${tag##*-distfiles-v}; family=${tag%-distfiles-v${version}}; reltag=${family}-v${version} ;;
+                *) continue ;;
+              esac
+              pkgdir=${FAMILIES[${family}]}
+              [ -z "${pkgdir}" ] && { echo "skip (unknown family): ${tag}"; continue; }
+              compgen -G "${pkgdir}/${pkgdir##*/}-${version}*.ebuild" >/dev/null && continue
+              code=$(curl -s -o /dev/null -w '%{http_code}' -H "${AUTH}" "${API}/releases/tags/${reltag}")
+              [ "${code}" = "200" ] && continue
+              if [ "${DRY_RUN}" != "false" ]; then
+                echo "would delete: orphan trigger tag ${tag}"; continue
+              fi
+              echo "deleting: orphan trigger tag ${tag}"
+              curl -s -X DELETE -H "${AUTH}" "${API}/tags/${tag}"
+            done < <(jq -r '.[].name' <<<"${tags}")
             page=$((page+1))
           done
         env:
