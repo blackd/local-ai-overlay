@@ -26,6 +26,7 @@ RDEPEND+="
 	sci-ml/torchaudio[${PYTHON_SINGLE_USEDEP}]
 	$(python_gen_cond_dep '
 		dev-python/soundfile[${PYTHON_USEDEP}]
+		dev-python/ruamel-yaml-clib[${PYTHON_USEDEP}]
 		sci-libs/onnxruntime[python,${PYTHON_USEDEP}]
 	')
 "
