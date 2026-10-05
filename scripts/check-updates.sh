@@ -16,6 +16,7 @@ AUTH="Authorization: token ${GITHUB_TOKEN}"
 # their real upstream, and are covered by the guru-sync check below.
 declare -A UPSTREAMS=(
 	[www-apps/localai-server]=github:mudler/LocalAI
+	[dev-python/sentry-sdk]=github:getsentry/sentry-python
 	[dev-util/opencode]=github:anomalyco/opencode
 	[dev-util/gitea-runner]=gitea:gitea.com/gitea/runner
 	[app-containers/zot]=github:project-zot/zot

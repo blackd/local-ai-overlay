@@ -17,8 +17,6 @@ HERE=$(dirname "$(realpath "$0")")
 PACKAGES=(
 	diffusers==0.38.0
 	transformers==4.57.6
-	accelerate
-	peft
 	huggingface-hub==0.36.2
 	optimum-quanto
 )

@@ -58,7 +58,6 @@ PACKAGES=(
 	omegaconf==2.3.1
 	opencc-python-reimplemented==0.1.7
 	pyarrow-hotfix==0.7
-	pydub==0.25.1
 	pyloudnorm==0.2.0
 	pyrootutils==1.0.4
 	pystoi==0.4.1
@@ -66,7 +65,6 @@ PACKAGES=(
 	randomname==0.2.1
 	resampy==0.4.3
 	safehttpx==0.1.7
-	sentry-sdk==2.69.1
 	silero-vad==6.2.1
 	tensorboard==2.20.0
 	torch-stoi==0.2.3

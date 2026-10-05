@@ -18,6 +18,8 @@ DESCRIPTION="LocalAI image and video generation backend (diffusers gRPC server)"
 LICENSE="MIT Apache-2.0"
 
 RDEPEND+="
+	sci-ml/accelerate[${PYTHON_SINGLE_USEDEP}]
+	dev-python/peft[${PYTHON_SINGLE_USEDEP}]
 	$(python_gen_cond_dep '
 		sci-ml/torchvision[${PYTHON_SINGLE_USEDEP}]
 		sci-ml/sentencepiece[${PYTHON_USEDEP}]

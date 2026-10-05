@@ -48,11 +48,11 @@ inherit local-ai-backend python-single-r1
 # lazily — importing "backend" alone proves nothing then.
 : "${LOCAL_AI_PYTHON_SMOKE_IMPORTS:=backend}"
 
-LOCAL_AI_PYTHON_DISTFILES="https://git.ipnmod.org/packages/local-ai-overlay/releases/download/${PN}-v${PV}"
+LOCAL_AI_PYTHON_DISTFILES="https://git.ipnmod.org/packages/local-ai-overlay/releases/download/${PN}-v${PVR}"
 
 SRC_URI="
 	${LOCAL_AI_SRC_URI}
-	${LOCAL_AI_PYTHON_DISTFILES}/${PN}-${PV}-wheels.tar.xz
+	${LOCAL_AI_PYTHON_DISTFILES}/${PN}-${PVR}-wheels.tar.xz
 "
 S="${WORKDIR}/LocalAI-${PV}/backend/python/${PN}"
 
@@ -102,7 +102,7 @@ RDEPEND="${PYTHON_DEPS}
 DEPEND="${RDEPEND}"
 
 local-ai-python_src_unpack() {
-	unpack "localai-${PV}.tar.gz" "${PN}-${PV}-wheels.tar.xz"
+	unpack "localai-${PV}.tar.gz" "${PN}-${PVR}-wheels.tar.xz"
 }
 
 local-ai-python_src_compile() {
