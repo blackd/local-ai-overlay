@@ -120,6 +120,7 @@ local-ai-python_install_venv() {
 	"${EPYTHON}" -m venv --system-site-packages "${ED}${BACKEND_DIR}/venv" || die
 	"${ED}${BACKEND_DIR}/venv/bin/python" -m pip install \
 		--no-index --find-links "${WORKDIR}/wheels" --no-deps --no-compile \
+		--ignore-installed \
 		"${WORKDIR}"/wheels/*.whl || die
 	# The venv's paths must not remember the image root.
 	find "${ED}${BACKEND_DIR}/venv/bin" -type f -exec sed -i "s:${D}::g" {} + || die
