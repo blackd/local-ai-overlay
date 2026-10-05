@@ -24,10 +24,11 @@ jobs:
           API="${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}"
           AUTH="Authorization: token ${GITHUB_TOKEN}"
           CUTOFF=$(date -u -d '30 days ago' +%s)
-          # local-ai is the pre-rename alias: old releases/tags carry it,
-          # and the ebuild check against the new pkgdir never matches, so
-          # they age out and get deleted like any other stale version.
-          declare -A FAMILIES=( [localai]=www-apps/localai-server [local-ai]=www-apps/localai-server [opencode]=dev-util/opencode [gitea-runner]=dev-util/gitea-runner [zot]=app-containers/zot [dagu]=sys-process/dagu [diffusers]=localai-backend/diffusers [fish-speech]=localai-backend/fish-speech [ormsgpack]=dev-python/ormsgpack [python-common]=localai-backend/python-common [rerankers]=localai-backend/rerankers [speaker-recognition]=localai-backend/speaker-recognition )
+          # local-ai is the pre-rename alias, and hf-xet/tokenizers/
+          # safetensors are retired families (packages dropped for tree
+          # equivalents): their pkgdirs never match an ebuild, so their
+          # releases age out and get deleted like any stale version.
+          declare -A FAMILIES=( [localai]=www-apps/localai-server [local-ai]=www-apps/localai-server [hf-xet]=dev-python/hf-xet [tokenizers]=dev-python/tokenizers [safetensors]=dev-python/safetensors [opencode]=dev-util/opencode [gitea-runner]=dev-util/gitea-runner [zot]=app-containers/zot [dagu]=sys-process/dagu [diffusers]=localai-backend/diffusers [fish-speech]=localai-backend/fish-speech [ormsgpack]=dev-python/ormsgpack [python-common]=localai-backend/python-common [rerankers]=localai-backend/rerankers [speaker-recognition]=localai-backend/speaker-recognition )
           page=1
           while :; do
             rels=$(curl -sf -H "${AUTH}" "${API}/releases?limit=50&page=${page}")
