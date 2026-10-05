@@ -1,12 +1,89 @@
-Manual model imports whose config references remote assets (download_files,
-URI-valued model/mmproj) go through the gallery job queue - job UUID +
-/models/jobs/{uuid} progress, same as gallery installs and URI imports -
-instead of downloading synchronously inside the /models/import request.
-Config-only imports keep the synchronous path. Also fixes the import
+Manual model imports whose config needs asset acquisition go through the
+gallery job queue - job UUID + /models/jobs/{uuid} progress, same as
+gallery installs and URI imports - instead of acquiring synchronously
+inside the /models/import request. The artifact resolver decides the
+acquisition: managed artifacts (hf:// repos, bare owner/repo on
+directory-consuming backends, explicit artifacts:) enqueue config-only
+so the worker runs the repository materializer; plain remote files ride
+as file entries through the legacy downloader. The model editor's two
+create paths poll the job before navigating. Also fixes the import
 page's job polling terminal check (raw /models/jobs reports `processed`,
-never `completed`), which left the spinner running after the job ended.
-Proposed upstream.
+never `completed`). Proposed upstream.
 
+diff --git a/core/gallery/queued_import_install_test.go b/core/gallery/queued_import_install_test.go
+new file mode 100644
+index 000000000..7031cde8b
+--- /dev/null
++++ b/core/gallery/queued_import_install_test.go
+@@ -0,0 +1,68 @@
++package gallery_test
++
++import (
++	"context"
++	"path/filepath"
++
++	. "github.com/mudler/LocalAI/core/gallery"
++	"github.com/mudler/LocalAI/pkg/modelartifacts"
++	"github.com/mudler/LocalAI/pkg/system"
++	. "github.com/onsi/ginkgo/v2"
++	. "github.com/onsi/gomega"
++)
++
++// The queued manual-import op carries only the config YAML — no files: —
++// so InstallModel must resolve and bind the managed artifact itself,
++// exactly as it does for a gallery entry. These specs pin that for the
++// references the import endpoint forwards without flattening; a file
++// entry here would have routed the repository through the single-file
++// downloader and skipped the materializer entirely.
++var _ = Describe("queued manual import installs", func() {
++	run := func(configFile string) (*fakeArtifactMaterializer, string) {
++		modelsPath := GinkgoT().TempDir()
++		state, err := system.GetSystemState(system.WithModelPath(modelsPath))
++		Expect(err).ToNot(HaveOccurred())
++
++		// Standing in for the materializer keeps the install off the network.
++		materializer := &fakeArtifactMaterializer{result: modelartifacts.Result{
++			Spec: modelartifacts.Spec{
++				Name: "model", Target: "model",
++				Source: modelartifacts.Source{Type: "huggingface", Repo: "owner/repo", Revision: "main"},
++				Resolved: &modelartifacts.Resolved{
++					Endpoint: "https://huggingface.co",
++					Revision: "0123456789abcdef0123456789abcdef01234567",
++					CacheKey: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
++				},
++			},
++			RelativePath: ".artifacts/huggingface/0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef/snapshot",
++		}}
++
++		_, err = InstallModel(context.TODO(), state, "queued-model",
++			&ModelConfig{ConfigFile: configFile}, nil, nil, false,
++			WithArtifactMaterializer(materializer))
++		Expect(err).ToNot(HaveOccurred())
++		return materializer, modelsPath
++	}
++
++	It("binds an hf:// repository through the materializer", func() {
++		m, dir := run(`name: queued-model
++backend: transformers
++parameters:
++  model: hf://owner/repo
++`)
++		Expect(m.seen).ToNot(BeEmpty())
++		Expect(m.seen[0].Source.Repo).To(Equal("owner/repo"))
++		Expect(filepath.Join(dir, "queued-model.yaml")).To(BeAnExistingFile())
++	})
++
++	It("binds a bare owner/repo reference through the materializer", func() {
++		m, dir := run(`name: queued-model
++backend: transformers
++parameters:
++  model: owner/repo
++`)
++		Expect(m.seen).ToNot(BeEmpty())
++		Expect(m.seen[0].Source.Repo).To(Equal("owner/repo"))
++		Expect(filepath.Join(dir, "queued-model.yaml")).To(BeAnExistingFile())
++	})
++})
 diff --git a/core/http/endpoints/localai/edit_model_test.go b/core/http/endpoints/localai/edit_model_test.go
 index 223943e46..e09283422 100644
 --- a/core/http/endpoints/localai/edit_model_test.go
@@ -21,29 +98,63 @@ index 223943e46..e09283422 100644
  
  			requestBody := bytes.NewBufferString(`{"name": "foo", "backend": "foo", "model": "foo"}`)
 diff --git a/core/http/endpoints/localai/import_model.go b/core/http/endpoints/localai/import_model.go
-index b3cf491eb..a0f4224d2 100644
+index 73448430a..083fe5ef9 100644
 --- a/core/http/endpoints/localai/import_model.go
 +++ b/core/http/endpoints/localai/import_model.go
-@@ -125,7 +125,7 @@ func ImportModelURIEndpoint(cl *config.ModelConfigLoader, appConfig *config.Appl
+@@ -125,7 +125,21 @@ func ImportModelURIEndpoint(cl *config.ModelConfigLoader, appConfig *config.Appl
  }
  
  // ImportModelEndpoint handles creating new model configurations
 -func ImportModelEndpoint(cl *config.ModelConfigLoader, gs *galleryop.GalleryService, appConfig *config.ApplicationConfig) echo.HandlerFunc {
++// @Summary Import a model from a raw YAML or JSON configuration
++// @Description Writes the posted model configuration. A config referencing
++// @Description remote assets (download_files entries, URI-valued model/mmproj)
++// @Description is enqueued on the gallery job queue and answered with a job id
++// @Description plus status URL to poll, like a gallery install; a config with
++// @Description no downloads is written synchronously and answered with a
++// @Description plain success response.
++// @Tags models
++// @Accept json
++// @Produce json
++// @Param request body object true "model configuration (YAML or JSON body)"
++// @Success 200 {object} schema.GalleryResponse "remote assets present: job id and status URL"
++// @Failure 400 {object} localai.ModelResponse "invalid or incomplete configuration"
++// @Router /models/import [post]
 +func ImportModelEndpoint(cl *config.ModelConfigLoader, gs *galleryop.GalleryService, appConfig *config.ApplicationConfig, opcache *galleryop.OpCache) echo.HandlerFunc {
  	return func(c echo.Context) error {
  		// Get the raw body
  		body, err := io.ReadAll(c.Request().Body)
-@@ -220,6 +220,37 @@ func ImportModelEndpoint(cl *config.ModelConfigLoader, gs *galleryop.GalleryServ
+@@ -226,6 +240,59 @@ func ImportModelEndpoint(cl *config.ModelConfigLoader, gs *galleryop.GalleryServ
  			return c.JSON(http.StatusInternalServerError, response)
  		}
  
-+		// A config referencing remote assets is a download, not just a file
-+		// write: route it through the gallery op queue so the UI tracks it
-+		// like a gallery install (job UUID + /models/jobs/{uuid}), instead
-+		// of downloading synchronously inside this request via Preload. The
-+		// op writes the config file and reloads once the downloads finish;
-+		// configs with no remote assets keep the fast synchronous path.
-+		if files := remoteAssetFiles(&modelConfig); len(files) > 0 && gs != nil {
++		// A config whose assets are not on disk yet is a download, not just
++		// a file write: route it through the gallery op queue so the UI
++		// tracks it like a gallery install (job UUID + /models/jobs/{uuid})
++		// instead of acquiring synchronously inside this request. The op
++		// writes the config file and reloads once acquisition finishes;
++		// configs needing no acquisition keep the fast synchronous path.
++		//
++		// WHICH acquisition is the artifact resolver's call, not a string
++		// test: a managed artifact (explicit artifacts:, an hf:// repo or
++		// bare owner/repo on a directory-consuming backend) must enqueue
++		// with NO files, so the worker's InstallModel runs the same binding
++		// and repository materializer as a gallery install — flattening a
++		// repository into file entries would send it to the single-file
++		// downloader and skip the materializer. Plain remote files
++		// (download_files, URL model/mmproj on single-file backends) ride
++		// as file entries through the same downloader preload would use.
++		// (A URL mmproj on an artifact config stays preload's job, as it
++		// was before queued imports.)
++		_, _, hasArtifact, err := modelConfig.PrimaryArtifactSpec(appConfig.SystemState.Model.ModelsPath)
++		if err != nil {
++			return c.JSON(http.StatusBadRequest, ModelResponse{Success: false, Error: "Invalid model reference: " + err.Error()})
++		}
++		var queueFiles []gallery.File
++		if !hasArtifact {
++			queueFiles = remoteAssetFiles(&modelConfig)
++		}
++		if gs != nil && (hasArtifact || len(queueFiles) > 0) {
 +			jobUUID, err := uuid.NewUUID()
 +			if err != nil {
 +				return err
@@ -58,7 +169,9 @@ index b3cf491eb..a0f4224d2 100644
 +				GalleryElement: &gallery.ModelConfig{
 +					Name:       modelConfig.Name,
 +					ConfigFile: string(yamlData),
-+					Files:      files,
++					// nil for artifact configs: InstallModel's empty-Files
++					// branch re-resolves and binds the artifact itself.
++					Files: queueFiles,
 +				},
 +				BackendGalleries: appConfig.BackendGalleries,
 +			})
@@ -71,7 +184,7 @@ index b3cf491eb..a0f4224d2 100644
  		// Write the file
  		if err := os.WriteFile(configPath, yamlData, 0644); err != nil {
  			response := ModelResponse{
-@@ -261,3 +292,22 @@ func ImportModelEndpoint(cl *config.ModelConfigLoader, gs *galleryop.GalleryServ
+@@ -267,3 +334,22 @@ func ImportModelEndpoint(cl *config.ModelConfigLoader, gs *galleryop.GalleryServ
  		return c.JSON(200, response)
  	}
  }
@@ -94,6 +207,157 @@ index b3cf491eb..a0f4224d2 100644
 +	}
 +	return files
 +}
+diff --git a/core/http/endpoints/localai/import_model_test.go b/core/http/endpoints/localai/import_model_test.go
+index 96c20160e..409162315 100644
+--- a/core/http/endpoints/localai/import_model_test.go
++++ b/core/http/endpoints/localai/import_model_test.go
+@@ -7,9 +7,11 @@ import (
+ 	"net/http"
+ 	"net/http/httptest"
+ 	"os"
++	"path/filepath"
+ 
+ 	"github.com/labstack/echo/v4"
+ 	"github.com/mudler/LocalAI/core/config"
++	"github.com/mudler/LocalAI/core/gallery"
+ 	. "github.com/mudler/LocalAI/core/http/endpoints/localai"
+ 	"github.com/mudler/LocalAI/core/services/galleryop"
+ 	"github.com/mudler/LocalAI/pkg/model"
+@@ -120,3 +122,134 @@ var _ = Describe("ImportModelURIEndpoint ambiguity handling", func() {
+ 		Expect(candidates).ToNot(ContainElement("vllm"))
+ 	})
+ })
++
++var _ = Describe("ImportModelEndpoint queued imports", func() {
++	var (
++		tempDir        string
++		app            *echo.Echo
++		galleryService *galleryop.GalleryService
++	)
++
++	BeforeEach(func() {
++		tempDir = GinkgoT().TempDir()
++		systemState, err := system.GetSystemState(system.WithModelPath(tempDir))
++		Expect(err).ToNot(HaveOccurred())
++		applicationConfig := config.NewApplicationConfig(config.WithSystemState(systemState))
++		modelConfigLoader := config.NewModelConfigLoader(systemState.Model.ModelsPath)
++		ml := model.NewModelLoader(systemState)
++		galleryService = galleryop.NewGalleryService(applicationConfig, ml)
++		// The worker is deliberately NOT started: these specs assert the
++		// admission contract (response shape, job visibility, op payload),
++		// not the download itself.
++		app = echo.New()
++		app.POST("/models/import", ImportModelEndpoint(modelConfigLoader, galleryService, applicationConfig, nil))
++	})
++
++	post := func(body string) *httptest.ResponseRecorder {
++		req := httptest.NewRequest("POST", "/models/import", bytes.NewBufferString(body))
++		req.Header.Set("Content-Type", "application/json")
++		rec := httptest.NewRecorder()
++		app.ServeHTTP(rec, req)
++		return rec
++	}
++
++	It("enqueues a config whose model is a URL and answers with a pollable job", func() {
++		rec := post(`{"name": "remote", "backend": "llama-cpp", "parameters": {"model": "https://example.com/weights/foo.gguf"}}`)
++		Expect(rec.Code).To(Equal(http.StatusOK))
++
++		var resp map[string]any
++		Expect(json.Unmarshal(rec.Body.Bytes(), &resp)).To(Succeed())
++		Expect(resp).To(HaveKey("uuid"))
++		Expect(resp["status"]).To(ContainSubstring("/models/jobs/" + resp["uuid"].(string)))
++
++		// Queryable from the instant the ID is handed out, before any
++		// worker picks the op up.
++		Expect(galleryService.GetStatus(resp["uuid"].(string))).ToNot(BeNil())
++
++		// The op writes the config once downloads finish; admission must
++		// not have written it already.
++		Expect(filepath.Join(tempDir, "remote.yaml")).ToNot(BeAnExistingFile())
++
++		var op galleryop.ManagementOp[gallery.GalleryModel, gallery.ModelConfig]
++		Eventually(galleryService.ModelGalleryChannel).Should(Receive(&op))
++		Expect(op.GalleryElementName).To(Equal("remote"))
++		// Preload-matching name: the loader later finds the file under the
++		// name the config resolves, so the config needs no rewriting.
++		Expect(op.GalleryElement.Files).To(HaveLen(1))
++		Expect(op.GalleryElement.Files[0].Filename).To(Equal("foo.gguf"))
++		Expect(op.GalleryElement.Files[0].URI).To(Equal("https://example.com/weights/foo.gguf"))
++		Expect(op.GalleryElement.ConfigFile).To(ContainSubstring("name: remote"))
++	})
++
++	It("carries download_files entries with their checksums into the op", func() {
++		rec := post(`{"name": "assets", "backend": "llama-cpp", "parameters": {"model": "weights.gguf"}, "download_files": [{"filename": "weights.gguf", "sha256": "abc123", "uri": "https://example.com/weights.gguf"}]}`)
++		Expect(rec.Code).To(Equal(http.StatusOK))
++		var op galleryop.ManagementOp[gallery.GalleryModel, gallery.ModelConfig]
++		Eventually(galleryService.ModelGalleryChannel).Should(Receive(&op))
++		Expect(op.GalleryElement.Files).To(HaveLen(1))
++		Expect(op.GalleryElement.Files[0].SHA256).To(Equal("abc123"))
++	})
++
++	It("enqueues a managed-artifact repo with no file entries so the worker binds it", func() {
++		// The reviewer's case: an hf:// repository on a directory-consuming
++		// backend must reach InstallModel's artifact binding, which only
++		// runs when the op carries no files — a file entry would route the
++		// repository through the single-file downloader instead.
++		rec := post(`{"name": "hfrepo", "backend": "transformers", "parameters": {"model": "hf://sshleifer/tiny-gpt2"}}`)
++		Expect(rec.Code).To(Equal(http.StatusOK))
++		var resp map[string]any
++		Expect(json.Unmarshal(rec.Body.Bytes(), &resp)).To(Succeed())
++		Expect(resp).To(HaveKey("uuid"))
++
++		var op galleryop.ManagementOp[gallery.GalleryModel, gallery.ModelConfig]
++		Eventually(galleryService.ModelGalleryChannel).Should(Receive(&op))
++		Expect(op.GalleryElement.Files).To(BeEmpty())
++		Expect(op.GalleryElement.ConfigFile).To(ContainSubstring("hf://sshleifer/tiny-gpt2"))
++	})
++
++	It("enqueues a bare owner/repo reference instead of importing it synchronously", func() {
++		rec := post(`{"name": "barerepo", "backend": "transformers", "parameters": {"model": "sshleifer/tiny-gpt2"}}`)
++		Expect(rec.Code).To(Equal(http.StatusOK))
++		Expect(filepath.Join(tempDir, "barerepo.yaml")).ToNot(BeAnExistingFile())
++		var op galleryop.ManagementOp[gallery.GalleryModel, gallery.ModelConfig]
++		Eventually(galleryService.ModelGalleryChannel).Should(Receive(&op))
++		Expect(op.GalleryElement.Files).To(BeEmpty())
++	})
++
++	It("enqueues an explicit artifacts config with no file entries", func() {
++		body := `name: artifactual
++backend: transformers
++artifacts:
++- name: model
++  target: model
++  source:
++    type: huggingface
++    repo: sshleifer/tiny-gpt2
++parameters:
++  model: sshleifer/tiny-gpt2
++`
++		req := httptest.NewRequest("POST", "/models/import", bytes.NewBufferString(body))
++		req.Header.Set("Content-Type", "application/x-yaml")
++		rec := httptest.NewRecorder()
++		app.ServeHTTP(rec, req)
++		Expect(rec.Code).To(Equal(http.StatusOK))
++		var op galleryop.ManagementOp[gallery.GalleryModel, gallery.ModelConfig]
++		Eventually(galleryService.ModelGalleryChannel).Should(Receive(&op))
++		Expect(op.GalleryElement.Files).To(BeEmpty())
++	})
++
++	It("rejects a malformed Hugging Face reference at admission", func() {
++		rec := post(`{"name": "badref", "backend": "transformers", "parameters": {"model": "owner/repo?bad"}}`)
++		Expect(rec.Code).To(Equal(http.StatusBadRequest))
++		Expect(rec.Body.String()).To(ContainSubstring("Invalid model reference"))
++	})
++
++	It("keeps the synchronous path for configs without remote assets", func() {
++		rec := post(`{"name": "local", "backend": "llama-cpp", "parameters": {"model": "already-here.gguf"}}`)
++		Expect(rec.Code).To(Equal(http.StatusOK))
++		Expect(rec.Body.String()).To(ContainSubstring("created successfully"))
++		Expect(filepath.Join(tempDir, "local.yaml")).To(BeAnExistingFile())
++		// Nothing was enqueued for a config with no downloads.
++		Consistently(galleryService.ModelGalleryChannel, "100ms").ShouldNot(Receive())
++	})
++})
 diff --git a/core/http/react-ui/src/pages/ImportModel.jsx b/core/http/react-ui/src/pages/ImportModel.jsx
 index c66706f96..cf1345b89 100644
 --- a/core/http/react-ui/src/pages/ImportModel.jsx
@@ -161,8 +425,62 @@ index c66706f96..cf1345b89 100644
        setIsSubmitting(false)
      }
    }
+diff --git a/core/http/react-ui/src/pages/ModelEditor.jsx b/core/http/react-ui/src/pages/ModelEditor.jsx
+index dc424414c..43c8bf5d2 100644
+--- a/core/http/react-ui/src/pages/ModelEditor.jsx
++++ b/core/http/react-ui/src/pages/ModelEditor.jsx
+@@ -284,6 +284,29 @@ export default function ModelEditor() {
+     return null
+   }, [isCreateMode, vramEstimate.loading, vramEstimate.vramDisplay])
+ 
++  // A queued import (config with remote assets) answers with a job id;
++  // the config file exists only once the job finishes, so creation must
++  // not navigate to the editor before that — and a download failure has
++  // to surface here instead of after a premature success toast. A
++  // response without a job id is a synchronous import: config written.
++  const waitForImportJob = async (result) => {
++    const jobId = result?.uuid || result?.ID
++    if (!jobId) return false
++    addToast('Import queued — downloading model assets…', 'info')
++    for (;;) {
++      await new Promise(r => setTimeout(r, 1000))
++      let data
++      try { data = await modelsApi.getJobStatus(jobId) } catch { continue }
++      if (data?.error) {
++        throw new Error(typeof data.error === 'string' ? data.error : 'model asset download failed')
++      }
++      // The raw /models/jobs endpoint reports `processed`, not the
++      // `completed` the /api/models/job shim synthesizes; failed jobs
++      // also set `processed`, but the error branch above runs first.
++      if (data?.completed || data?.processed) return true
++    }
++  }
++
+   // Interactive save — uses PATCH (edit mode) or importConfig (create mode)
+   const handleInteractiveSave = async () => {
+     setSaving(true)
+@@ -298,7 +321,8 @@ export default function ModelEditor() {
+         const modelName = values['name']
+         if (!modelName?.trim()) { addToast('Model name is required', 'error'); setSaving(false); return }
+         if (!/^[a-zA-Z0-9_.-]+$/.test(modelName.trim())) { addToast('Invalid model name — use only letters, numbers, hyphens, underscores, and dots', 'error'); setSaving(false); return }
+-        await modelsApi.importConfig(JSON.stringify(config), 'application/json')
++        const result = await modelsApi.importConfig(JSON.stringify(config), 'application/json')
++        await waitForImportJob(result)
+         addToast('Model created successfully', 'success')
+         // replace: the transient create URL shouldn't sit in history, so
+         // Back (browser or in-page) skips it and returns to the linking page.
+@@ -328,7 +352,8 @@ export default function ModelEditor() {
+     try {
+       if (isCreateMode) {
+         // In create mode, import the YAML as a new config
+-        await modelsApi.importConfig(yamlText, 'application/x-yaml')
++        const result = await modelsApi.importConfig(yamlText, 'application/x-yaml')
++        await waitForImportJob(result)
+         addToast('Model created successfully', 'success')
+         try {
+           const parsed = YAML.parse(yamlText)
 diff --git a/core/http/routes/localai.go b/core/http/routes/localai.go
-index 1d3c7adaf..7e48e8e9e 100644
+index 7a6f901ec..744703a4b 100644
 --- a/core/http/routes/localai.go
 +++ b/core/http/routes/localai.go
 @@ -80,7 +80,7 @@ func RegisterLocalAIRoutes(router *echo.Echo,
