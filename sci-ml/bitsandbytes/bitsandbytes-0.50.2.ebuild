@@ -87,6 +87,9 @@ python_install() {
 
 	if use rocm || use cuda; then
 		python_moduleinto bitsandbytes
-		python_domodule "${WORKDIR}"/cpu-build/bitsandbytes/libbitsandbytes_cpu.so
+		# Upstream CMake forces every output into the SOURCE package dir
+		# (so the wheel's package-data picks libraries up); -B only moves
+		# the object files. The CPU fallback therefore lands in ${S}.
+		python_domodule "${S}"/bitsandbytes/libbitsandbytes_cpu.so
 	fi
 }
