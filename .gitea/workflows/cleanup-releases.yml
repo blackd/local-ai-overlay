@@ -28,7 +28,7 @@ jobs:
           # safetensors are retired families (packages dropped for tree
           # equivalents): their pkgdirs never match an ebuild, so their
           # releases age out and get deleted like any stale version.
-          declare -A FAMILIES=( [localai]=www-apps/localai-server [local-ai]=www-apps/localai-server [hf-xet]=dev-python/hf-xet [tokenizers]=dev-python/tokenizers [safetensors]=dev-python/safetensors [opencode]=dev-util/opencode [gitea-runner]=dev-util/gitea-runner [zot]=app-containers/zot [dagu]=sys-process/dagu [diffusers]=localai-backend/diffusers [fish-speech]=localai-backend/fish-speech [ormsgpack]=dev-python/ormsgpack [python-common]=localai-backend/python-common [rerankers]=localai-backend/rerankers [speaker-recognition]=localai-backend/speaker-recognition )
+          declare -A FAMILIES=( [localai]=www-apps/localai-server [local-ai]=www-apps/localai-server [hf-xet]=dev-python/hf-xet [tokenizers]=dev-python/tokenizers [safetensors]=dev-python/safetensors [opencode]=dev-util/opencode [gitea-runner]=dev-util/gitea-runner [zot]=app-containers/zot [dagu]=sys-process/dagu [diffusers]=localai-backend/diffusers [fish-speech]=localai-backend/fish-speech [ormsgpack]=dev-python/ormsgpack [python-common]=localai-backend/python-common [rerankers]=localai-backend/rerankers [speaker-recognition]=localai-backend/speaker-recognition [transformers]=localai-backend/transformers )
           page=1
           while :; do
             rels=$(curl -sf -H "${AUTH}" "${API}/releases?limit=50&page=${page}")

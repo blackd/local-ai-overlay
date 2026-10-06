@@ -10,6 +10,7 @@ declare -A FAMILY_DIRS=(
 	[localai]="www-apps/localai-server sci-ml/localai LOCALAI_BACKEND_REST"
 	[rerankers]="localai-backend/rerankers"
 	[speaker-recognition]="localai-backend/speaker-recognition"
+	[transformers]="localai-backend/transformers"
 	[python-common]="localai-backend/python-common"
 	[diffusers]="localai-backend/diffusers"
 	[fish-speech]="localai-backend/fish-speech"

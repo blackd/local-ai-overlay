@@ -28,6 +28,7 @@
 		<flag name="rerankers">Install the rerankers reranking backend (<pkg>localai-backend/rerankers</pkg>)</flag>
 		<flag name="sam3-cpp">Install the sam3.cpp image-segmentation backend (<pkg>localai-backend/sam3-cpp</pkg>)</flag>
 		<flag name="trellis2cpp">Install the trellis2cpp 3D-generation backend (<pkg>localai-backend/trellis2cpp</pkg>)</flag>
+		<flag name="transformers">Generic HuggingFace transformers backend (<pkg>localai-backend/transformers</pkg>)</flag>
 		<flag name="vllm-cpp">Install the vllm.cpp text-generation backend (<pkg>localai-backend/vllm-cpp</pkg>)</flag>
 		<flag name="rfdetr-cpp">Install the rf-detr.cpp object-detection backend (<pkg>localai-backend/rfdetr-cpp</pkg>)</flag>
 		<flag name="piper">Install the piper text-to-speech backend (<pkg>localai-backend/piper</pkg>)</flag>
