@@ -15,7 +15,7 @@ inherit check-reqs go-module systemd
 ZOT_DISTFILES="https://git.ipnmod.org/packages/local-ai-overlay/releases/download/zot-v${PV}"
 
 # The zui tag zot's Makefile pins (ZUI_VERSION).
-ZUI_PIN="commit-a7feb46"
+ZUI_PIN="commit-8e8457d"
 
 DESCRIPTION="OCI-native container image registry"
 HOMEPAGE="https://zotregistry.dev https://github.com/project-zot/zot"
@@ -38,7 +38,7 @@ RDEPEND="
 	acct-user/zot
 "
 BDEPEND="
-	>=dev-lang/go-1.26.4
+	>=dev-lang/go-1.27
 	ui? ( net-libs/nodejs[npm] )
 "
 
@@ -60,24 +60,6 @@ src_prepare() {
 	if use ui; then
 		mv "${WORKDIR}/node_modules" "${WORKDIR}/zui-${ZUI_PIN}/node_modules" || die
 	fi
-
-	# trivy (v0.74.0 at this zot release) uses the experimental json/v2
-	# SkipFunc sentinel, which go 1.27's graduated encoding/json/v2
-	# removed; upstream fix is aquasecurity/trivy@dc3c56ee (still in no
-	# trivy release) and replaces it with errors.ErrUnsupported. Apply
-	# the same change to every affected file in the module cache copy
-	# (extracted trees are not re-verified against go.sum).
-	if has_version -b ">=dev-lang/go-1.27"; then
-		local f found=
-		while IFS= read -r -d '' f; do
-			found=1
-			chmod u+w "${f%/*}" "${f}" || die
-			sed -i -e 's:json\.SkipFunc:errors.ErrUnsupported:g' "${f}" || die
-			grep -q '"errors"' "${f}" || \
-				sed -i -e '0,/^import (/s:^import (:import (\n\t"errors":' "${f}" || die
-		done < <(grep -rlZ 'json\.SkipFunc' "${WORKDIR}"/go-mod/github.com/aquasecurity/trivy@v*)
-		[[ -n ${found} ]] || die "trivy json/v2 fix did not apply"
-	fi
 }
 
 src_compile() {
@@ -96,8 +78,7 @@ src_compile() {
 	fi
 
 	# Mirrors upstream's `make binary` invocation, minus -s -w: stripping
-	# is Portage's job. zot targets go 1.27's encoding/json/v2 — still an
-	# experiment on go 1.26, graduated (and an unknown flag) on 1.27+.
+	# is Portage's job.
 	local ldflags=(
 		-X "zotregistry.dev/zot/v2/pkg/buildinfo.ReleaseTag=v${PV}"
 		-X "zotregistry.dev/zot/v2/pkg/buildinfo.Commit=v${PV}"
@@ -105,9 +86,6 @@ src_compile() {
 		-X "zotregistry.dev/zot/v2/pkg/buildinfo.GoVersion=$(go env GOVERSION)"
 	)
 	local -x CGO_ENABLED=0
-	if ! has_version -b ">=dev-lang/go-1.27"; then
-		local -x GOEXPERIMENT=jsonv2
-	fi
 	ego build -tags "${tags}" -trimpath -ldflags "${ldflags[*]}" -o zot ./cmd/zot
 }
 
