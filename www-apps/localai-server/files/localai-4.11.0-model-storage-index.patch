@@ -1,0 +1,1102 @@
+The models pages report disk usage: an admin storage index
+(GET /api/models/storage) built on the delete path's file attribution
+gives per-model sizes with the shared portion split out, file-to-models
+relations, and missing-reference warnings. The WebUI shows sizes and a
+summary strip on the Installed tab, a per-model file table in the detail
+panel with cross-model links, and the file-centric list in the detail
+pane while no model is selected. Proposed upstream.
+
+diff --git a/core/gallery/storage.go b/core/gallery/storage.go
+new file mode 100644
+index 000000000..5e1d06fe6
+--- /dev/null
++++ b/core/gallery/storage.go
+@@ -0,0 +1,200 @@
++package gallery
++
++import (
++	"fmt"
++	"io/fs"
++	"os"
++	"path/filepath"
++	"sort"
++	"strings"
++
++	"github.com/mudler/LocalAI/pkg/system"
++)
++
++// StorageFile is one referenced path under the models directory with the
++// model configs referencing it. Missing marks a reference whose file is
++// not on disk (a download that never finished, or removed by hand);
++// len(Models) > 1 is what the UI renders as "shared".
++type StorageFile struct {
++	// Path is relative to the models directory.
++	Path      string   `json:"path"`
++	SizeBytes int64    `json:"size_bytes"`
++	Missing   bool     `json:"missing,omitempty"`
++	Models    []string `json:"models"`
++}
++
++// ModelStorage is the disk footprint of one model config. SharedBytes is
++// the portion of SizeBytes in files other configs reference too: deleting
++// this model frees SizeBytes minus SharedBytes. Missing lists referenced
++// paths with no file behind them — surfaced as a warning in the UI.
++type ModelStorage struct {
++	Name        string   `json:"name"`
++	SizeBytes   int64    `json:"size_bytes"`
++	SharedBytes int64    `json:"shared_bytes"`
++	Files       []string `json:"files"`
++	Missing     []string `json:"missing,omitempty"`
++}
++
++// StorageIndex is the storage report for the models directory. TotalBytes
++// deduplicates shared files, so it is the actual on-disk payload of the
++// installed configs rather than the sum of the per-model sizes.
++type StorageIndex struct {
++	Models     []ModelStorage `json:"models"`
++	Files      []StorageFile  `json:"files"`
++	TotalBytes int64          `json:"total_bytes"`
++	// Errors carries per-config failures (malformed YAML, path escapes),
++	// reported rather than fatal so one broken config cannot blank the
++	// whole report.
++	Errors []string `json:"errors,omitempty"`
++}
++
++// BuildStorageIndex attributes every referenced file to the model configs
++// referencing it, using the same resolution the delete path trusts
++// (listModelFiles: the config's model/mmproj references plus the gallery
++// sidecar's file list, including the sidecar itself). Model references
++// are confined to the models path by construction — resolution always
++// joins onto it — so the index is complete for installed configs.
++func BuildStorageIndex(systemState *system.SystemState) (*StorageIndex, error) {
++	base := systemState.Model.ModelsPath
++	entries, err := os.ReadDir(base)
++	if err != nil {
++		return nil, err
++	}
++
++	type fileInfo struct {
++		size    int64
++		missing bool
++		models  []string
++	}
++	files := map[string]*fileInfo{}
++	index := &StorageIndex{Models: []ModelStorage{}, Files: []StorageFile{}}
++
++	var modelNames []string
++	for _, e := range entries {
++		if e.IsDir() {
++			continue
++		}
++		n := e.Name()
++		if strings.HasPrefix(n, "._gallery_") {
++			continue
++		}
++		if !strings.HasSuffix(n, ".yaml") && !strings.HasSuffix(n, ".yml") {
++			continue
++		}
++		modelNames = append(modelNames, strings.TrimSuffix(strings.TrimSuffix(n, ".yaml"), ".yml"))
++	}
++	sort.Strings(modelNames)
++
++	for _, name := range modelNames {
++		refs, err := listModelFiles(systemState, name)
++		if err != nil {
++			index.Errors = append(index.Errors, fmt.Sprintf("%s: %v", name, err))
++			continue
++		}
++		ms := ModelStorage{Name: name, Files: []string{}}
++		seen := map[string]bool{}
++		for _, f := range refs {
++			if seen[f] {
++				continue
++			}
++			seen[f] = true
++			// listModelFiles names the ._gallery_ sidecar unconditionally
++			// (deletion must remove it when present). An ABSENT sidecar is
++			// the normal state of a hand-written config, not a broken
++			// reference — only a present one counts as payload.
++			if strings.HasPrefix(filepath.Base(f), "._gallery_") {
++				if _, err := os.Stat(f); err != nil {
++					continue
++				}
++			}
++			fi, ok := files[f]
++			if !ok {
++				fi = &fileInfo{}
++				if size, err := pathSize(f); err != nil {
++					fi.missing = true
++				} else {
++					fi.size = size
++				}
++				files[f] = fi
++			}
++			fi.models = append(fi.models, name)
++			rel, err := filepath.Rel(base, f)
++			if err != nil {
++				rel = f
++			}
++			if fi.missing {
++				ms.Missing = append(ms.Missing, rel)
++				continue
++			}
++			ms.Files = append(ms.Files, rel)
++			ms.SizeBytes += fi.size
++		}
++		sort.Strings(ms.Files)
++		sort.Strings(ms.Missing)
++		index.Models = append(index.Models, ms)
++	}
++
++	// Shared bytes need the final refcounts, hence the second pass.
++	for i := range index.Models {
++		m := &index.Models[i]
++		for _, rel := range m.Files {
++			if fi := files[filepath.Join(base, rel)]; fi != nil && len(fi.models) > 1 {
++				m.SharedBytes += fi.size
++			}
++		}
++	}
++
++	for p, fi := range files {
++		rel, err := filepath.Rel(base, p)
++		if err != nil {
++			rel = p
++		}
++		sort.Strings(fi.models)
++		index.Files = append(index.Files, StorageFile{
++			Path: rel, SizeBytes: fi.size, Missing: fi.missing, Models: fi.models,
++		})
++		index.TotalBytes += fi.size
++	}
++
++	sort.Slice(index.Models, func(i, j int) bool {
++		if index.Models[i].SizeBytes != index.Models[j].SizeBytes {
++			return index.Models[i].SizeBytes > index.Models[j].SizeBytes
++		}
++		return index.Models[i].Name < index.Models[j].Name
++	})
++	sort.Slice(index.Files, func(i, j int) bool {
++		if index.Files[i].SizeBytes != index.Files[j].SizeBytes {
++			return index.Files[i].SizeBytes > index.Files[j].SizeBytes
++		}
++		return index.Files[i].Path < index.Files[j].Path
++	})
++
++	return index, nil
++}
++
++// pathSize sizes a referenced path: a plain stat for files, a walk for
++// artifact snapshot directories (multi-file models resolve to a directory).
++func pathSize(p string) (int64, error) {
++	st, err := os.Stat(p)
++	if err != nil {
++		return 0, err
++	}
++	if !st.IsDir() {
++		return st.Size(), nil
++	}
++	var total int64
++	err = filepath.WalkDir(p, func(_ string, d fs.DirEntry, err error) error {
++		if err != nil {
++			return err
++		}
++		if d.Type().IsRegular() {
++			info, err := d.Info()
++			if err != nil {
++				return err
++			}
++			total += info.Size()
++		}
++		return nil
++	})
++	return total, err
++}
+diff --git a/core/gallery/storage_test.go b/core/gallery/storage_test.go
+new file mode 100644
+index 000000000..e823560b1
+--- /dev/null
++++ b/core/gallery/storage_test.go
+@@ -0,0 +1,107 @@
++package gallery_test
++
++import (
++	"os"
++	"path/filepath"
++
++	. "github.com/mudler/LocalAI/core/gallery"
++	"github.com/mudler/LocalAI/pkg/system"
++	. "github.com/onsi/ginkgo/v2"
++	. "github.com/onsi/gomega"
++)
++
++var _ = Describe("StorageIndex", func() {
++	var base string
++	var state *system.SystemState
++
++	write := func(name, content string) {
++		Expect(os.WriteFile(filepath.Join(base, name), []byte(content), 0o644)).To(Succeed())
++	}
++
++	// The sidecar fixture is 54 bytes; its size shows up in alpha's total
++	// because deletion counts it too — the index mirrors what delete frees.
++	const sidecar = "files:\n- filename: alpha.gguf\n- filename: shared.gguf\n"
++
++	BeforeEach(func() {
++		base = GinkgoT().TempDir()
++		var err error
++		state, err = system.GetSystemState(system.WithModelPath(base))
++		Expect(err).ToNot(HaveOccurred())
++
++		// alpha: own weight plus the shared file via its gallery sidecar.
++		write("alpha.yaml", "name: alpha\nparameters:\n  model: alpha.gguf\n")
++		write("._gallery_alpha.yaml", sidecar)
++		// beta: a hand-written config (no sidecar) reusing alpha's file.
++		write("beta.yaml", "name: beta\nparameters:\n  model: shared.gguf\n")
++
++		write("alpha.gguf", "aaaa")      // 4 bytes
++		write("shared.gguf", "ssssssss") // 8 bytes
++		write("unreferenced.bin", "uu")  // orphan detection is out of scope
++	})
++
++	It("attributes files to every config referencing them, sidecar included", func() {
++		idx, err := BuildStorageIndex(state)
++		Expect(err).ToNot(HaveOccurred())
++
++		byName := map[string]ModelStorage{}
++		for _, m := range idx.Models {
++			byName[m.Name] = m
++		}
++		Expect(byName).To(HaveLen(2))
++		Expect(byName["alpha"].SizeBytes).To(Equal(int64(4 + 8 + len(sidecar))))
++		Expect(byName["alpha"].SharedBytes).To(Equal(int64(8)))
++		Expect(byName["alpha"].Missing).To(BeEmpty())
++		Expect(byName["beta"].SizeBytes).To(Equal(int64(8)))
++		Expect(byName["beta"].SharedBytes).To(Equal(int64(8)))
++		// beta has no sidecar on disk: its absence is normal, not a
++		// broken reference.
++		Expect(byName["beta"].Missing).To(BeEmpty())
++
++		byPath := map[string]StorageFile{}
++		for _, f := range idx.Files {
++			byPath[f.Path] = f
++		}
++		Expect(byPath["shared.gguf"].Models).To(Equal([]string{"alpha", "beta"}))
++		Expect(byPath["alpha.gguf"].Models).To(Equal([]string{"alpha"}))
++		Expect(byPath["._gallery_alpha.yaml"].SizeBytes).To(Equal(int64(len(sidecar))))
++	})
++
++	It("deduplicates shared files in the total and ignores unreferenced ones", func() {
++		idx, err := BuildStorageIndex(state)
++		Expect(err).ToNot(HaveOccurred())
++		Expect(idx.TotalBytes).To(Equal(int64(4 + 8 + len(sidecar))))
++		for _, f := range idx.Files {
++			Expect(f.Path).ToNot(Equal("unreferenced.bin"))
++		}
++	})
++
++	It("reports a reference without a file as missing, per model and per file", func() {
++		write("gamma.yaml", "name: gamma\nparameters:\n  model: never-downloaded.gguf\n")
++		idx, err := BuildStorageIndex(state)
++		Expect(err).ToNot(HaveOccurred())
++
++		byName := map[string]ModelStorage{}
++		for _, m := range idx.Models {
++			byName[m.Name] = m
++		}
++		Expect(byName["gamma"].Missing).To(Equal([]string{"never-downloaded.gguf"}))
++		Expect(byName["gamma"].SizeBytes).To(BeZero())
++
++		byPath := map[string]StorageFile{}
++		for _, f := range idx.Files {
++			byPath[f.Path] = f
++		}
++		Expect(byPath["never-downloaded.gguf"].Missing).To(BeTrue())
++		Expect(byPath["never-downloaded.gguf"].SizeBytes).To(BeZero())
++		Expect(byPath["never-downloaded.gguf"].Models).To(Equal([]string{"gamma"}))
++	})
++
++	It("reports a broken config instead of failing the whole index", func() {
++		write("broken.yaml", "::: not yaml :::\n\t")
++		idx, err := BuildStorageIndex(state)
++		Expect(err).ToNot(HaveOccurred())
++		Expect(idx.Errors).To(HaveLen(1))
++		Expect(idx.Errors[0]).To(ContainSubstring("broken"))
++		Expect(idx.Models).To(HaveLen(2))
++	})
++})
+diff --git a/core/http/endpoints/localai/model_storage.go b/core/http/endpoints/localai/model_storage.go
+new file mode 100644
+index 000000000..8fd2b701f
+--- /dev/null
++++ b/core/http/endpoints/localai/model_storage.go
+@@ -0,0 +1,28 @@
++package localai
++
++import (
++	"net/http"
++
++	"github.com/labstack/echo/v4"
++	"github.com/mudler/LocalAI/core/config"
++	"github.com/mudler/LocalAI/core/gallery"
++)
++
++// ModelStorageEndpoint reports the on-disk footprint of the installed
++// model configs: per-model sizes with the shared portion split out, the
++// file-to-models relation, and references whose files are missing.
++// @Summary Report model storage usage on disk
++// @Description Per-model disk usage, shared-file relations and missing references under the models path
++// @Tags models
++// @Produce json
++// @Success 200 {object} gallery.StorageIndex "storage report"
++// @Router /api/models/storage [get]
++func ModelStorageEndpoint(appConfig *config.ApplicationConfig) echo.HandlerFunc {
++	return func(c echo.Context) error {
++		idx, err := gallery.BuildStorageIndex(appConfig.SystemState)
++		if err != nil {
++			return c.JSON(http.StatusInternalServerError, map[string]any{"error": err.Error()})
++		}
++		return c.JSON(http.StatusOK, idx)
++	}
++}
+diff --git a/core/http/react-ui/public/locales/en/models.json b/core/http/react-ui/public/locales/en/models.json
+index f60dc3051..e6cb25e09 100644
+--- a/core/http/react-ui/public/locales/en/models.json
++++ b/core/http/react-ui/public/locales/en/models.json
+@@ -10,7 +10,9 @@
+       "backToAll": "All installed models",
+       "eyebrow": "Installed on this host",
+       "summary": "{{count}} models ready to serve.",
+-      "summaryHint": "Select a model to inspect its runtime state and controls."
++      "summaryHint": "Select a model to inspect its runtime state and controls.",
++      "storageSummary": "{{total}} on disk \u00b7 {{shared}} shared across models",
++      "storageMissing": "{{count}} missing references"
+     },
+     "states": { "running": "Running", "idle": "Idle", "disabled": "Disabled", "working": "Working…" },
+     "actions": {
+@@ -39,6 +41,10 @@
+       "description": "Description", "noDescription": "No gallery description is available for this model.",
+       "license": "License", "tags": "Tags", "links": "Links", "distributed": "Distributed", "source": "Source",
+       "files": "Files", "fileCount": "{{count}} file", "fileCount_other": "{{count}} files",
++      "size": "Size on disk", "sharedBytes": "{{size}} shared with other models",
++      "storageFiles": "Files on disk",
++      "missingFiles": "Missing files",
++      "missingCount": "{{count}} referenced file missing", "missingCount_other": "{{count}} referenced files missing",
+       "adopted": "Adopted", "adoptedHint": "Discovered on a worker but not configured locally. Persist the config to make it permanent.",
+       "alias": "alias → {{target}}", "aliasTitle": "Alias → {{target}}",
+       "chain": "chain → {{target}}", "chainTitle": "Failover chain → {{target}}"
+@@ -57,6 +63,12 @@
+   "title": "Models",
+   "subtitle": "Browse and install AI models from the gallery",
+   "models": "Models",
++  "storage": {
++    "searchPlaceholder": "Filter by file or model\u2026",
++    "columns": { "file": "File", "size": "Size", "status": "Status", "models": "Used by" },
++    "status": { "missing": "missing", "shared": "shared by {{count}}" },
++    "empty": "No referenced files."
++  },
+   "recommended": {
+     "title": "Recommended for your hardware",
+     "cpuNote": "No GPU detected - small models that stay responsive on CPU.",
+diff --git a/core/http/react-ui/src/pages/InstalledModels.jsx b/core/http/react-ui/src/pages/InstalledModels.jsx
+index fce53a124..59db2f790 100644
+--- a/core/http/react-ui/src/pages/InstalledModels.jsx
++++ b/core/http/react-ui/src/pages/InstalledModels.jsx
+@@ -1,4 +1,4 @@
+-import { useCallback, useEffect, useRef, useState } from 'react'
++import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+ import { useLocation, useNavigate } from 'react-router-dom'
+ import { useTranslation } from 'react-i18next'
+ import { fromState } from '../utils/editorNav'
+@@ -16,6 +16,7 @@ import { useGalleryEnrichment } from '../hooks/useGalleryEnrichment'
+ import { useOperations } from '../hooks/useOperations'
+ import useFailoverChains from '../hooks/useFailoverChains'
+ import { backendControlApi, modelsApi, nodesApi, systemApi } from '../utils/api'
++import { formatBytes } from '../utils/format'
+ import { renderMarkdown, stripMarkdown } from '../utils/markdown'
+ import { safeHref } from '../utils/url'
+ import {
+@@ -110,6 +111,24 @@ export default function InstalledModels({
+   const { operations } = useOperations()
+   const { byName: failoverChains } = useFailoverChains()
+   const [loadedModelIds, setLoadedModelIds] = useState(() => new Set())
++  // Admin-only storage report; a 403 for non-admins just hides the size
++  // information, it never breaks the page.
++  const [storage, setStorage] = useState(null)
++  const storageByName = useMemo(() => {
++    const map = {}
++    for (const m of storage?.models || []) map[m.name] = m
++    return map
++  }, [storage])
++  const storageSummary = useMemo(() => {
++    if (!storage) return null
++    let shared = 0
++    let missing = 0
++    for (const f of storage.files || []) {
++      if (f.missing) missing++
++      else if ((f.models || []).length > 1) shared += f.size_bytes
++    }
++    return { total: storage.total_bytes, shared, missing }
++  }, [storage])
+   const [aliasTargets, setAliasTargets] = useState({})
+   const [distributedMode, setDistributedMode] = useState(false)
+   const [pendingActions, setPendingActions] = useState(() => new Set())
+@@ -142,6 +161,7 @@ export default function InstalledModels({
+   useEffect(() => {
+     fetchLoadedModels()
+     fetchAliases()
++    modelsApi.getStorage().then(setStorage).catch(() => setStorage(null))
+     nodesApi.list().then(() => setDistributedMode(true)).catch(() => setDistributedMode(false))
+   }, [fetchAliases, fetchLoadedModels])
+ 
+@@ -363,6 +383,16 @@ export default function InstalledModels({
+             tone: running ? 'ok' : undefined,
+           },
+           { label: t('lifecycle.detail.backend'), value: selectedModel.backend || t('lifecycle.detail.auto') },
++          storageByName[selectedModel.id]
++            ? { label: t('lifecycle.detail.size'), value: formatBytes(storageByName[selectedModel.id].size_bytes) }
++            : null,
++          storageByName[selectedModel.id]?.missing?.length
++            ? {
++                label: t('lifecycle.detail.missingFiles'),
++                value: t('lifecycle.detail.missingCount', { count: storageByName[selectedModel.id].missing.length }),
++                tone: 'warn',
++              }
++            : null,
+           selectedModel.pinned
+             ? { label: t('lifecycle.detail.pinned'), value: t('lifecycle.detail.yes'), tone: 'warn' }
+             : null,
+@@ -468,6 +498,9 @@ export default function InstalledModels({
+         <InstalledModelDetail
+           model={selectedModel}
+           enriched={enriched}
++          storage={storageByName[selectedModel.id]}
++          storageFiles={(storage?.files || []).filter(f => (f.models || []).includes(selectedModel.id))}
++          onSelectModel={onSelect}
+           distributedMode={distributedMode}
+           t={t}
+         />
+@@ -480,6 +513,9 @@ export default function InstalledModels({
+         <h2 className="zero-pane__title">{t('lifecycle.installed.summary', { count: models.length })}</h2>
+         <p className="zero-pane__text">{t('lifecycle.installed.summaryHint')}</p>
+       </div>
++      {storage?.files?.length > 0 && (
++        <StorageFilesTable files={storage.files} onSelectModel={onSelect} t={t} />
++      )}
+     </div>
+   )
+ 
+@@ -511,6 +547,19 @@ export default function InstalledModels({
+         </div>
+       )}
+ 
++      {storageSummary && (
++        <div className="text-meta" data-testid="installed-models-storage-summary">
++          <i className="fas fa-hard-drive icon-before" aria-hidden="true" />
++          {t('lifecycle.installed.storageSummary', {
++            total: formatBytes(storageSummary.total),
++            shared: formatBytes(storageSummary.shared),
++          })}
++          {storageSummary.missing > 0 && (
++            <span className="text-warning"> · {t('lifecycle.installed.storageMissing', { count: storageSummary.missing })}</span>
++          )}
++        </div>
++      )}
++
+       {loading && !loadedOnce.current ? (
+         <GalleryLoader />
+       ) : models.length === 0 ? (
+@@ -571,7 +620,7 @@ export default function InstalledModels({
+   )
+ }
+ 
+-function InstalledModelDetail({ model, enriched, distributedMode, t }) {
++function InstalledModelDetail({ model, enriched, storage, storageFiles = [], onSelectModel, distributedMode, t }) {
+   const description = enriched?.description
+   const license = enriched?.license
+   const tags = Array.isArray(enriched?.tags) ? enriched.tags : []
+@@ -638,7 +687,122 @@ function InstalledModelDetail({ model, enriched, distributedMode, t }) {
+           <dt>{t('lifecycle.detail.files')}</dt>
+           <dd className="cell-muted">{t('lifecycle.detail.fileCount', { count: files.length })}</dd>
+         </>)}
++
++        {storage && (<>
++          <dt>{t('lifecycle.detail.size')}</dt>
++          <dd>
++            {formatBytes(storage.size_bytes)}
++            {storage.shared_bytes > 0 && (
++              <span className="cell-muted"> · {t('lifecycle.detail.sharedBytes', { size: formatBytes(storage.shared_bytes) })}</span>
++            )}
++          </dd>
++        </>)}
++        {storageFiles.length > 0 && (<>
++          <dt>{t('lifecycle.detail.storageFiles')}</dt>
++          <dd>
++            <div className="table-container">
++              <table className="table">
++                <thead>
++                  <tr>
++                    <th>{t('storage.columns.file')}</th>
++                    <th>{t('storage.columns.size')}</th>
++                    <th>{t('storage.columns.status')}</th>
++                    <th>{t('storage.columns.models')}</th>
++                  </tr>
++                </thead>
++                <tbody>
++                  {storageFiles.map(f => (
++                    <tr key={f.path}>
++                      <td className="cell-mono">{f.path}</td>
++                      <td>{f.missing ? '—' : formatBytes(f.size_bytes)}</td>
++                      <td>
++                        <div className="badge-row">
++                          {f.missing && <span className="badge badge-warning">{t('storage.status.missing')}</span>}
++                          {!f.missing && (f.models || []).length > 1 && (
++                            <span className="badge badge-info">{t('storage.status.shared', { count: f.models.length })}</span>
++                          )}
++                        </div>
++                      </td>
++                      <td>
++                        <div className="badge-row">
++                          {(f.models || []).filter(m => m !== model.id).map(m => (
++                            <button key={m} type="button" className="badge badge-info" onClick={() => onSelectModel(m)}>{m}</button>
++                          ))}
++                        </div>
++                      </td>
++                    </tr>
++                  ))}
++                </tbody>
++              </table>
++            </div>
++          </dd>
++        </>)}
+       </dl>
+     </div>
+   )
+ }
++
++// The file-centric half of the storage report, shown while no model is
++// selected — the one place the cross-model missing-file overview lives.
++// Clicking a referencing model selects it in the rail.
++function StorageFilesTable({ files, onSelectModel, t }) {
++  const [query, setQuery] = useState('')
++  const q = query.trim().toLowerCase()
++  const visible = q
++    ? files.filter(f =>
++        f.path.toLowerCase().includes(q) ||
++        (f.models || []).some(m => m.toLowerCase().includes(q)))
++    : files
++
++  return (
++    <div>
++      <div className="hstack hstack--xs mb-md">
++        <input
++          type="search"
++          className="form-control"
++          placeholder={t('storage.searchPlaceholder')}
++          value={query}
++          onChange={e => setQuery(e.target.value)}
++        />
++      </div>
++      <div className="table-container">
++        <table className="table" data-testid="model-storage-table">
++          <thead>
++            <tr>
++              <th>{t('storage.columns.file')}</th>
++              <th>{t('storage.columns.size')}</th>
++              <th>{t('storage.columns.status')}</th>
++              <th>{t('storage.columns.models')}</th>
++            </tr>
++          </thead>
++          <tbody>
++            {visible.map(f => (
++              <tr key={f.path}>
++                <td className="cell-mono">{f.path}</td>
++                <td>{f.missing ? '—' : formatBytes(f.size_bytes)}</td>
++                <td>
++                  <div className="badge-row">
++                    {f.missing && <span className="badge badge-warning">{t('storage.status.missing')}</span>}
++                    {!f.missing && (f.models || []).length > 1 && (
++                      <span className="badge badge-info">{t('storage.status.shared', { count: f.models.length })}</span>
++                    )}
++                  </div>
++                </td>
++                <td>
++                  <div className="badge-row">
++                    {(f.models || []).map(m => (
++                      <button key={m} type="button" className="badge badge-info" onClick={() => onSelectModel(m)}>{m}</button>
++                    ))}
++                  </div>
++                </td>
++              </tr>
++            ))}
++            {visible.length === 0 && (
++              <tr><td colSpan={4} className="cell-muted">{t('storage.empty')}</td></tr>
++            )}
++          </tbody>
++        </table>
++      </div>
++    </div>
++  )
++}
+diff --git a/core/http/react-ui/src/utils/api.js b/core/http/react-ui/src/utils/api.js
+index 65c1aa0a1..33e55393f 100644
+--- a/core/http/react-ui/src/utils/api.js
++++ b/core/http/react-ui/src/utils/api.js
+@@ -118,6 +118,7 @@ export const modelsApi = {
+     return handleResponse(response)
+   },
+   getJobStatus: (uid) => fetchJSON(API_CONFIG.endpoints.modelsJobStatus(uid)),
++  getStorage: () => fetchJSON(API_CONFIG.endpoints.modelsStorage),
+   getEditConfig: (name) => fetchJSON(API_CONFIG.endpoints.modelEditGet(name)),
+   editConfig: (name, body) => postJSON(API_CONFIG.endpoints.modelEdit(name), body),
+   toggleState: (name, action) => fetchJSON(API_CONFIG.endpoints.modelToggleState(name, action), { method: 'PUT' }),
+diff --git a/core/http/react-ui/src/utils/config.js b/core/http/react-ui/src/utils/config.js
+index 9a6c69140..c2702ed30 100644
+--- a/core/http/react-ui/src/utils/config.js
++++ b/core/http/react-ui/src/utils/config.js
+@@ -127,6 +127,7 @@ export const API_CONFIG = {
+     modelsImportUri: '/models/import-uri',
+     modelsImport: '/models/import',
+     vramEstimate: '/api/models/vram-estimate',
++    modelsStorage: '/api/models/storage',
+     modelsJobStatus: (uid) => `/models/jobs/${uid}`,
+     modelEditGet: (name) => `/api/models/edit/${encodeURIComponent(name)}`,
+     modelEdit: (name) => `/models/edit/${name}`,
+diff --git a/core/http/routes/localai.go b/core/http/routes/localai.go
+index b2bfed146..a63a65dd7 100644
+--- a/core/http/routes/localai.go
++++ b/core/http/routes/localai.go
+@@ -343,6 +343,7 @@ func RegisterLocalAIRoutes(router *echo.Echo,
+ 				"config_patch":        "/api/models/config-json/:name",
+ 				"autocomplete":        "/api/models/config-metadata/autocomplete/:provider",
+ 				"vram_estimate":       "/api/models/vram-estimate",
++				"model_storage":       "/api/models/storage",
+ 				"model_load_status":   "/api/models/:id/load-status",
+ 				"tts":                 "/tts",
+ 				"tts_voices":          "/v1/audio/voices",
+@@ -375,6 +376,7 @@ func RegisterLocalAIRoutes(router *echo.Echo,
+ 				},
+ 				"model_management": map[string]string{
+ 					"list_gallery": "/models/available",
++					"storage":      "/api/models/storage",
+ 					"install":      "/models/apply",
+ 					"delete":       "/models/delete/:name",
+ 					"edit":         "/models/edit/:name",
+@@ -429,6 +431,7 @@ func RegisterLocalAIRoutes(router *echo.Echo,
+ 				"config_metadata": true,
+ 				"config_patch":    true,
+ 				"vram_estimate":   true,
++				"model_storage":   true,
+ 				"mcp":             !appConfig.DisableMCP,
+ 				"agents":          appConfig.AgentPool.Enabled,
+ 				"p2p":             appConfig.P2PToken != "",
+diff --git a/core/http/routes/ui_api.go b/core/http/routes/ui_api.go
+index 2420da638..08ced3bc0 100644
+--- a/core/http/routes/ui_api.go
++++ b/core/http/routes/ui_api.go
+@@ -1207,6 +1207,9 @@ func RegisterUIAPIRoutes(app *echo.Echo, cl *config.ModelConfigLoader, ml *model
+ 	// VRAM estimation endpoint
+ 	app.POST("/api/models/vram-estimate", localai.VRAMEstimateEndpoint(cl, appConfig), adminMiddleware)
+ 
++	// On-disk storage report: per-model sizes, shared files, missing refs
++	app.GET("/api/models/storage", localai.ModelStorageEndpoint(appConfig), adminMiddleware)
++
+ 	// Get installed model YAML config for the React model editor
+ 	app.GET("/api/models/edit/:name", func(c echo.Context) error {
+ 		modelName := c.Param("name")
+diff --git a/docs/content/features/api-discovery.md b/docs/content/features/api-discovery.md
+index 932634a39..1aaf07831 100644
+--- a/docs/content/features/api-discovery.md
++++ b/docs/content/features/api-discovery.md
+@@ -62,6 +62,7 @@ Returns the instance version, all available endpoint URLs (flat and categorized)
+     "config_metadata": true,
+     "config_patch": true,
+     "vram_estimate": true,
++    "model_storage": true,
+     "mcp": true,
+     "agents": false,
+     "p2p": false
+@@ -239,6 +240,19 @@ The endpoint validates the merged config and writes it to disk as YAML.
+ Config management endpoints require **admin authentication** when authentication is configured. The well-known endpoint, instructions API, and Swagger `GET` routes remain available without authentication.
+ {{% /notice %}}
+ 
++### Model storage report
++
++`GET /api/models/storage` (admin)
++
++Reports the on-disk footprint of the installed model configurations:
++per-model sizes with the portion shared with other models split out,
++every referenced file with the models referencing it, and references
++whose files are missing from disk.
++
++```bash
++curl http://localhost:8080/api/models/storage
++```
++
+ ### VRAM estimation
+ 
+ `POST /api/models/vram-estimate`
+diff --git a/docs/content/getting-started/models.md b/docs/content/getting-started/models.md
+index 2130dfc58..37c22e4f8 100644
+--- a/docs/content/getting-started/models.md
++++ b/docs/content/getting-started/models.md
+@@ -401,6 +401,30 @@ curl http://localhost:8080/v1/models
+ local-ai models list
+ ```
+ 
++### Disk Usage
++
++The **Installed** tab shows how much disk the installed configurations use: a
++summary strip with the total on disk and the portion shared across models, and
++a per-model size in the selected model's detail panel. A file referenced by
++more than one configuration is counted once in the total; the per-model size
++notes the shared portion, since deleting that model frees only its exclusive
++files. A reference whose file is not on disk — a download that never finished,
++or a file removed by hand — is shown as a warning on the model.
++
++While no model is selected, the detail pane lists every referenced file with
++its size, which models reference it, and whether it is shared or missing;
++clicking a model name selects it.
++
++The report behind both views is available directly (admin only):
++
++```bash
++curl http://localhost:8080/api/models/storage
++```
++
++It returns per-model sizes with the shared portion split out, the
++file-to-models relation, and missing references. Files in the models directory
++that no configuration references are not included.
++
+ ### Remove Models
+ 
+ Simply delete the model file and configuration from your models directory:
+diff --git a/swagger/docs.go b/swagger/docs.go
+index b08a320b8..01506ceb8 100644
+--- a/swagger/docs.go
++++ b/swagger/docs.go
+@@ -1193,6 +1193,26 @@ const docTemplate = `{
+                 }
+             }
+         },
++        "/api/models/storage": {
++            "get": {
++                "description": "Per-model disk usage, shared-file relations and missing references under the models path",
++                "produces": [
++                    "application/json"
++                ],
++                "tags": [
++                    "models"
++                ],
++                "summary": "Report model storage usage on disk",
++                "responses": {
++                    "200": {
++                        "description": "storage report",
++                        "schema": {
++                            "$ref": "#/definitions/gallery.StorageIndex"
++                        }
++                    }
++                }
++            }
++        },
+         "/api/models/toggle-pinned/{name}/{action}": {
+             "put": {
+                 "description": "Pin or unpin a model. Pinned models stay loaded and are excluded from automatic eviction.",
+@@ -4715,6 +4735,32 @@ const docTemplate = `{
+                 }
+             }
+         },
++        "gallery.ModelStorage": {
++            "type": "object",
++            "properties": {
++                "files": {
++                    "type": "array",
++                    "items": {
++                        "type": "string"
++                    }
++                },
++                "missing": {
++                    "type": "array",
++                    "items": {
++                        "type": "string"
++                    }
++                },
++                "name": {
++                    "type": "string"
++                },
++                "shared_bytes": {
++                    "type": "integer"
++                },
++                "size_bytes": {
++                    "type": "integer"
++                }
++            }
++        },
+         "gallery.NodeDriftInfo": {
+             "type": "object",
+             "properties": {
+@@ -4732,6 +4778,54 @@ const docTemplate = `{
+                 }
+             }
+         },
++        "gallery.StorageFile": {
++            "type": "object",
++            "properties": {
++                "missing": {
++                    "type": "boolean"
++                },
++                "models": {
++                    "type": "array",
++                    "items": {
++                        "type": "string"
++                    }
++                },
++                "path": {
++                    "description": "Path is relative to the models directory.",
++                    "type": "string"
++                },
++                "size_bytes": {
++                    "type": "integer"
++                }
++            }
++        },
++        "gallery.StorageIndex": {
++            "type": "object",
++            "properties": {
++                "errors": {
++                    "description": "Errors carries per-config failures (malformed YAML, path escapes),\nreported rather than fatal so one broken config cannot blank the\nwhole report.",
++                    "type": "array",
++                    "items": {
++                        "type": "string"
++                    }
++                },
++                "files": {
++                    "type": "array",
++                    "items": {
++                        "$ref": "#/definitions/gallery.StorageFile"
++                    }
++                },
++                "models": {
++                    "type": "array",
++                    "items": {
++                        "$ref": "#/definitions/gallery.ModelStorage"
++                    }
++                },
++                "total_bytes": {
++                    "type": "integer"
++                }
++            }
++        },
+         "gallery.UpgradeInfo": {
+             "type": "object",
+             "properties": {
+diff --git a/swagger/swagger.json b/swagger/swagger.json
+index c328f4f09..df4174de4 100644
+--- a/swagger/swagger.json
++++ b/swagger/swagger.json
+@@ -1190,6 +1190,26 @@
+                 }
+             }
+         },
++        "/api/models/storage": {
++            "get": {
++                "description": "Per-model disk usage, shared-file relations and missing references under the models path",
++                "produces": [
++                    "application/json"
++                ],
++                "tags": [
++                    "models"
++                ],
++                "summary": "Report model storage usage on disk",
++                "responses": {
++                    "200": {
++                        "description": "storage report",
++                        "schema": {
++                            "$ref": "#/definitions/gallery.StorageIndex"
++                        }
++                    }
++                }
++            }
++        },
+         "/api/models/toggle-pinned/{name}/{action}": {
+             "put": {
+                 "description": "Pin or unpin a model. Pinned models stay loaded and are excluded from automatic eviction.",
+@@ -4712,6 +4732,32 @@
+                 }
+             }
+         },
++        "gallery.ModelStorage": {
++            "type": "object",
++            "properties": {
++                "files": {
++                    "type": "array",
++                    "items": {
++                        "type": "string"
++                    }
++                },
++                "missing": {
++                    "type": "array",
++                    "items": {
++                        "type": "string"
++                    }
++                },
++                "name": {
++                    "type": "string"
++                },
++                "shared_bytes": {
++                    "type": "integer"
++                },
++                "size_bytes": {
++                    "type": "integer"
++                }
++            }
++        },
+         "gallery.NodeDriftInfo": {
+             "type": "object",
+             "properties": {
+@@ -4729,6 +4775,54 @@
+                 }
+             }
+         },
++        "gallery.StorageFile": {
++            "type": "object",
++            "properties": {
++                "missing": {
++                    "type": "boolean"
++                },
++                "models": {
++                    "type": "array",
++                    "items": {
++                        "type": "string"
++                    }
++                },
++                "path": {
++                    "description": "Path is relative to the models directory.",
++                    "type": "string"
++                },
++                "size_bytes": {
++                    "type": "integer"
++                }
++            }
++        },
++        "gallery.StorageIndex": {
++            "type": "object",
++            "properties": {
++                "errors": {
++                    "description": "Errors carries per-config failures (malformed YAML, path escapes),\nreported rather than fatal so one broken config cannot blank the\nwhole report.",
++                    "type": "array",
++                    "items": {
++                        "type": "string"
++                    }
++                },
++                "files": {
++                    "type": "array",
++                    "items": {
++                        "$ref": "#/definitions/gallery.StorageFile"
++                    }
++                },
++                "models": {
++                    "type": "array",
++                    "items": {
++                        "$ref": "#/definitions/gallery.ModelStorage"
++                    }
++                },
++                "total_bytes": {
++                    "type": "integer"
++                }
++            }
++        },
+         "gallery.UpgradeInfo": {
+             "type": "object",
+             "properties": {
+diff --git a/swagger/swagger.yaml b/swagger/swagger.yaml
+index 4527627c8..85b656f04 100644
+--- a/swagger/swagger.yaml
++++ b/swagger/swagger.yaml
+@@ -272,6 +272,23 @@ definitions:
+           type: string
+         type: array
+     type: object
++  gallery.ModelStorage:
++    properties:
++      files:
++        items:
++          type: string
++        type: array
++      missing:
++        items:
++          type: string
++        type: array
++      name:
++        type: string
++      shared_bytes:
++        type: integer
++      size_bytes:
++        type: integer
++    type: object
+   gallery.NodeDriftInfo:
+     properties:
+       digest:
+@@ -283,6 +300,41 @@ definitions:
+       version:
+         type: string
+     type: object
++  gallery.StorageFile:
++    properties:
++      missing:
++        type: boolean
++      models:
++        items:
++          type: string
++        type: array
++      path:
++        description: Path is relative to the models directory.
++        type: string
++      size_bytes:
++        type: integer
++    type: object
++  gallery.StorageIndex:
++    properties:
++      errors:
++        description: |-
++          Errors carries per-config failures (malformed YAML, path escapes),
++          reported rather than fatal so one broken config cannot blank the
++          whole report.
++        items:
++          type: string
++        type: array
++      files:
++        items:
++          $ref: '#/definitions/gallery.StorageFile'
++        type: array
++      models:
++        items:
++          $ref: '#/definitions/gallery.ModelStorage'
++        type: array
++      total_bytes:
++        type: integer
++    type: object
+   gallery.UpgradeInfo:
+     properties:
+       available_digest:
+@@ -4299,6 +4351,20 @@ paths:
+       summary: Get dynamic autocomplete values for a config field
+       tags:
+       - config
++  /api/models/storage:
++    get:
++      description: Per-model disk usage, shared-file relations and missing references
++        under the models path
++      produces:
++      - application/json
++      responses:
++        "200":
++          description: storage report
++          schema:
++            $ref: '#/definitions/gallery.StorageIndex'
++      summary: Report model storage usage on disk
++      tags:
++      - models
+   /api/models/toggle-pinned/{name}/{action}:
+     put:
+       description: Pin or unpin a model. Pinned models stay loaded and are excluded

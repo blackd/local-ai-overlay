@@ -43,6 +43,9 @@ PATCHES=(
 	# Manual model imports with remote assets download through the
 	# gallery job queue — PR pending; see the patch header.
 	"${FILESDIR}/localai-4.11.0-manual-import-job-queue.patch"
+	# Models pages report disk usage (per-model size, shared split,
+	# missing references) — PR pending; see the patch header.
+	"${FILESDIR}/localai-4.11.0-model-storage-index.patch"
 )
 
 LICENSE="MIT"
@@ -85,7 +88,6 @@ src_compile() {
 	# -prebuilt tarball. The Go module cache unpacked by the eclass
 	# covers every dependency offline.
 	local ldflags=(
-		-s -w
 		-X "github.com/mudler/LocalAI/internal.Version=v${PV}"
 		-X "github.com/mudler/LocalAI/internal.Commit=${LOCAL_AI_COMMIT}"
 	)
@@ -98,6 +100,9 @@ src_install() {
 	newinitd "${FILESDIR}"/local-ai.initd local-ai
 	newconfd "${FILESDIR}"/local-ai.confd local-ai
 	systemd_dounit "${FILESDIR}"/local-ai.service
+	# Same defaults for systemd, outside OpenRC's /etc/conf.d namespace.
+	insinto /etc/local-ai
+	newins "${FILESDIR}"/local-ai.confd local-ai.conf
 
 	insinto /etc/logrotate.d
 	newins "${FILESDIR}"/local-ai.logrotate local-ai
