@@ -5,9 +5,12 @@
 # install clones VibeVoice from UNPINNED git main at install time; we
 # pin the commit below (upstream has no tags) and install the pure-
 # python package next to backend.py. The venv skeleton lives in
-# local-ai-python.eclass; wheels carry only librosa (fish-speech's
-# pin, its closure is tree packages) and diffusers 0.40.0 (same pin
-# and huggingface-hub reasoning as localai-backend/transformers).
+# local-ai-python.eclass; wheels carry transformers 4.57.6 (the last
+# 4.x release: the MS package pins <5, and its class names collide
+# with the native VibeVoice port that transformers >=5.17 ships — the
+# venv copy shadows the system 5.x), librosa (fish-speech's pin, its
+# closure is tree packages) and diffusers 0.40.0 (same pin and
+# huggingface-hub reasoning as localai-backend/transformers).
 # Deliberately NOT shipped from upstream's requirements/pyproject:
 # gradio, av, aiortc, fastapi, uvicorn, pydub, requests,
 # ml-collections, absl-py — demo- and vllm-plugin-only, nothing the
@@ -37,6 +40,12 @@ VV_S="${WORKDIR}/VibeVoice-${VIBEVOICE_COMMIT}"
 
 LICENSE="MIT"
 
+# sci-ml/transformers is shadowed in the venv by the wheels'
+# transformers 4.57.6 (the MS package pins <5 and collides with
+# >=5.17's native VibeVoice) — kept as the guaranteed provider of the
+# 4.x wheel's runtime closure (tokenizers, safetensors,
+# huggingface_hub, regex, ...) via system-site, since wheels install
+# with --no-deps.
 RDEPEND+="
 	sci-ml/transformers[${PYTHON_SINGLE_USEDEP}]
 	sci-ml/accelerate[${PYTHON_SINGLE_USEDEP}]
