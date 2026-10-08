@@ -8,9 +8,10 @@
 # local-ai-python.eclass; wheels carry transformers 4.57.6 (the last
 # 4.x release: the MS package pins <5, and its class names collide
 # with the native VibeVoice port that transformers >=5.17 ships — the
-# venv copy shadows the system 5.x), librosa (fish-speech's pin, its
-# closure is tree packages) and diffusers 0.40.0 (same pin and
-# huggingface-hub reasoning as localai-backend/transformers).
+# venv copy shadows the system 5.x), huggingface-hub 0.36.2
+# (transformers 4.x enforces hub <1.0 at import, shadowing the tree's
+# 1.x), librosa (fish-speech's pin, its closure is tree packages) and
+# diffusers 0.39.0 (the last release accepting hub <1.0).
 # Deliberately NOT shipped from upstream's requirements/pyproject:
 # gradio, av, aiortc, fastapi, uvicorn, pydub, requests,
 # ml-collections, absl-py — demo- and vllm-plugin-only, nothing the
@@ -81,6 +82,17 @@ src_install() {
 	doins -r "${VV_S}/vibevoice"
 
 	local-ai-python_install_venv
+
+	# transformers 4.57.6 caps tokenizers at <=0.23.0, while the tree
+	# (serving the system transformers 5.x) carries 0.23.1+ — the same
+	# 0.23 API line, the cap is just upstream's release-time snapshot.
+	# Relax the venv copy's import-time check to the 0.23 series.
+	local table=( "${ED}${BACKEND_DIR}/venv/lib"/python*/site-packages/transformers/dependency_versions_table.py )
+	grep -q '"tokenizers": "tokenizers>=0.22.0,<=0.23.0"' "${table[@]}" \
+		|| die "transformers tokenizers pin anchor moved"
+	sed -i 's/"tokenizers": "tokenizers>=0.22.0,<=0.23.0"/"tokenizers": "tokenizers>=0.22.0,<0.24"/' \
+		"${table[@]}" || die
+
 	python_optimize "${ED}${BACKEND_DIR}/vibevoice"
 	local-ai-python_install_meta
 	local-ai-python_smoke_test
