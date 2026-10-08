@@ -11,6 +11,7 @@ declare -A FAMILY_DIRS=(
 	[rerankers]="localai-backend/rerankers"
 	[speaker-recognition]="localai-backend/speaker-recognition"
 	[transformers]="localai-backend/transformers"
+	[vibevoice]="localai-backend/vibevoice"
 	[python-common]="localai-backend/python-common"
 	[diffusers]="localai-backend/diffusers"
 	[fish-speech]="localai-backend/fish-speech"

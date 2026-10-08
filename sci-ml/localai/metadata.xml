@@ -35,6 +35,7 @@
 		<flag name="silero-vad">Install the Silero voice-activity-detection backend (<pkg>localai-backend/silero-vad</pkg>)</flag>
 		<flag name="speaker-recognition">Speaker recognition and voice-embedding backend (speechbrain/ONNX) — <pkg>localai-backend/speaker-recognition</pkg></flag>
 		<flag name="stablediffusion-ggml">Install the stable-diffusion.cpp image-generation backend (<pkg>localai-backend/stablediffusion-ggml</pkg>)</flag>
+		<flag name="vibevoice">Microsoft VibeVoice realtime TTS/ASR backend (<pkg>localai-backend/vibevoice</pkg>)</flag>
 		<flag name="vibevoice-cpp">Install the vibevoice.cpp text-to-speech backend (<pkg>localai-backend/vibevoice-cpp</pkg>)</flag>
 		<flag name="whisper">Install the whisper.cpp speech-to-text backend (<pkg>localai-backend/whisper</pkg>)</flag>
 	</use>
