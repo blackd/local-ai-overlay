@@ -82,17 +82,6 @@ src_install() {
 	doins -r "${VV_S}/vibevoice"
 
 	local-ai-python_install_venv
-
-	# transformers 4.57.6 caps tokenizers at <=0.23.0, while the tree
-	# (serving the system transformers 5.x) carries 0.23.1+ — the same
-	# 0.23 API line, the cap is just upstream's release-time snapshot.
-	# Relax the venv copy's import-time check to the 0.23 series.
-	local table=( "${ED}${BACKEND_DIR}/venv/lib"/python*/site-packages/transformers/dependency_versions_table.py )
-	grep -q '"tokenizers": "tokenizers>=0.22.0,<=0.23.0"' "${table[@]}" \
-		|| die "transformers tokenizers pin anchor moved"
-	sed -i 's/"tokenizers": "tokenizers>=0.22.0,<=0.23.0"/"tokenizers": "tokenizers>=0.22.0,<0.24"/' \
-		"${table[@]}" || die
-
 	python_optimize "${ED}${BACKEND_DIR}/vibevoice"
 	local-ai-python_install_meta
 	local-ai-python_smoke_test
