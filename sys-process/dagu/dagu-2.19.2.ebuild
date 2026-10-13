@@ -32,7 +32,7 @@ RDEPEND="
 	acct-user/dagu
 "
 BDEPEND="
-	>=dev-lang/go-1.27.0
+	>=dev-lang/go-1.27.2
 	net-libs/nodejs[npm]
 "
 
