@@ -9,7 +9,7 @@
 
 EAPI=8
 
-inherit go-module local-ai-backend multilib
+inherit flag-o-matic go-module local-ai-backend multilib
 
 # Pins. Source of truth: backend/go/piper/Makefile (PIPER_VERSION) at the
 # LocalAI release tag; the three below it are go-piper's submodule gitlinks
@@ -108,6 +108,14 @@ setup_onnx_prefix() {
 
 src_compile() {
 	setup_onnx_prefix
+
+	# The vendored sources predate C++20 and are archived upstream:
+	# phonemize's test prints a char32_t, which C++20 deleted, so GCC 16's
+	# gnu++20 default breaks the build. Pin the dialect they were written
+	# for — the cmake children via the Portage flags, the cgo wrapper via
+	# the Makefile's seed variable.
+	append-cxxflags -std=gnu++17
+	local -x PIPER_CGO_CXXFLAGS="-std=gnu++17"
 
 	# FMT_DIR/SPDLOG_DIR defined => piper's ExternalProject downloads are
 	# skipped and the system libraries are used. CMAKE_ARGS reaches the
