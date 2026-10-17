@@ -31,6 +31,9 @@ S="${WORKDIR}/LocalAI-${PV}/backend/go/acestep-cpp"
 
 KEYWORDS="~amd64"
 
+# CUDA 13 / CCCL 3.1 header split, fixed on the fork's master after our pin.
+PATCHES=( "${FILESDIR}/${P}-cuda-iterator.patch" )
+
 src_unpack() {
 	local-ai-backend_go_unpack
 

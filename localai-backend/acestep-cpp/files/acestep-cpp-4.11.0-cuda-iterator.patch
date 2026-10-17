@@ -1,0 +1,25 @@
+Backport of llama.cpp 8cef8201a1 + 84c678242a ("CUDA: directly include
+cuda/iterator"): CCCL >= 3.1 no longer provides <cuda/iterator> through
+<cub/cub.cuh>, leaving cuda::make_*_iterator undeclared. Already on the
+ggml fork's master; drop at the next GGML_COMMIT bump.
+
+--- a/sources/acestep.cpp/ggml/src/ggml-cuda/argsort.cu
++++ b/sources/acestep.cpp/ggml/src/ggml-cuda/argsort.cu
+@@ -4,6 +4,7 @@
+ #    include <cub/cub.cuh>
+ #    if (CCCL_MAJOR_VERSION >= 3 && CCCL_MINOR_VERSION >= 1)
+ #        define STRIDED_ITERATOR_AVAILABLE
++#        include <cuda/iterator>
+ #    endif
+ using namespace cub;
+ #endif  // GGML_CUDA_USE_CUB
+--- a/sources/acestep.cpp/ggml/src/ggml-cuda/top-k.cu
++++ b/sources/acestep.cpp/ggml/src/ggml-cuda/top-k.cu
+@@ -5,6 +5,7 @@
+ #    include <cub/cub.cuh>
+ #    if (CCCL_MAJOR_VERSION >= 3 && CCCL_MINOR_VERSION >= 2)
+ #        define CUB_TOP_K_AVAILABLE
++#        include <cuda/iterator>
+ using namespace cub;
+ #    endif  // CCCL_MAJOR_VERSION >= 3 && CCCL_MINOR_VERSION >= 2
+ #endif      // GGML_CUDA_USE_CUB
