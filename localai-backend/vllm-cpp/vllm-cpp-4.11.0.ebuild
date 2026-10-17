@@ -60,16 +60,16 @@ src_prepare() {
 	[[ -n ${engine} && ${engine} == "${backend}" ]] || \
 		die "vllm.h ABI v${engine:-?} does not match govllmcpp.go v${backend:-?}"
 
-	# Upstream demotes GCC's libstdc++ -Warray-bounds false positives
-	# from -Werror, but only on GCC >= 16 (cmake/CompilerWarnings.cmake,
-	# with rationale); the same class fires on GCC 15 here
-	# (vector::back() of a just-copied vector in ltx2_samplers.cpp).
-	# Extend their demotion to 15. The warning stays visible.
-	sed -i 's/VERSION_GREATER_EQUAL 16/VERSION_GREATER_EQUAL 15/' \
+	# Upstream demotes GCC's libstdc++ -Warray-bounds false positives from
+	# -Werror on GCC >= 15 (cmake/CompilerWarnings.cmake, with rationale).
+	# GCC 16 adds -Wmaybe-uninitialized of the same kind, raised inside
+	# std::optional's move path (gemma4.cpp). Demote it alongside; both
+	# warnings stay visible.
+	sed -i 's/-Wno-error=array-bounds)/-Wno-error=array-bounds -Wno-error=maybe-uninitialized)/' \
 		"${CMAKE_USE_DIR}/cmake/CompilerWarnings.cmake" || die
-	grep -q 'VERSION_GREATER_EQUAL 15' \
+	grep -q 'Wno-error=maybe-uninitialized' \
 		"${CMAKE_USE_DIR}/cmake/CompilerWarnings.cmake" || \
-		die "array-bounds demotion sed did not apply"
+		die "maybe-uninitialized demotion sed did not apply"
 
 	cmake_src_prepare
 }
