@@ -49,23 +49,30 @@ SRC_URI+="
 LICENSE="MIT Apache-2.0"
 
 # transformers: LlamaTokenizerFast only. torchaudio (overlay) carries
-# torchcodec for torchaudio.load. cryptography is modelscope-hub's;
-# soundfile is backend.py's own; anyascii is textsearch's, kaldifst and
-# pyahocorasick are wetext's/contractions' compiled engines. Wheels
-# install --no-deps, so the rest of voxcpm's closure must be named here.
+# torchcodec for torchaudio.load. modelscope.pipelines imports its
+# msdatasets layer, hence datasets (the tree's 5.x imports fine; the
+# denoiser never uses it), addict (vendored from guru), pillow and
+# simplejson; cryptography is modelscope-hub's. soundfile is backend.py's
+# own; anyascii is textsearch's, kaldifst and pyahocorasick are
+# wetext's/contractions' compiled engines. Wheels install --no-deps, so
+# the rest of voxcpm's closure must be named here.
 RDEPEND+="
 	sci-ml/transformers[${PYTHON_SINGLE_USEDEP}]
 	sci-ml/torchaudio[${PYTHON_SINGLE_USEDEP}]
+	sci-ml/datasets[${PYTHON_SINGLE_USEDEP}]
 	$(python_gen_cond_dep '
+		dev-python/addict[${PYTHON_USEDEP}]
 		dev-python/anyascii[${PYTHON_USEDEP}]
 		dev-python/cryptography[${PYTHON_USEDEP}]
 		dev-python/einops[${PYTHON_USEDEP}]
 		dev-python/inflect[${PYTHON_USEDEP}]
 		dev-python/kaldifst[${PYTHON_USEDEP}]
 		dev-python/librosa[${PYTHON_USEDEP}]
+		dev-python/pillow[${PYTHON_USEDEP}]
 		dev-python/pyahocorasick[${PYTHON_USEDEP}]
 		dev-python/pydantic[${PYTHON_USEDEP}]
 		dev-python/regex[${PYTHON_USEDEP}]
+		dev-python/simplejson[${PYTHON_USEDEP}]
 		dev-python/soundfile[${PYTHON_USEDEP}]
 	')
 "
