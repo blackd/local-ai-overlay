@@ -36,7 +36,7 @@ RDEPEND="
 	acct-user/gitea-runner
 	>=dev-vcs/git-2.34.1
 "
-BDEPEND=">=dev-lang/go-1.27"
+BDEPEND=">=dev-lang/go-1.27.3"
 
 
 src_prepare() {
