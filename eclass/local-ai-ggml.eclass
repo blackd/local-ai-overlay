@@ -71,15 +71,6 @@ inherit check-reqs cmake cuda local-ai-backend local-ai-rocm
 # ( -DSD_RPC=ON ). May also be extended inside src_configure before
 # calling local-ai-ggml_src_configure (e.g. for usex-derived values).
 
-# @ECLASS_VARIABLE: LOCAL_AI_ROCM_CLANG
-# @DEFAULT_UNSET
-# @DESCRIPTION:
-# Drive the USE=rocm build with ROCm clang instead of hipcc, for
-# engines whose plain C++ TUs cannot survive hipcc's HIP mode (e.g.
-# CGAL/boost::multiprecision: HIP's device math overloads make
-# frexp(long double) ambiguous). Mirrors upstream recipes that export
-# the ROCm llvm clang/clang++ for such engines.
-
 HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"
 LICENSE="MIT"
 SLOT="0"
@@ -211,18 +202,20 @@ local-ai-ggml_src_configure() {
 	use openblas && mycmakeargs+=( -DGGML_BLAS_VENDOR=OpenBLAS )
 
 	if [[ -z ${LOCALAI_GGML_NO_ROCM} ]] && use rocm; then
-		if [[ -n ${LOCAL_AI_ROCM_CLANG} ]]; then
-			local hipclang
-			hipclang=$(hipconfig --hipclangpath) && [[ -n ${hipclang} ]] \
-				|| die "hipconfig --hipclangpath failed"
-			local -x CC="${hipclang}/clang" CXX="${hipclang}/clang++"
-			# The user's *FLAGS are GCC-tuned; drop what clang rejects
-			# (e.g. -mfpmath=both), as rocm_use_hipcc does for hipcc.
-			strip-unsupported-flags
-		else
-			# Switch to hipcc and strip flags it can't digest.
-			rocm_use_hipcc
-		fi
+		# ROCm clang as the project compiler, never hipcc. With hipcc as
+		# CXX ggml takes its legacy path where hipcc compiles everything,
+		# and CMake cannot resolve the OpenMP runtime through the wrapper:
+		# on ROCm 10.1 (clang 23) ggml-cpu's omp_* symbols stay
+		# unresolved at the final link, silently so for shared engine
+		# libraries. With plain clang the .cu files go through CMake's
+		# HIP language, host code is ordinary C++ and FindOpenMP works.
+		# Same move as sci-misc/llama-cpp::guru made for ROCm 10.1.
+		local hipclang
+		hipclang=$(hipconfig --hipclangpath) && [[ -n ${hipclang} ]] \
+			|| die "hipconfig --hipclangpath failed"
+		local -x CC="${hipclang}/clang" CXX="${hipclang}/clang++"
+		# The user's *FLAGS are GCC-tuned; drop what clang rejects.
+		strip-unsupported-flags
 		# Build for the GPU architectures selected via AMDGPU_TARGETS
 		# USE_EXPAND flags (rocm.eclass) instead of autodetecting the
 		# build host's GPU. GPU_TARGETS is ROCm >=6's name for
@@ -232,6 +225,11 @@ local-ai-ggml_src_configure() {
 			-DAMDGPU_TARGETS="$(get_amdgpu_flags)"
 			-DGPU_TARGETS="$(get_amdgpu_flags)"
 			-DCMAKE_HIP_ARCHITECTURES="$(get_amdgpu_flags)"
+			# Device code now goes through CMake's HIP language, which
+			# ignores CXXFLAGS: forward them, and blank CMake's own
+			# per-build-type HIP defaults so they cannot override.
+			-DCMAKE_HIP_FLAGS="${CXXFLAGS}"
+			"-DCMAKE_HIP_FLAGS_${CMAKE_BUILD_TYPE^^}="
 		)
 	fi
 
