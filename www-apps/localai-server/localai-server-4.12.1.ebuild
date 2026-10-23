@@ -23,7 +23,7 @@ pkg_setup() {
 # Commit hash the upstream release tag points at. Embedded into the
 # binary (internal.Commit) so `local-ai --version` reports the same build
 # metadata as upstream's official builds.
-LOCAL_AI_COMMIT="15e37df9a468c798a5a511624f054057da4380a1"
+LOCAL_AI_COMMIT="ec9274027eadd552d56f2c6c1fe86cd9216a991a"
 
 DESCRIPTION="Self-hosted, OpenAI-compatible AI server (core, without inference backends)"
 HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"

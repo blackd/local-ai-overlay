@@ -20,7 +20,7 @@ LOCALAI_GGML_NO_ROCM=1
 
 inherit local-ai-ggml-go
 
-# The kimodo.cpp commit LocalAI v4.12.0 builds against. Source of truth:
+# The kimodo.cpp commit LocalAI v4.12.1 builds against. Source of truth:
 # backend/go/kimodocpp/Makefile (KIMODO_VERSION) at the upstream release
 # tag; the ggml pin is that commit's ggml gitlink.
 KIMODO_COMMIT="ed8a931aedb132f768190f6931c365855caba74c"

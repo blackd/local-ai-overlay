@@ -29,7 +29,7 @@ LOCAL_AI_EXTRA_CMAKE_ARGS=(
 
 inherit local-ai-ggml-go
 
-# The parakeet.cpp commit LocalAI v4.12.0 builds against. Source of truth:
+# The parakeet.cpp commit LocalAI v4.12.1 builds against. Source of truth:
 # backend/go/parakeet-cpp/Makefile (PARAKEET_VERSION) at the upstream
 # release tag; the ggml, ced.cpp and voice-detect.cpp pins are that
 # commit's third_party/* gitlinks.

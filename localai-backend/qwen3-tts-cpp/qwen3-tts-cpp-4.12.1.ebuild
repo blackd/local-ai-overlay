@@ -15,7 +15,7 @@ LOCAL_AI_CMAKE_TARGET="goqwen3ttscpp"
 
 inherit local-ai-ggml-go
 
-# The qwentts.cpp commit LocalAI v4.12.0 builds against. Source of truth:
+# The qwentts.cpp commit LocalAI v4.12.1 builds against. Source of truth:
 # backend/go/qwen3-tts-cpp/Makefile (QWEN3TTS_CPP_VERSION) at the
 # upstream release tag; the ggml pin is that commit's root-level ggml
 # gitlink (ServeurpersoCom's own ggml fork, mounted at ggml/ rather
