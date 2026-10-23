@@ -1,4 +1,4 @@
-dev-lang/go 1.27.2
+dev-lang/go 1.27.3
 net-libs/grpc 1.80.0
 dev-libs/protobuf 34.2
 dev-cpp/abseil-cpp 20260107.1
