@@ -23,9 +23,9 @@ LOCAL_AI_HIP_CMAKE_VARS="GGML_HIPBLAS"
 
 inherit local-ai-ggml
 
-# The ik_llama.cpp commit LocalAI v4.11.0 builds against. Source of truth:
+# The ik_llama.cpp commit LocalAI v4.12.0 builds against. Source of truth:
 # backend/cpp/ik-llama-cpp/Makefile (IK_LLAMA_VERSION) at the release tag.
-IK_LLAMA_COMMIT="d9e286846d6f8232db48ec5c111a4ea3aea675ef"
+IK_LLAMA_COMMIT="565f08d1eac9b73bd39fa369b3ffc154e8394b27"
 
 DESCRIPTION="LocalAI text-generation backend (ik_llama.cpp gRPC server)"
 SRC_URI="

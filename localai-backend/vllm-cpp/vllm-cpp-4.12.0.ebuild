@@ -19,9 +19,9 @@ EAPI=8
 
 inherit cmake go-module local-ai-backend
 
-# The vllm.cpp commit LocalAI v4.11.0 builds against. Source of truth:
+# The vllm.cpp commit LocalAI v4.12.0 builds against. Source of truth:
 # backend/go/vllm-cpp/Makefile (VLLM_CPP_VERSION) at the release tag.
-VLLM_COMMIT="a19294a9ae2248e66d0206ecedee1b9041944e59"
+VLLM_COMMIT="46c6846b939313b591f71825a5f5878918663795"
 
 DESCRIPTION="LocalAI text-generation backend (vllm.cpp gRPC server)"
 HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"

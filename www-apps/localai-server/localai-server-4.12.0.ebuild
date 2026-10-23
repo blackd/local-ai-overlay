@@ -23,7 +23,7 @@ pkg_setup() {
 # Commit hash the upstream release tag points at. Embedded into the
 # binary (internal.Commit) so `local-ai --version` reports the same build
 # metadata as upstream's official builds.
-LOCAL_AI_COMMIT="58830f7ac508845a6f4efa32cfca06af422d4d82"
+LOCAL_AI_COMMIT="15e37df9a468c798a5a511624f054057da4380a1"
 
 DESCRIPTION="Self-hosted, OpenAI-compatible AI server (core, without inference backends)"
 HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"
@@ -35,18 +35,6 @@ SRC_URI="
 	${DISTFILES_BASE}/${P}-node_modules.tar.xz
 "
 S="${WORKDIR}/LocalAI-${PV}"
-
-PATCHES=(
-	# OCI downloads stage beside the destination, not tmpfs /tmp —
-	# PR #12280, open; see the patch header.
-	"${FILESDIR}/localai-4.11.0-oci-staging-dir.patch"
-	# Manual model imports with remote assets download through the
-	# gallery job queue — PR pending; see the patch header.
-	"${FILESDIR}/localai-4.11.0-manual-import-job-queue.patch"
-	# Models pages report disk usage (per-model size, shared split,
-	# missing references) — PR pending; see the patch header.
-	"${FILESDIR}/localai-4.11.0-model-storage-index.patch"
-)
 
 LICENSE="MIT"
 SLOT="0"

@@ -29,11 +29,11 @@ LOCAL_AI_EXTRA_CMAKE_ARGS=(
 
 inherit local-ai-ggml-go
 
-# The parakeet.cpp commit LocalAI v4.11.0 builds against. Source of truth:
+# The parakeet.cpp commit LocalAI v4.12.0 builds against. Source of truth:
 # backend/go/parakeet-cpp/Makefile (PARAKEET_VERSION) at the upstream
 # release tag; the ggml, ced.cpp and voice-detect.cpp pins are that
 # commit's third_party/* gitlinks.
-PARAKEET_COMMIT="bee7c14dfcc23613df58176c59a40459e7b47095"
+PARAKEET_COMMIT="5c9b0fbbd8e611d88e47d7e1ebae9bca9b447e8f"
 GGML_COMMIT="e705c5fed490514458bdd2eaddc43bd098fcce9b"
 # Subengines (PARAKEET_WITH_CED / PARAKEET_WITH_VOICEDETECT, default ON,
 # hard-required by the engine's CMake): built as static libs inside
@@ -41,8 +41,8 @@ GGML_COMMIT="e705c5fed490514458bdd2eaddc43bd098fcce9b"
 # link parakeet's patched ggml and their empty third_party/ggml
 # placeholders are never configured. ced.cpp is the same commit the ced
 # backend pins — one shared distfile.
-CED_COMMIT="61dec2ab0106f2047ee40062a7075dbf08c523d0"
-VOICEDETECT_COMMIT="b74a896f47c6d04fcca0a962ff317528fd0b0019"
+CED_COMMIT="736a4ee46a31d4ff38b41add65ce0f2cf1aaa05f"
+VOICEDETECT_COMMIT="bca46bcbc2fe68169c2d7c414e9b290a7cb89911"
 
 DESCRIPTION="LocalAI speech-to-text backend (parakeet.cpp gRPC server)"
 SRC_URI="

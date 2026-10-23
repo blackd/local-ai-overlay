@@ -28,7 +28,7 @@ LOCALAI_GGML_NO_ROCM=1
 
 inherit local-ai-ggml-go
 
-# The LocalVQE commit LocalAI v4.11.0 builds against. Source of truth:
+# The LocalVQE commit LocalAI v4.12.0 builds against. Source of truth:
 # backend/go/localvqe/Makefile (LOCALVQE_VERSION) at the upstream
 # release tag; the ggml pin is that commit's ggml/vendor/ggml gitlink.
 LOCALVQE_COMMIT="b0f0378a450e87c871b85689554801601ca56d98"

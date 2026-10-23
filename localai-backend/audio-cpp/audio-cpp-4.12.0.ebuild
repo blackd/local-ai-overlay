@@ -9,9 +9,9 @@ EAPI=8
 
 inherit cmake local-ai-backend local-ai-rocm
 
-# The audio.cpp commit LocalAI v4.11.0 builds against. Source of truth:
+# The audio.cpp commit LocalAI v4.12.0 builds against. Source of truth:
 # backend/cpp/audio-cpp/Makefile (AUDIO_CPP_VERSION) at the release tag.
-AUDIOCPP_COMMIT="9a02e61326aaaf9d462b584ca5e0daba22c0abfc"
+AUDIOCPP_COMMIT="0bf4d155f2af5f85853415170622dc145e3d62c3"
 
 DESCRIPTION="LocalAI audio backend (audio.cpp gRPC server)"
 HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"

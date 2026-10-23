@@ -7,7 +7,7 @@
 #
 #   localai-<v>-deps.tar.xz          Go module cache (go-module.eclass format)
 #   localai-server-<v>-node_modules.tar.xz  npm dependencies of the React web UI
-#   localai-<v>-prebuilt.tar.xz      the two generated protobuf Go files
+#   localai-<v>-prebuilt.tar.xz      the generated protobuf Go packages (grpc, motion)
 #
 # The node_modules and prebuilt tarball paths are rooted at the LocalAI
 # source tree top level, so ebuilds unpack them directly inside ${S}; the
@@ -58,7 +58,8 @@ GOBIN="${WORK}/gobin" go install "google.golang.org/protobuf/cmd/protoc-gen-go@$
 GOBIN="${WORK}/gobin" go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc@${PROTOC_GEN_GO_GRPC_VERSION}"
 mkdir -p "${SRC}/pkg/grpc/proto"
 ( cd "${SRC}" && PATH="${WORK}/gobin:${PATH}" protoc -I backend --go_out=paths=source_relative:pkg/grpc/proto --go-grpc_out=paths=source_relative:pkg/grpc/proto backend/backend.proto )
-tar -C "${SRC}" -cJf "${OUT}/localai-${VERSION}-prebuilt.tar.xz" pkg/grpc/proto
+( cd "${SRC}" && PATH="${WORK}/gobin:${PATH}" protoc -I pkg/motion/proto --go_out=paths=source_relative:pkg/motion/proto pkg/motion/proto/motion.proto )
+tar -C "${SRC}" -cJf "${OUT}/localai-${VERSION}-prebuilt.tar.xz" pkg/grpc/proto pkg/motion/proto
 
 echo ">>> Done. Upload these to the distfiles server:"
 ( cd "${OUT}" && sha256sum ./*.tar.xz )

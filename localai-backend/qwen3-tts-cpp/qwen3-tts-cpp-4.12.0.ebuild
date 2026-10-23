@@ -2,10 +2,10 @@
 # Distributed under the terms of the GNU General Public License v2
 
 # LocalAI text-to-speech backend for Qwen3-TTS models, built from
-# ServeurpersoCom's qwentts.cpp at the exact commit this LocalAI release
-# pins. Upstream HOLDS this pin back deliberately: 35ebe537 is the last
-# commit before a synthesis hang (qwentts.cpp 26dd8adb, LocalAI #11241)
-# — do not advance it past the LocalAI Makefile's pin.
+# localai-org's fork of ServeurpersoCom's qwentts.cpp at the exact commit
+# this LocalAI release pins (the fork took over at 4.12.0, LocalAI #12770,
+# after the pin had been held at 35ebe537 for a synthesis hang in the
+# original, LocalAI #11241) — do not advance it past the Makefile's pin.
 
 EAPI=8
 
@@ -15,18 +15,18 @@ LOCAL_AI_CMAKE_TARGET="goqwen3ttscpp"
 
 inherit local-ai-ggml-go
 
-# The qwentts.cpp commit LocalAI v4.9.0 builds against. Source of truth:
+# The qwentts.cpp commit LocalAI v4.12.0 builds against. Source of truth:
 # backend/go/qwen3-tts-cpp/Makefile (QWEN3TTS_CPP_VERSION) at the
 # upstream release tag; the ggml pin is that commit's root-level ggml
 # gitlink (ServeurpersoCom's own ggml fork, mounted at ggml/ rather
 # than third_party/).
-QWEN3TTS_COMMIT="35ebe5376b82a0a59d008586d55bbe623d449011"
-GGML_COMMIT="c044c6f03892f9d5e98213b05f8afea1f8b0d3c9"
+QWEN3TTS_COMMIT="7cdb17cdaf6ef88961365e9b5177a0284501beb9"
+GGML_COMMIT="cc5df49a6b878db2b68b9a7b45976e279594627d"
 
 DESCRIPTION="LocalAI text-to-speech backend (qwentts.cpp gRPC server)"
 SRC_URI="
 	${LOCAL_AI_GO_SRC_URI}
-	https://github.com/ServeurpersoCom/qwentts.cpp/archive/${QWEN3TTS_COMMIT}.tar.gz -> qwentts.cpp-${QWEN3TTS_COMMIT}.tar.gz
+	https://github.com/localai-org/qwentts.cpp/archive/${QWEN3TTS_COMMIT}.tar.gz -> qwentts.cpp-${QWEN3TTS_COMMIT}.tar.gz
 	https://github.com/ServeurpersoCom/ggml/archive/${GGML_COMMIT}.tar.gz -> ServeurpersoCom-ggml-${GGML_COMMIT}.tar.gz
 "
 S="${WORKDIR}/LocalAI-${PV}/backend/go/qwen3-tts-cpp"

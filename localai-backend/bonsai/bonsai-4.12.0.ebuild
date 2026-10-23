@@ -32,7 +32,7 @@ inherit local-ai-ggml
 # The PrismML llama.cpp (prism branch) commit LocalAI v4.9.0 pins.
 # Source of truth: backend/cpp/bonsai/Makefile (BONSAI_VERSION) at the
 # upstream release tag — NOT the auto-bumped pin on master.
-BONSAI_COMMIT="adfffbe41b2cabcd51fff326ab045662265062bb"
+BONSAI_COMMIT="11809184898113482c2f510fd13da669aaba1052"
 
 DESCRIPTION="LocalAI text-generation backend for 1-bit/ternary models (Bonsai fork of llama.cpp)"
 SRC_URI="
