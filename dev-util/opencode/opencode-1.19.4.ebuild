@@ -31,7 +31,7 @@ KEYWORDS="~amd64"
 RESTRICT="strip"
 QA_PREBUILT="usr/bin/opencode"
 
-BDEPEND=">=dev-lang/bun-bin-1.3.14"
+BDEPEND=">=dev-lang/bun-bin-1.4.4"
 
 # GURU's dev-util/opencode-bin installs the same /usr/bin/opencode.
 RDEPEND="!dev-util/opencode-bin"
