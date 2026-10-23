@@ -38,6 +38,7 @@ RDEPEND="
 	dev-python/peft[${PYTHON_SINGLE_USEDEP}]
 	dev-python/trl[${PYTHON_SINGLE_USEDEP}]
 	$(python_gen_cond_dep '
+		<dev-python/click-8.5[${PYTHON_USEDEP}]
 		dev-python/packaging[${PYTHON_USEDEP}]
 		dev-python/plotext[${PYTHON_USEDEP}]
 		dev-python/pydantic[${PYTHON_USEDEP}]
@@ -55,8 +56,8 @@ src_prepare() {
 	# 0.27 passes the full CLI surface (command tree, subcommands —
 	# verified 2026-09-28). Relaxing the pin here also fixes the
 	# installed metadata, so `soup env check` sees clean bounds.
-	sed -i 's/"typer>=0.9.0,<0.21.0",/"typer>=0.9.0",/' pyproject.toml || die
-	grep -q '"typer>=0.9.0",' pyproject.toml || die "typer pin relax did not apply"
+	sed -i 's/"typer>=0.15.4,<0.21.0",/"typer>=0.15.4",/' pyproject.toml || die
+	grep -q '"typer>=0.15.4",' pyproject.toml || die "typer pin relax did not apply"
 
 	# Upstream caps requires-python at <3.13 to keep pip users inside its
 	# CI-tested torch-wheel matrix (loader crashes in libc10.so on
