@@ -22,6 +22,8 @@ DESCRIPTION="k-bit optimizers and quantization for PyTorch"
 HOMEPAGE="https://github.com/bitsandbytes-foundation/bitsandbytes"
 SRC_URI="https://github.com/bitsandbytes-foundation/bitsandbytes/archive/${PV}.tar.gz -> ${P}.gh.tar.gz"
 
+PATCHES=( "${FILESDIR}/${P}-llvm-23-fdot2.patch" )
+
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64"
