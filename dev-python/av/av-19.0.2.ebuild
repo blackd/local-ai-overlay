@@ -36,15 +36,15 @@ IUSE="examples"
 
 BDEPEND="
 	virtual/pkgconfig
-	>=dev-python/cython-3.1.0[${PYTHON_USEDEP}]
+	>=dev-python/cython-3.3.0[${PYTHON_USEDEP}]
 	test? (
 		dev-python/numpy[${PYTHON_USEDEP}]
 		dev-python/pillow[${PYTHON_USEDEP}]
 	)
 "
-DEPEND="media-video/ffmpeg:="
+DEPEND=">=media-video/ffmpeg-8:="
 RDEPEND="
-	media-video/ffmpeg:=
+	>=media-video/ffmpeg-8:=
 	dev-python/numpy[${PYTHON_USEDEP}]
 	dev-python/pillow[${PYTHON_USEDEP}]
 "
