@@ -29,7 +29,7 @@ _LOCAL_AI_ROCM_ECLASS=1
 # @DESCRIPTION:
 # ROCm toolchain version the rocm eclass targets; overlay packages
 # also use it as the floor for their HIP/BLAS runtime dependencies.
-ROCM_VERSION=7.2
+ROCM_VERSION=10.1
 
 inherit rocm
 
