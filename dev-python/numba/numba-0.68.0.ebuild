@@ -24,8 +24,8 @@ KEYWORDS="~amd64"
 
 RDEPEND="
 	$(python_gen_cond_dep '
-		=dev-python/llvmlite-0.49*[${PYTHON_USEDEP}]
-		dev-python/numpy[${PYTHON_USEDEP}]
+		=dev-python/llvmlite-0.50*[${PYTHON_USEDEP}]
+		<dev-python/numpy-2.6[${PYTHON_USEDEP}]
 	')
 "
 DEPEND="${RDEPEND}"
