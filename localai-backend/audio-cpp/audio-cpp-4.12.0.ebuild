@@ -30,7 +30,7 @@ KEYWORDS="~amd64"
 IUSE="+cpu cuda native rocm test vulkan"
 # Same CPU kernel gates as local-ai-ggml.eclass (audio-cpp predates it);
 # see that eclass for the option-gated-kernels rationale.
-_ggml_cpu_flags=( avx avx2 avx512f bmi2 f16c fma3 )
+_ggml_cpu_flags=( amx_bf16 amx_int8 amx_tile avx avx_vnni avx2 avx512_bf16 avx512bw avx512f avx512vbmi avx512_vnni bmi2 fma3 f16c sse4_2 )
 IUSE+=" ${_ggml_cpu_flags[*]/#/cpu_flags_x86_}"
 unset _ggml_cpu_flags
 # Each enabled flag builds its own co-installable backend variant
@@ -128,18 +128,31 @@ src_configure() {
 			-DENGINE_ENABLE_CPU_ALL_VARIANTS=OFF
 			-DGGML_NATIVE=$(usex native)
 			# Tree-style CPU kernel gates, matching local-ai-ggml.eclass.
+			-DGGML_AMX_BF16=$(usex cpu_flags_x86_amx_bf16)
+			-DGGML_AMX_INT8=$(usex cpu_flags_x86_amx_int8)
+			-DGGML_AMX_TILE=$(usex cpu_flags_x86_amx_tile)
 			-DGGML_AVX=$(usex cpu_flags_x86_avx)
+			-DGGML_AVX_VNNI=$(usex cpu_flags_x86_avx_vnni)
 			-DGGML_AVX2=$(usex cpu_flags_x86_avx2)
-			-DGGML_AVX512=$(usex cpu_flags_x86_avx512f)
+			-DGGML_AVX512_BF16=$(usex cpu_flags_x86_avx512_bf16)
+			-DGGML_AVX512_VBMI=$(usex cpu_flags_x86_avx512vbmi)
+			-DGGML_AVX512_VNNI=$(usex cpu_flags_x86_avx512_vnni)
 			-DGGML_BMI2=$(usex cpu_flags_x86_bmi2)
 			-DGGML_F16C=$(usex cpu_flags_x86_f16c)
 			-DGGML_FMA=$(usex cpu_flags_x86_fma3)
+			-DGGML_SSE42=$(usex cpu_flags_x86_sse4_2)
 			-DENGINE_ENABLE_CUDA=$([[ ${v} == cuda ]] && echo ON || echo OFF)
 			-DENGINE_ENABLE_HIP=$([[ ${v} == rocm ]] && echo ON || echo OFF)
 			-DENGINE_ENABLE_VULKAN=$([[ ${v} == vulkan ]] && echo ON || echo OFF)
 			# Engine-logic tests: built once, in the cpu variant.
 			-DAUDIO_CPP_GRPC_BUILD_TESTS=$([[ ${v} == cpu ]] && usex test || echo OFF)
 		)
+		# The base AVX-512 kernels serve both the f and bw subsets.
+		if use cpu_flags_x86_avx512f || use cpu_flags_x86_avx512bw; then
+			mycmakeargs+=( -DGGML_AVX512=ON )
+		else
+			mycmakeargs+=( -DGGML_AVX512=OFF )
+		fi
 		if [[ ${v} == rocm ]]; then
 			(
 				# Upstream drives this build with ROCm clang rather than
