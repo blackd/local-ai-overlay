@@ -51,17 +51,8 @@ RDEPEND+="
 	sci-ml/transformers[${PYTHON_SINGLE_USEDEP}]
 	sci-ml/accelerate[${PYTHON_SINGLE_USEDEP}]
 	$(python_gen_cond_dep '
-		dev-python/decorator[${PYTHON_USEDEP}]
-		dev-python/joblib[${PYTHON_USEDEP}]
-		dev-python/lazy-loader[${PYTHON_USEDEP}]
-		dev-python/llvmlite[${PYTHON_USEDEP}]
-		dev-python/msgpack[${PYTHON_USEDEP}]
-		dev-python/numba[${PYTHON_USEDEP}]
-		dev-python/pooch[${PYTHON_USEDEP}]
-		dev-python/scikit-learn[${PYTHON_USEDEP}]
-		dev-python/scipy[${PYTHON_USEDEP}]
+		dev-python/librosa[${PYTHON_USEDEP}]
 		dev-python/soundfile[${PYTHON_USEDEP}]
-		dev-python/soxr[${PYTHON_USEDEP}]
 		dev-python/tqdm[${PYTHON_USEDEP}]
 	')
 "

@@ -14,6 +14,8 @@
 # tensorboard-data-server are PARKED: their wheels ship prebuilt
 # Go/Rust binaries, which the from-source rule cannot accept — pending
 # a decision (source-built cores vs sanctioned exception).
+# einops and librosa come from the overlay's dev-python packages
+# through system-site.
 # Upload the result as an asset of a release tagged
 # fish-speech-v<version> on this repository.
 
@@ -35,7 +37,6 @@ PACKAGES=(
 	datasets==2.18.0
 	descript-audio-codec==1.0.0
 	descript-audiotools==0.7.2
-	einops==0.8.2
 	einx==0.2.2
 	ffmpy==1.0.0
 	fire==0.7.1
@@ -50,7 +51,6 @@ PACKAGES=(
 	importlib-resources==7.1.0
 	julius==0.2.8
 	kui==1.14.1
-	librosa==1.0.0
 	lightning==2.6.6
 	lightning-utilities==0.15.3
 	loralib==0.1.2
@@ -69,7 +69,7 @@ PACKAGES=(
 	tensorboard==2.20.0
 	torch-stoi==0.2.3
 	torchmetrics==1.9.0
-	transformers==4.57.3
+	transformers==4.57.6
 )
 
 bash "$(dirname "$(realpath "$0")")/gen-wheels.sh" fish-speech "${VERSION}" "${PACKAGES[@]}"

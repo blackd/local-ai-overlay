@@ -52,6 +52,8 @@ RDEPEND+="
 		sci-ml/torchaudio[${PYTHON_SINGLE_USEDEP}]
 		app-arch/brotli[python,${PYTHON_USEDEP}]
 		sci-ml/hf_xet[${PYTHON_USEDEP}]
+		dev-python/einops[${PYTHON_USEDEP}]
+		dev-python/librosa[${PYTHON_USEDEP}]
 		dev-python/llvmlite[${PYTHON_USEDEP}]
 		dev-python/numba[${PYTHON_USEDEP}]
 		dev-python/ormsgpack[${PYTHON_USEDEP}]
