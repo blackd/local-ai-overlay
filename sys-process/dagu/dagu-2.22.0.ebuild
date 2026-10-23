@@ -32,7 +32,7 @@ RDEPEND="
 	acct-user/dagu
 "
 BDEPEND="
-	>=dev-lang/go-1.27.2
+	>=dev-lang/go-1.27.3
 	net-libs/nodejs[npm]
 "
 
@@ -69,4 +69,8 @@ pkg_postinst() {
 	elog "dagu user with DAGU_HOME=/var/lib/dagu; the UI listens on"
 	elog "127.0.0.1:8080 by default. Put DAG definitions under"
 	elog "/var/lib/dagu/dags or adjust via /etc/conf.d/dagu."
+	ewarn "Since 2.22.0 requests that need no login (auth.mode: none) get"
+	ewarn "HTTP 400 for an unrecognized Host header. IP addresses, localhost"
+	ewarn "and the configured host/public_url pass; a hostname used through"
+	ewarn "a reverse proxy must be listed in allowed_hosts or DAGU_ALLOWED_HOSTS."
 }
