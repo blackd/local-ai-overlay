@@ -52,12 +52,7 @@ jobs:
         id: "rel"
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-        run: >-
-          echo "family=${{ steps.fam.outputs.family }} version=${{ steps.fam.outputs.version }}" &&
-          bash scripts/release-family.sh
-          "${{ steps.fam.outputs.family }}"
-          "${{ steps.fam.outputs.version }}"
-          "${{ inputs.rerelease || 'false' }}"
+        run: echo "family=${{ steps.fam.outputs.family }} version=${{ steps.fam.outputs.version }}" && bash scripts/release-family.sh "${{ steps.fam.outputs.family }}" "${{ steps.fam.outputs.version }}" "${{ inputs.rerelease || 'false' }}"
       - name: "Manifests"
         env:
           RELEASE_TAG: "${{ steps.fam.outputs.family }}-v${{ steps.fam.outputs.version }}"
