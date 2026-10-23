@@ -15,6 +15,10 @@ EAPI=8
 LOCAL_AI_CMAKE_TARGET="kimodo"
 LOCAL_AI_ENGINE_LIB="libkimodo.so"
 LOCAL_AI_VULKAN_CMAKE_VARS="KIMODO_ENABLE_VULKAN"
+# lib/ resolves through run.sh's LD_LIBRARY_PATH. Without this the
+# build-tree libraries carry a RUNPATH into the build directory,
+# which Portage's QA check blanks into a null entry.
+LOCAL_AI_EXTRA_CMAKE_ARGS=( -DCMAKE_SKIP_RPATH=ON )
 LOCALAI_GGML_NO_CUDA=1
 LOCALAI_GGML_NO_ROCM=1
 

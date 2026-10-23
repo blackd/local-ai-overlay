@@ -21,6 +21,10 @@ LOCAL_AI_EXTRA_CMAKE_ARGS=(
 	-DTRELLIS2_BUILD_TESTS=OFF
 	-DTRELLIS2_FETCH_PRINT_REMESH_DEPS=OFF
 	-DCMAKE_POSITION_INDEPENDENT_CODE=ON
+	# lib/ resolves through run.sh's LD_LIBRARY_PATH. Without this the
+	# build-tree libraries carry a RUNPATH into the build directory,
+	# which Portage's QA check blanks into a null entry.
+	-DCMAKE_SKIP_RPATH=ON
 )
 
 inherit local-ai-ggml-go
