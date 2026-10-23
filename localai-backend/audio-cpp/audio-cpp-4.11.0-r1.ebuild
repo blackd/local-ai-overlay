@@ -90,6 +90,7 @@ src_prepare() {
 	# builds as); the bytes are identical UTF-8 either way on Linux.
 	einfo "Replacing path::u8string() calls in engine sources"
 	find "${S}/audio.cpp/src" \( -name '*.cpp' -o -name '*.h' \) -exec sed -i 's/\.u8string()/.string()/g' {} + || die
+	use rocm && local-ai-backend_fix_bf16_wmma
 }
 
 # Enabled variants, in the order they build.
@@ -159,6 +160,11 @@ src_configure() {
 					-DAMDGPU_TARGETS="${amdgpu_flags}"
 					-DGPU_TARGETS="${amdgpu_flags}"
 					-DCMAKE_HIP_ARCHITECTURES="${amdgpu_flags}"
+					# CMake's HIP language ignores CXXFLAGS; forward them
+					# and blank the per-build-type defaults that would
+					# otherwise win (-O2 -g -DNDEBUG for RelWithDebInfo).
+					-DCMAKE_HIP_FLAGS="${CXXFLAGS}"
+					"-DCMAKE_HIP_FLAGS_${CMAKE_BUILD_TYPE^^}="
 				)
 				cmake_src_configure
 			) || die

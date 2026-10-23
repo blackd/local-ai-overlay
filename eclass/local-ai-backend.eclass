@@ -115,6 +115,24 @@ local-ai-backend_bump_cxx20() {
 	done
 }
 
+# @FUNCTION: local-ai-backend_fix_bf16_wmma
+# @DESCRIPTION:
+# Since LLVM 23 the AMDGPU bf16 WMMA/MFMA builtins take their operands as
+# 16-bit integer vectors and reject __bf16 vectors (llvm-project PR 176033);
+# the clang 22 bundled with ROCm 7 accepted both. ggml's mma.cuh still
+# declares __bf16 vectors, so HIP compilation fails for gfx11, gfx12 and
+# CDNA targets. Rewrite the element type the way llama.cpp PR 29536 and
+# sci-ml/ggml's llvm-23 patch do, in every ggml copy under WORKDIR. A copy
+# that already has the fix has no such line and is left alone.
+local-ai-backend_fix_bf16_wmma() {
+	local f
+	while IFS= read -r -d '' f; do
+		grep -q 'ext_vector_type([0-9]*))) __bf16;' "${f}" || continue
+		einfo "Rewriting __bf16 WMMA operand vectors to short for LLVM 23 in ${f#"${WORKDIR}/"}"
+		sed -i -e 's/\(ext_vector_type([0-9]*))) \)__bf16;/\1short;/' "${f}" || die
+	done < <(find "${WORKDIR}" -path '*/ggml-cuda/mma.cuh' -print0)
+}
+
 # @ECLASS_VARIABLE: LOCAL_AI_BACKENDS_DIR
 # @DESCRIPTION:
 # Install root for backend packages. /usr/libexec is the filesystem-standard
