@@ -43,7 +43,7 @@ _LOCAL_AI_GGML_ECLASS=1
 # ROCM_VERSION (the rocm eclass key and the HIP/BLAS dependency floor)
 # is pinned overlay-wide in local-ai-rocm.eclass.
 [[ -n ${LOCALAI_GGML_NO_ROCM} ]] && ROCM_SKIP_GLOBALS=1
-inherit check-reqs cmake cuda local-ai-backend local-ai-rocm
+inherit check-reqs cmake cuda flag-o-matic local-ai-backend local-ai-rocm toolchain-funcs
 
 # @ECLASS_VARIABLE: CHECKREQS_DISK_BUILD
 # @DESCRIPTION:
@@ -75,18 +75,18 @@ HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"
 LICENSE="MIT"
 SLOT="0"
 
-IUSE="native openblas vulkan video_cards_amdgpu"
+IUSE="native openblas +openmp vulkan video_cards_amdgpu"
 [[ -n ${LOCALAI_GGML_NO_CUDA} ]] || IUSE+=" cuda"
 [[ -n ${LOCALAI_GGML_NO_ROCM} ]] || IUSE+=" rocm"
 # CPU kernel selection, tree-style (sci-ml/ggml precedent): ggml's
 # AVX-family kernels are option-gated — GGML_AVX512 and friends add
 # dedicated sources and dispatch entries — not merely -march macro-gated,
-# so CFLAGS alone under-builds the CPU backend. The conservative core
-# set mirrors upstream's avx/avx2/avx512 variant matrix; engines with
+# so CFLAGS alone under-builds the CPU backend. The set is the tree's
+# sci-ml/ggml list, one Portage CPU flag per ggml toggle; engines with
 # older ggml forks ignore unknown GGML_* options harmlessly. With
 # USE=native, ggml's own -march=native probing runs in addition — the
 # explicit toggles stay authoritative for kernel selection either way.
-_ggml_cpu_flags=( avx avx2 avx512f bmi2 f16c fma3 )
+_ggml_cpu_flags=( amx_bf16 amx_int8 amx_tile avx avx_vnni avx2 avx512_bf16 avx512bw avx512f avx512vbmi avx512_vnni bmi2 fma3 f16c sse4_2 )
 IUSE+=" ${_ggml_cpu_flags[*]/#/cpu_flags_x86_}"
 unset _ggml_cpu_flags
 # Any selected amdgpu_targets_* flag (typically expanded from AMDGPU_TARGETS
@@ -135,15 +135,21 @@ BDEPEND="
 
 local-ai-ggml_pkg_pretend() {
 	check-reqs_pkg_pretend
+	[[ ${MERGE_TYPE} != binary ]] && use openmp && tc-check-openmp
 }
 
 local-ai-ggml_pkg_setup() {
 	check-reqs_pkg_setup
+	[[ ${MERGE_TYPE} != binary ]] && use openmp && tc-check-openmp
 }
 
 local-ai-ggml_src_prepare() {
 	cmake_src_prepare
-	[[ -z ${LOCALAI_GGML_NO_CUDA} ]] && use cuda && cuda_src_prepare
+	if [[ -z ${LOCALAI_GGML_NO_CUDA} ]] && use cuda; then
+		cuda_src_prepare
+		# nvcc cannot consume LTO objects (Gentoo bug 983121).
+		filter-lto
+	fi
 	[[ -z ${LOCALAI_GGML_NO_ROCM} ]] && use rocm && local-ai-backend_fix_bf16_wmma
 }
 
@@ -157,14 +163,28 @@ local-ai-ggml_src_configure() {
 		# unless they opt in via USE=native.
 		-DGGML_NATIVE=$(usex native)
 		# Tree-style CPU kernel gates (see IUSE comment above).
+		-DGGML_AMX_BF16=$(usex cpu_flags_x86_amx_bf16)
+		-DGGML_AMX_INT8=$(usex cpu_flags_x86_amx_int8)
+		-DGGML_AMX_TILE=$(usex cpu_flags_x86_amx_tile)
 		-DGGML_AVX=$(usex cpu_flags_x86_avx)
+		-DGGML_AVX_VNNI=$(usex cpu_flags_x86_avx_vnni)
 		-DGGML_AVX2=$(usex cpu_flags_x86_avx2)
-		-DGGML_AVX512=$(usex cpu_flags_x86_avx512f)
+		-DGGML_AVX512_BF16=$(usex cpu_flags_x86_avx512_bf16)
+		-DGGML_AVX512_VBMI=$(usex cpu_flags_x86_avx512vbmi)
+		-DGGML_AVX512_VNNI=$(usex cpu_flags_x86_avx512_vnni)
 		-DGGML_BMI2=$(usex cpu_flags_x86_bmi2)
 		-DGGML_F16C=$(usex cpu_flags_x86_f16c)
 		-DGGML_FMA=$(usex cpu_flags_x86_fma3)
+		-DGGML_SSE42=$(usex cpu_flags_x86_sse4_2)
 		-DGGML_BLAS=$(usex openblas)
+		-DGGML_OPENMP=$(usex openmp)
 	)
+	# The base AVX-512 kernels serve both the f and bw subsets.
+	if use cpu_flags_x86_avx512f || use cpu_flags_x86_avx512bw; then
+		mycmakeargs+=( -DGGML_AVX512=ON )
+	else
+		mycmakeargs+=( -DGGML_AVX512=OFF )
+	fi
 	local v
 	for v in ${LOCAL_AI_VULKAN_CMAKE_VARS:-GGML_VULKAN}; do
 		mycmakeargs+=( -D${v}=$(usex vulkan) )
@@ -206,6 +226,9 @@ local-ai-ggml_src_configure() {
 			-DAMDGPU_TARGETS="$(get_amdgpu_flags)"
 			-DGPU_TARGETS="$(get_amdgpu_flags)"
 			-DCMAKE_HIP_ARCHITECTURES="$(get_amdgpu_flags)"
+			# CDNA-only MMQ path that has broken builds on several ROCm
+			# releases; the tree's ggml keeps it off as well.
+			-DGGML_HIP_MMQ_MFMA=OFF
 			# Device code now goes through CMake's HIP language, which
 			# ignores CXXFLAGS: forward them, and blank CMake's own
 			# per-build-type HIP defaults so they cannot override.
