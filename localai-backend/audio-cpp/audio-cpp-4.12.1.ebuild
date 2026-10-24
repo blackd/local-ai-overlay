@@ -7,7 +7,7 @@
 
 EAPI=8
 
-inherit cmake local-ai-backend local-ai-rocm
+inherit cmake flag-o-matic local-ai-backend local-ai-rocm toolchain-funcs
 
 # The audio.cpp commit LocalAI v4.12.1 builds against. Source of truth:
 # backend/cpp/audio-cpp/Makefile (AUDIO_CPP_VERSION) at the release tag.
@@ -155,28 +155,26 @@ src_configure() {
 		fi
 		if [[ ${v} == rocm ]]; then
 			(
-				# Upstream drives this build with ROCm clang rather than
-				# hipcc: hipcc treats every .cpp as HIP source and
-				# device-compiles it for its built-in default arch
-				# (gfx906) when no offload arch is passed — the kernels'
-				# archs already travel via CMAKE_HIP_ARCHITECTURES. The
-				# subshell keeps CC/CXX out of the other variants;
-				# CMake caches the compilers, so compile needs no env.
-				local hipclang
-				hipclang=$(hipconfig --hipclangpath) && [[ -n ${hipclang} ]] \
-					|| die "hipconfig --hipclangpath failed"
-				local -x CC="${hipclang}/clang" CXX="${hipclang}/clang++"
+				# Host code on the system compiler; the .cu files go
+				# through CMake's HIP language with ROCm clang, named
+				# explicitly. The subshell keeps the flag filtering out
+				# of the other variants.
+				local hipcxx hipflags
+				hipcxx=$(tc-getHIPCXX)
+				hipflags=$(HIPCXX="${hipcxx}" test-flags-HIPCXX ${CXXFLAGS})
+				filter-lto
 				local amdgpu_flags
 				amdgpu_flags=$(get_amdgpu_flags)
 				amdgpu_flags=${amdgpu_flags%;}
 				mycmakeargs+=(
+					-DCMAKE_HIP_COMPILER="${hipcxx}"
 					-DAMDGPU_TARGETS="${amdgpu_flags}"
 					-DGPU_TARGETS="${amdgpu_flags}"
 					-DCMAKE_HIP_ARCHITECTURES="${amdgpu_flags}"
-					# CMake's HIP language ignores CXXFLAGS; forward them
-					# and blank the per-build-type defaults that would
-					# otherwise win (-O2 -g -DNDEBUG for RelWithDebInfo).
-					-DCMAKE_HIP_FLAGS="${CXXFLAGS}"
+					# CMake's HIP language ignores CXXFLAGS; pass the
+					# filtered set and blank the per-build-type defaults
+					# that would otherwise win (-O2 -g -DNDEBUG).
+					-DCMAKE_HIP_FLAGS="${hipflags}"
 					"-DCMAKE_HIP_FLAGS_${CMAKE_BUILD_TYPE^^}="
 				)
 				cmake_src_configure

@@ -203,36 +203,35 @@ local-ai-ggml_src_configure() {
 	use openblas && mycmakeargs+=( -DGGML_BLAS_VENDOR=OpenBLAS )
 
 	if [[ -z ${LOCALAI_GGML_NO_ROCM} ]] && use rocm; then
-		# ROCm clang as the project compiler, never hipcc. With hipcc as
-		# CXX ggml takes its legacy path where hipcc compiles everything,
-		# and CMake cannot resolve the OpenMP runtime through the wrapper:
-		# on ROCm 10.1 (clang 23) ggml-cpu's omp_* symbols stay
-		# unresolved at the final link, silently so for shared engine
-		# libraries. With plain clang the .cu files go through CMake's
-		# HIP language, host code is ordinary C++ and FindOpenMP works.
-		# Same move as sci-misc/llama-cpp::guru made for ROCm 10.1.
-		local hipclang
-		hipclang=$(hipconfig --hipclangpath) && [[ -n ${hipclang} ]] \
-			|| die "hipconfig --hipclangpath failed"
-		local -x CC="${hipclang}/clang" CXX="${hipclang}/clang++"
-		# The user's *FLAGS are GCC-tuned; drop what clang rejects.
-		strip-unsupported-flags
+		# Host code stays on the system compiler with the user's flags;
+		# only the .cu files go through CMake's HIP language, compiled
+		# by ROCm clang. hipcc as CXX would put ggml on its legacy path
+		# where hipcc compiles everything and FindOpenMP cannot resolve
+		# the runtime through the wrapper (ROCm 10.1: unresolved omp_*
+		# at link). Same split as sci-ml/ggml::gentoo.
+		local hipcxx hipflags
+		hipcxx=$(tc-getHIPCXX)
+		# Only the flags the HIP compiler accepts reach the device build.
+		hipflags=$(HIPCXX="${hipcxx}" test-flags-HIPCXX ${CXXFLAGS})
+		# GCC LTO objects cannot share a link with clang's device objects.
+		filter-lto
 		# Build for the GPU architectures selected via AMDGPU_TARGETS
 		# USE_EXPAND flags (rocm.eclass) instead of autodetecting the
 		# build host's GPU. GPU_TARGETS is ROCm >=6's name for
 		# AMDGPU_TARGETS; pass both so the build survives when the
 		# legacy name is dropped.
 		mycmakeargs+=(
+			-DCMAKE_HIP_COMPILER="${hipcxx}"
 			-DAMDGPU_TARGETS="$(get_amdgpu_flags)"
 			-DGPU_TARGETS="$(get_amdgpu_flags)"
 			-DCMAKE_HIP_ARCHITECTURES="$(get_amdgpu_flags)"
 			# CDNA-only MMQ path that has broken builds on several ROCm
 			# releases; the tree's ggml keeps it off as well.
 			-DGGML_HIP_MMQ_MFMA=OFF
-			# Device code now goes through CMake's HIP language, which
-			# ignores CXXFLAGS: forward them, and blank CMake's own
-			# per-build-type HIP defaults so they cannot override.
-			-DCMAKE_HIP_FLAGS="${CXXFLAGS}"
+			# The HIP language ignores CXXFLAGS: pass the filtered set,
+			# and blank CMake's own per-build-type HIP defaults so they
+			# cannot override it.
+			-DCMAKE_HIP_FLAGS="${hipflags}"
 			"-DCMAKE_HIP_FLAGS_${CMAKE_BUILD_TYPE^^}="
 		)
 	fi
