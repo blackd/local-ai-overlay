@@ -132,8 +132,7 @@ done < scripts/guru-sync.state
 # overlay was last verified with.
 GENTOO=/var/db/repos/gentoo
 while read -r pkg known; do
-	latest=$(basename -s .ebuild "${GENTOO}/${pkg}"/*.ebuild 2>/dev/null \
-		| sed "s:^${pkg##*/}-::" | grep -v 9999 | sort -V | tail -n1 || true)
+	latest=$(shopt -s nullglob; basename -s .ebuild "${GENTOO}/${pkg}"/*.ebuild 2>/dev/null | sed "s:^${pkg##*/}-::" | grep -v 9999 | sort -V | tail -n1 || true)
 	if [ -z "${latest}" ]; then
 		echo "warn: no version for ${pkg} in ::gentoo"
 		rc=1
