@@ -5,9 +5,7 @@
 # friends), with GGUF export for serving via LocalAI. Ships upstream's
 # [train] stack unconditionally — the base CLI cannot fine-tune and is
 # not worth a flag. Every dependency is a tree or overlay package (no
-# venv); bitsandbytes is parked (prebuilt-binary wheel, no source
-# package yet): the 4bit/8bit quantization paths import it lazily and
-# fail cleanly; the rest works.
+# venv), bitsandbytes included for the 4bit/8bit quantization paths.
 
 EAPI=8
 
@@ -37,6 +35,7 @@ RDEPEND="
 	>=sci-ml/transformers-5.16.1[${PYTHON_SINGLE_USEDEP}]
 	dev-python/peft[${PYTHON_SINGLE_USEDEP}]
 	dev-python/trl[${PYTHON_SINGLE_USEDEP}]
+	sci-ml/bitsandbytes[${PYTHON_SINGLE_USEDEP}]
 	$(python_gen_cond_dep '
 		<dev-python/click-8.5[${PYTHON_USEDEP}]
 		dev-python/packaging[${PYTHON_USEDEP}]
@@ -65,10 +64,4 @@ src_prepare() {
 	# here: sci-ml/pytorch is built from source for the active python.
 	sed -i 's/requires-python = ">=3.10,<3.13"/requires-python = ">=3.10"/' pyproject.toml || die
 	grep -q 'requires-python = ">=3.10"' pyproject.toml || die "requires-python relax did not apply"
-}
-
-pkg_postinst() {
-	elog "QLoRA (quantization: 4bit/8bit) needs bitsandbytes, which is not"
-	elog "packaged yet (prebuilt-binary wheel; a source-built package is"
-	elog "planned). LoRA, SFT and the preference trainers work without it."
 }
