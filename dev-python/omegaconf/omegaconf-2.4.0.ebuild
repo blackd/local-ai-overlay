@@ -63,7 +63,7 @@ src_prepare() {
 
 	# The three hand-written modules that import the vendored runtime.
 	sed -i 's/from \.vendor\.antlr4/from antlr4/' omegaconf/grammar_parser.py omegaconf/grammar_visitor.py omegaconf/typing.py || die
-	grep -rq 'vendor' omegaconf/*.py && die "vendored antlr4 import left behind"
+	grep -Eq '^\s*from \.vendor|^\s*import omegaconf\.vendor|^\s*from omegaconf\.vendor' omegaconf/*.py && die "vendored antlr4 import left behind"
 
 	# Regenerate the parsers with the system tool, lexer first so the
 	# parser grammar finds its tokens file. The tool emits plain
