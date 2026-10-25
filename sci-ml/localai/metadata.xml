@@ -14,6 +14,7 @@
 		<flag name="face-detect">Install the face-detect.cpp face-detection backend (<pkg>localai-backend/face-detect</pkg>)</flag>
 		<flag name="ik-llama-cpp">Install the ik_llama.cpp text-generation backend (<pkg>localai-backend/ik-llama-cpp</pkg>)</flag>
 		<flag name="kimodocpp">Install the kimodo.cpp skeleton-animation backend (<pkg>localai-backend/kimodocpp</pkg>)</flag>
+		<flag name="liquid-audio">Install the LFM2-Audio speech-to-speech backend (<pkg>localai-backend/liquid-audio</pkg>)</flag>
 		<flag name="llama-cpp">Install the llama.cpp text-generation backend (<pkg>localai-backend/llama-cpp</pkg>)</flag>
 		<flag name="audio-cpp">Install the audio backend (<pkg>localai-backend/audio-cpp</pkg>)</flag>
 		<flag name="bonsai">Install the Bonsai 1-bit/ternary text-generation backend (<pkg>localai-backend/bonsai</pkg>)</flag>

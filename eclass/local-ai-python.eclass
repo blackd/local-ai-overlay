@@ -23,6 +23,12 @@
 # and the src_install venv dance ending in the build-time import
 # smoke test. Backends with extra sources or install steps override
 # the phase and compose the helpers (see localai-backend/fish-speech).
+#
+# A backend whose whole engine is a tree package has nothing for the
+# venv to carry. It sets LOCAL_AI_PYTHON_NO_VENV: no wheels tarball,
+# no venv, run.sh and the smoke test use the system interpreter, and
+# the engine arrives through the ebuild's own RDEPEND (see
+# localai-backend/liquid-audio).
 
 case ${EAPI} in
 	8) ;;
@@ -48,12 +54,17 @@ inherit local-ai-backend python-single-r1
 # lazily — importing "backend" alone proves nothing then.
 : "${LOCAL_AI_PYTHON_SMOKE_IMPORTS:=backend}"
 
+# @ECLASS_VARIABLE: LOCAL_AI_PYTHON_NO_VENV
+# @DEFAULT_UNSET
+# @DESCRIPTION:
+# Set to any value before inherit when the backend has no wheels layer:
+# every import resolves from tree packages. Drops the wheels SRC_URI
+# and the venv; backend.py runs under the system interpreter.
+
 LOCAL_AI_PYTHON_DISTFILES="https://git.ipnmod.org/packages/local-ai-overlay/releases/download/${PN}-v${PVR}"
 
-SRC_URI="
-	${LOCAL_AI_SRC_URI}
-	${LOCAL_AI_PYTHON_DISTFILES}/${PN}-${PVR}-wheels.tar.xz
-"
+SRC_URI="${LOCAL_AI_SRC_URI}"
+[[ -z ${LOCAL_AI_PYTHON_NO_VENV} ]] && SRC_URI+=" ${LOCAL_AI_PYTHON_DISTFILES}/${PN}-${PVR}-wheels.tar.xz"
 S="${WORKDIR}/LocalAI-${PV}/backend/python/${PN}"
 
 SLOT="0"
@@ -102,7 +113,8 @@ RDEPEND="${PYTHON_DEPS}
 DEPEND="${RDEPEND}"
 
 local-ai-python_src_unpack() {
-	unpack "localai-${PV}.tar.gz" "${PN}-${PVR}-wheels.tar.xz"
+	unpack "localai-${PV}.tar.gz"
+	[[ -z ${LOCAL_AI_PYTHON_NO_VENV} ]] && unpack "${PN}-${PVR}-wheels.tar.xz"
 }
 
 local-ai-python_src_compile() {
@@ -141,6 +153,21 @@ local-ai-python_install_venv() {
 	python_optimize "${ED}${BACKEND_DIR}/venv/lib"
 }
 
+# @FUNCTION: _local-ai-python_interp
+# @INTERNAL
+# @DESCRIPTION:
+# The interpreter backend.py runs under: the venv's python, or the
+# system interpreter python-single-r1 selected when there is no venv.
+# Takes the path prefix to put in front of the venv (the image root
+# for the smoke test, run.sh's own directory at runtime).
+_local-ai-python_interp() {
+	if [[ -n ${LOCAL_AI_PYTHON_NO_VENV} ]]; then
+		echo "${PYTHON}"
+	else
+		echo "${1}/venv/bin/python"
+	fi
+}
+
 # @FUNCTION: local-ai-python_install_meta
 # @DESCRIPTION:
 # run.sh (generated — identical for every python backend) and the
@@ -153,7 +180,7 @@ local-ai-python_install_meta() {
 	# Shared helpers and gRPC stubs from localai-backend/python-common.
 	PYTHONPATH="/usr/libexec/local-ai/python-common\${PYTHONPATH:+:\${PYTHONPATH}}"
 	export PYTHONPATH
-	exec "\${CURDIR}/venv/bin/python" "\${CURDIR}/backend.py" "\$@"
+	exec "$(_local-ai-python_interp '${CURDIR}')" "\${CURDIR}/backend.py" "\$@"
 	EOF
 	exeinto "${BACKEND_DIR}"
 	doexe "${T}/run.sh"
@@ -168,16 +195,13 @@ local-ai-python_install_meta() {
 # The whole import closure must resolve NOW, at build time — not at
 # the user's first model load.
 local-ai-python_smoke_test() {
-	PYTHONPATH="${ED}${BACKEND_DIR}:${EPREFIX}/usr/libexec/local-ai/python-common" \
-		"${ED}${BACKEND_DIR}/venv/bin/python" -c \
-		"$(printf 'import %s\n' ${LOCAL_AI_PYTHON_SMOKE_IMPORTS})" \
-		|| die "backend import check failed"
+	PYTHONPATH="${ED}${BACKEND_DIR}:${EPREFIX}/usr/libexec/local-ai/python-common" "$(_local-ai-python_interp "${ED}${BACKEND_DIR}")" -c "$(printf 'import %s\n' ${LOCAL_AI_PYTHON_SMOKE_IMPORTS})" || die "backend import check failed"
 }
 
 local-ai-python_src_install() {
 	exeinto "${BACKEND_DIR}"
 	doexe ${LOCAL_AI_PYTHON_EXES}
-	local-ai-python_install_venv
+	[[ -z ${LOCAL_AI_PYTHON_NO_VENV} ]] && local-ai-python_install_venv
 	local-ai-python_install_meta
 	local-ai-python_smoke_test
 }
