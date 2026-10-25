@@ -59,7 +59,7 @@ src_prepare() {
 
 	# Stock build_py: no clean step, no jar run.
 	sed -i -e '/"build_py": BuildPyCommand,/d' -e '/"clean": CleanCommand,/d' setup.py || die
-	grep -q 'BuildPyCommand,' setup.py && die "build_py override still registered"
+	grep -q '"build_py": BuildPyCommand' setup.py && die "build_py override still registered"
 
 	# The three hand-written modules that import the vendored runtime.
 	sed -i 's/from \.vendor\.antlr4/from antlr4/' omegaconf/grammar_parser.py omegaconf/grammar_visitor.py omegaconf/typing.py || die
