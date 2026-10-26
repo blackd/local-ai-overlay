@@ -28,3 +28,12 @@ RDEPEND="
 "
 
 distutils_enable_tests pytest
+
+src_prepare() {
+	distutils-r1_src_prepare
+	# Package discovery only excludes test_typechecking*; the test/
+	# directory has an __init__.py and gets installed as a top-level
+	# "test" package otherwise.
+	sed -i 's/^exclude = \["test_typechecking\*"\]$/exclude = ["test*", "docs*"]/' pyproject.toml || die
+	grep -q '"test\*"' pyproject.toml || die "package exclusion not applied"
+}
