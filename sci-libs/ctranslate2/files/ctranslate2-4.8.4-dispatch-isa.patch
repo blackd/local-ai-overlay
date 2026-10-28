@@ -1,0 +1,23 @@
+With ENABLE_CPU_DISPATCH, src/cpu/kernels.cc is compiled once per ISA and
+each copy instantiates the kernels for the ISA its compiler macros announce.
+A -march in the global CXXFLAGS leaks into every copy, so a -march=native
+on an AVX2 host turns the generic, AVX and AVX2 copies into three AVX2
+objects and the link fails on multiple definitions. Pin each copy's ISA
+explicitly; nothing else in the build is touched.
+
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -344,9 +344,10 @@
+       ct2_compile_kernels_for_isa(avx2 "/arch:AVX2")
+       ct2_compile_kernels_for_isa(avx512 "/arch:AVX512")
+     else()
+-      ct2_compile_kernels_for_isa(avx "-mavx")
+-      ct2_compile_kernels_for_isa(avx2 "-mavx2 -mfma")
+-      ct2_compile_kernels_for_isa(avx512 "-mavx512f -mavx512cd -mavx512vl -mavx512bw -mavx512dq")
++      set_source_files_properties(src/cpu/kernels.cc PROPERTIES COMPILE_FLAGS "-march=x86-64")
++      ct2_compile_kernels_for_isa(avx "-march=x86-64 -mavx")
++      ct2_compile_kernels_for_isa(avx2 "-march=x86-64 -mavx2 -mfma")
++      ct2_compile_kernels_for_isa(avx512 "-march=x86-64 -mavx512f -mavx512cd -mavx512vl -mavx512bw -mavx512dq")
+     endif()
+   elseif(CT2_BUILD_ARCH STREQUAL "arm64")
+     ct2_compile_kernels_for_isa(neon "-DUSE_NEON")

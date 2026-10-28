@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>plamen@ipnmod.org</email>
+		<name>Plamen K. Kosseff</name>
+	</maintainer>
+	<use>
+		<flag name="native">Let ggml tune the CPU kernels for the build host (-march=native) instead of the CPU_FLAGS_X86 gates</flag>
+		<flag name="openblas">Route matrix multiplication through <pkg>sci-libs/openblas</pkg></flag>
+		<flag name="vulkan">Build the ggml Vulkan backend for GPU offload</flag>
+	</use>
+	<upstream>
+		<remote-id type="github">abetlen/llama-cpp-python</remote-id>
+		<remote-id type="pypi">llama-cpp-python</remote-id>
+	</upstream>
+</pkgmetadata>

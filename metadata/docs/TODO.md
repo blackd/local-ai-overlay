@@ -22,6 +22,9 @@ session (human or AI-assisted) can pick up where the last one stopped.
 - Continue packaging by gallery-usage ranking: rfdetr-cpp and
   parakeet-cpp (11 models each), vllm-cpp and qwen3-tts-cpp (10), bonsai
   (8), then the tail.
+- kokoro and kitten-tts: the shared spaCy/misaki/espeak stack, its
+  Python 3.12 ceiling and the blis-against-sci-libs/blis plan are written
+  up in [todo-kokoro-kitten-tts.md](todo-kokoro-kitten-tts.md).
 - Capability meta-flags on backends-meta (idea borrowed from the
   oiledmachine-overlay LocalAI ebuild): flags like tts/stt/image that
   REQUIRED_USE-map to "at least one backend providing that capability",

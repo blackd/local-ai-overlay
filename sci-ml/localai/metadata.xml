@@ -12,6 +12,7 @@
 		<flag name="acestep-cpp">Install the acestep.cpp music-generation backend (<pkg>localai-backend/acestep-cpp</pkg>)</flag>
 		<flag name="ced">Install the ced.cpp audio-event-detection backend (<pkg>localai-backend/ced</pkg>)</flag>
 		<flag name="face-detect">Install the face-detect.cpp face-detection backend (<pkg>localai-backend/face-detect</pkg>)</flag>
+		<flag name="faster-whisper">Install the faster-whisper speech-to-text backend (<pkg>localai-backend/faster-whisper</pkg>)</flag>
 		<flag name="ik-llama-cpp">Install the ik_llama.cpp text-generation backend (<pkg>localai-backend/ik-llama-cpp</pkg>)</flag>
 		<flag name="kimodocpp">Install the kimodo.cpp skeleton-animation backend (<pkg>localai-backend/kimodocpp</pkg>)</flag>
 		<flag name="liquid-audio">Install the LFM2-Audio speech-to-speech backend (<pkg>localai-backend/liquid-audio</pkg>)</flag>

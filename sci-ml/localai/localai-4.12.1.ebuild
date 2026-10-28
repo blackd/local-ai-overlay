@@ -17,7 +17,7 @@ HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"
 LICENSE="metapackage"
 SLOT="0"
 KEYWORDS="~amd64"
-IUSE="+acestep-cpp +audio-cpp +bonsai +ced +crispasr +depth-anything +diffusers +face-detect +fish-speech +ik-llama-cpp +kimodocpp +liquid-audio +llama-cpp +localvqe +locate-anything-cpp +parakeet-cpp +piper +qwen3-tts-cpp +rerankers +rfdetr-cpp +sam3-cpp +silero-vad +speaker-recognition +stablediffusion-ggml +trellis2cpp +transformers +vibevoice +vibevoice-cpp +vllm-cpp +voxcpm +whisper"
+IUSE="+acestep-cpp +audio-cpp +bonsai +ced +crispasr +depth-anything +diffusers +face-detect +faster-whisper +fish-speech +ik-llama-cpp +kimodocpp +liquid-audio +llama-cpp +localvqe +locate-anything-cpp +parakeet-cpp +piper +qwen3-tts-cpp +rerankers +rfdetr-cpp +sam3-cpp +silero-vad +speaker-recognition +stablediffusion-ggml +trellis2cpp +transformers +vibevoice +vibevoice-cpp +vllm-cpp +voxcpm +whisper"
 # No REQUIRED_USE: with every backend flag off this is a bare server
 # install — the package always anchors www-apps/localai-server.
 
@@ -31,6 +31,7 @@ RDEPEND="
 	depth-anything? ( localai-backend/depth-anything )
 	diffusers? ( localai-backend/diffusers )
 	face-detect? ( localai-backend/face-detect )
+	faster-whisper? ( localai-backend/faster-whisper )
 	fish-speech? ( localai-backend/fish-speech )
 	ik-llama-cpp? ( localai-backend/ik-llama-cpp )
 	kimodocpp? ( localai-backend/kimodocpp )
