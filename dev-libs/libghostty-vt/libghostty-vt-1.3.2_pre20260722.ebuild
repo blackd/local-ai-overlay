@@ -17,6 +17,11 @@
 # The C dependencies the target uses are built from these sources and
 # combined into the static archive as upstream ships it; nothing is
 # downloaded at build time (zig runs in --system mode).
+#
+# x11-terms/ghostty installs libghostty-vt.so and include/ghostty from
+# its own release, so this snapshot lives under private directories,
+# /usr/lib64/libghostty-vt-opencode and /usr/include/libghostty-vt-opencode,
+# and dev-util/opencode-pty links it from there.
 
 EAPI=8
 
@@ -105,6 +110,16 @@ src_configure() {
 		-Demit-xcframework=false
 		-Dversion-string="${GHOSTTY_VERSION}"
 		-Dstrip=false
+		# Private prefix dirs; these come after the eclass defaults and win.
+		--prefix-lib-dir "$(get_libdir)/libghostty-vt-opencode/"
+		--prefix-include-dir include/libghostty-vt-opencode/
 	)
 	zig_src_configure
+}
+
+src_install() {
+	zig_src_install
+	# pkg-config files land in /usr/share/pkgconfig under the names
+	# x11-terms/ghostty uses, and describe nothing a consumer should find.
+	rm -r "${ED}"/usr/share/pkgconfig || die
 }
