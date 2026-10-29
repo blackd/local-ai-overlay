@@ -5,6 +5,9 @@
 		<email>plamen@ipnmod.org</email>
 		<name>Plamen K. Kosseff</name>
 	</maintainer>
+	<use>
+		<flag name="webui">Embed the browser UI (packages/app) into the binary for the web server mode</flag>
+	</use>
 	<upstream>
 		<remote-id type="github">anomalyco/opencode</remote-id>
 	</upstream>

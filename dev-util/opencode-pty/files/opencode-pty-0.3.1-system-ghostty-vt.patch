@@ -1,0 +1,21 @@
+Link the libghostty-vt archive installed by dev-libs/libghostty-vt when
+GHOSTTY_VT_LIB_DIR names its directory, instead of cloning Ghostty and
+running zig on it. The pin check between ghostty-revision and the
+generated ffi.rs stays: it is what ties the bindings to that snapshot.
+
+--- a/build.rs
++++ b/build.rs
+@@ -17,6 +17,13 @@
+         Some(revision),
+         "regenerate the bindings with script/ghostty-bindings"
+     );
++    if let Some(dir) = env::var_os("GHOSTTY_VT_LIB_DIR") {
++        // A prebuilt libghostty-vt.a of the pinned revision.
++        let dir = PathBuf::from(dir);
++        println!("cargo:rustc-link-search=native={}", dir.display());
++        println!("cargo:rustc-link-lib=static=ghostty-vt");
++        return;
++    }
+     let out = PathBuf::from(env::var_os("OUT_DIR").expect("OUT_DIR"));
+     let source = match env::var_os("GHOSTTY_SOURCE_DIR") {
+         Some(path) => {

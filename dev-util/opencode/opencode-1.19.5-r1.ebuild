@@ -23,7 +23,9 @@ SRC_URI="
 S="${WORKDIR}/opencode-${PV}"
 
 LICENSE="MIT"
-SLOT="0"
+# One slot per major: 1.x is /usr/bin/opencode, 2.x is /usr/bin/opencode2,
+# the parallel command name upstream's 2.x package declares itself.
+SLOT="1"
 KEYWORDS="~amd64"
 
 # The compiled binary carries Bun's runtime with an appended bundle;
