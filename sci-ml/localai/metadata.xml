@@ -35,6 +35,7 @@
 		<flag name="voxcpm">OpenBMB VoxCPM text-to-speech backend (<pkg>localai-backend/voxcpm</pkg>)</flag>
 		<flag name="rfdetr-cpp">Install the rf-detr.cpp object-detection backend (<pkg>localai-backend/rfdetr-cpp</pkg>)</flag>
 		<flag name="piper">Install the piper text-to-speech backend (<pkg>localai-backend/piper</pkg>)</flag>
+		<flag name="pocket-tts">Install the pocket-tts text-to-speech backend (<pkg>localai-backend/pocket-tts</pkg>)</flag>
 		<flag name="silero-vad">Install the Silero voice-activity-detection backend (<pkg>localai-backend/silero-vad</pkg>)</flag>
 		<flag name="speaker-recognition">Speaker recognition and voice-embedding backend (speechbrain/ONNX) — <pkg>localai-backend/speaker-recognition</pkg></flag>
 		<flag name="stablediffusion-ggml">Install the stable-diffusion.cpp image-generation backend (<pkg>localai-backend/stablediffusion-ggml</pkg>)</flag>
