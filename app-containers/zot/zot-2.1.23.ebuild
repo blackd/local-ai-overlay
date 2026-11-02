@@ -15,7 +15,7 @@ inherit check-reqs go-module systemd
 ZOT_DISTFILES="https://git.ipnmod.org/packages/local-ai-overlay/releases/download/zot-v${PV}"
 
 # The zui tag zot's Makefile pins (ZUI_VERSION).
-ZUI_PIN="commit-8e8457d"
+ZUI_PIN="commit-ce3819c"
 
 DESCRIPTION="OCI-native container image registry"
 HOMEPAGE="https://zotregistry.dev https://github.com/project-zot/zot"
