@@ -99,4 +99,6 @@ pkg_postinst() {
 	ewarn "  environment and FAIL when unset; a literal dollar sign must be"
 	ewarn "  escaped as \$\$. Review existing configs before upgrading."
 	ewarn "- Jobs must set 'runs-on' explicitly."
+	ewarn "- 5.3.0 scopes cache entries by ref like GitHub does: every cache"
+	ewarn "  starts cold once after this upgrade."
 }
