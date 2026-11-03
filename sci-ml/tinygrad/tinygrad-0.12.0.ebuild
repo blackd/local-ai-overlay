@@ -12,7 +12,11 @@
 # tinygrad finds its libraries by listing /usr/lib64 and friends, not
 # through the loader, so Gentoo's slotted libLLVM has to be named
 # explicitly (LLVM_PATH). The shipped test runs on the CPU device with
-# the in-process LLVM renderer (DEV=CPU:LLVM).
+# the in-process LLVM renderer (CPU_LLVM=1).
+#
+# 0.12 is the last release with tinygrad.apps.llm and
+# device.is_dtype_supported, which localai-backend/tinygrad builds on.
+# 0.13 moved the LLM code to a rewritten tinygrad.llm.model.
 
 EAPI=8
 
@@ -46,7 +50,8 @@ pkg_setup() {
 }
 
 python_test() {
-	local -x DEV="CPU:LLVM"
+	local -x DEV="CPU"
+	local -x CPU_LLVM=1
 	local -x LLVM_PATH="$(get_llvm_prefix)/$(get_libdir)/libLLVM.so"
 	epytest test/test_tiny.py
 }

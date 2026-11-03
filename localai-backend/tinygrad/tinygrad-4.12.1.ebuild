@@ -15,9 +15,12 @@
 # CUDA. The device is chosen through the environment (DEV=...) and
 # tinygrad locates its libraries by listing /usr/lib64 and friends, so
 # run.sh names the device per USE flag and points tinygrad at Gentoo's
-# slotted libLLVM and at the lib64 ROCm libraries. Upstream's run.sh
-# still exports CPU_LLVM=1, a form tinygrad 0.14 rejects; the eclass
-# generates run.sh, so that never runs here.
+# slotted libLLVM and at the lib64 ROCm libraries.
+#
+# backend.py loads GGUF models through tinygrad.apps.llm and the
+# vendored UNet uses device.is_dtype_supported; both left tinygrad in
+# 0.13, which replaced the LLM code with a rewritten tinygrad.llm.model.
+# Upstream declares only tinygrad>=0.12.0, so the bound is set here.
 
 EAPI=8
 
@@ -64,7 +67,7 @@ RDEPEND+="
 		dev-libs/rocm-comgr:=
 	)
 	$(python_gen_cond_dep '
-		>=sci-ml/tinygrad-0.12.0[${PYTHON_USEDEP}]
+		<sci-ml/tinygrad-0.13[${PYTHON_USEDEP}]
 		>=dev-python/jinja2-3.1.0[${PYTHON_USEDEP}]
 		dev-python/librosa[${PYTHON_USEDEP}]
 		dev-python/pillow[${PYTHON_USEDEP}]
@@ -98,7 +101,8 @@ src_install() {
 		)
 	else
 		LOCAL_AI_PYTHON_RUN_ENV=(
-			"DEV=CPU:LLVM"
+			"DEV=CPU"
+			"CPU_LLVM=1"
 			"LLVM_PATH=$(get_llvm_prefix)/$(get_libdir)/libLLVM.so"
 		)
 	fi
