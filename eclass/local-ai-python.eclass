@@ -61,6 +61,20 @@ inherit local-ai-backend python-single-r1
 # every import resolves from tree packages. Drops the wheels SRC_URI
 # and the venv; backend.py runs under the system interpreter.
 
+# @ECLASS_VARIABLE: LOCAL_AI_PYTHON_NO_TORCH
+# @DEFAULT_UNSET
+# @DESCRIPTION:
+# Set to any value before inherit when the backend does not use torch
+# (tinygrad). Leaves sci-ml/pytorch out of the dependency baseline.
+
+# @ECLASS_VARIABLE: LOCAL_AI_PYTHON_RUN_ENV
+# @DEFAULT_UNSET
+# @DESCRIPTION:
+# Array of VAR=value assignments run.sh exports before starting
+# backend.py, for engines configured through the environment
+# (tinygrad's device selection). Set it before
+# local-ai-python_install_meta runs.
+
 LOCAL_AI_PYTHON_DISTFILES="https://git.ipnmod.org/packages/local-ai-overlay/releases/download/${PN}-v${PVR}"
 
 SRC_URI="${LOCAL_AI_SRC_URI}"
@@ -82,7 +96,6 @@ BACKEND_DIR="/usr/libexec/local-ai/backends/${PN}"
 RDEPEND="${PYTHON_DEPS}
 	~localai-backend/python-common-${PV}
 	$(python_gen_cond_dep '
-		sci-ml/pytorch[${PYTHON_SINGLE_USEDEP}]
 		sci-ml/safetensors[${PYTHON_USEDEP}]
 		>=sci-ml/tokenizers-0.23.3-r1[${PYTHON_USEDEP}]
 		>=dev-python/grpcio-1.84.0[${PYTHON_USEDEP}]
@@ -109,6 +122,7 @@ RDEPEND="${PYTHON_DEPS}
 		dev-python/zipp[${PYTHON_USEDEP}]
 	')
 "
+[[ -z ${LOCAL_AI_PYTHON_NO_TORCH} ]] && RDEPEND+=" sci-ml/pytorch[${PYTHON_SINGLE_USEDEP}]"
 # Build-time too: the smoke test runs the backend's import closure.
 DEPEND="${RDEPEND}"
 
@@ -173,6 +187,10 @@ _local-ai-python_interp() {
 # run.sh (generated — identical for every python backend) and the
 # discovery metadata.json.
 local-ai-python_install_meta() {
+	local env_lines="" kv
+	for kv in "${LOCAL_AI_PYTHON_RUN_ENV[@]}"; do
+		env_lines+="export ${kv}"$'\n'
+	done
 	cat > "${T}/run.sh" <<-EOF || die
 	#!/bin/sh
 	# Entry point the LocalAI server invokes to start this backend.
@@ -180,7 +198,7 @@ local-ai-python_install_meta() {
 	# Shared helpers and gRPC stubs from localai-backend/python-common.
 	PYTHONPATH="/usr/libexec/local-ai/python-common\${PYTHONPATH:+:\${PYTHONPATH}}"
 	export PYTHONPATH
-	exec "$(_local-ai-python_interp '${CURDIR}')" "\${CURDIR}/backend.py" "\$@"
+	${env_lines}exec "$(_local-ai-python_interp '${CURDIR}')" "\${CURDIR}/backend.py" "\$@"
 	EOF
 	exeinto "${BACKEND_DIR}"
 	doexe "${T}/run.sh"

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>plamen@ipnmod.org</email>
+		<name>Plamen K. Kosseff</name>
+	</maintainer>
+	<use>
+		<flag name="cuda">Run on NVIDIA GPUs through tinygrad's CUDA device</flag>
+		<flag name="rocm">Run on AMD GPUs through tinygrad's HIP device</flag>
+	</use>
+	<upstream>
+		<remote-id type="github">mudler/LocalAI</remote-id>
+		<remote-id type="github">tinygrad/tinygrad</remote-id>
+	</upstream>
+</pkgmetadata>
