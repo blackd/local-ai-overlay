@@ -66,6 +66,14 @@ src_compile() {
 	# loggers (the --debug flag) are enabled through this variable and
 	# show module resolution as the web UI bundles.
 	local -x DEBUG="vite:*"
+	# Bun honours vite's `#!/usr/bin/env node` shebang and hands the web
+	# UI build to a system node when one is installed, so the build ran
+	# on node 26 or on Bun depending on the box. node 26's TurboFan loops
+	# forever in that build on some CPUs. A node symlink to bun first in
+	# PATH keeps vite on Bun's runtime, which is what `bun --bun` does.
+	mkdir -p "${T}/bin" || die
+	ln -snf "$(type -P bun)" "${T}/bin/node" || die
+	local -x PATH="${T}/bin:${PATH}"
 
 	# --single builds only the native target; --skip-install skips the
 	# cross-libc native package install used for release packaging.
