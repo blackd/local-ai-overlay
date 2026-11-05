@@ -62,6 +62,10 @@ src_compile() {
 	local -x OPENCODE_CHANNEL="latest"
 	# Embed the system opencode-pty instead of the @opencode-ai/pty wheel.
 	local -x OPENCODE_PTY_BIN="${EPREFIX}/usr/bin/opencode-pty"
+	# vite prints only the final asset table by default; its debug
+	# loggers (the --debug flag) are enabled through this variable and
+	# show module resolution as the web UI bundles.
+	local -x DEBUG="vite:*"
 
 	# --single builds only the native target; --skip-install skips the
 	# cross-libc native package install used for release packaging.
