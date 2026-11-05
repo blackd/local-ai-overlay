@@ -21,6 +21,11 @@ declare -A UPSTREAMS=(
 	[dev-python/einops]=github:arogozhnikov/einops
 	[dev-python/kaldifst]=github:k2-fsa/kaldifst
 	[dev-python/pyahocorasick]=github:WojciechMula/pyahocorasick
+	# Both pair with a pytorch generation through local-ai-torch.eclass;
+	# a new upstream release is the signal to add a rung for a newer
+	# pytorch, the ladder stays at 2.14 until then.
+	[sci-ml/torchaudio]=github:pytorch/audio
+	[sci-ml/torchcodec]=github:meta-pytorch/torchcodec
 	[dev-util/opencode]=github:anomalyco/opencode
 	[dev-util/gitea-runner]=gitea:gitea.com/gitea/runner
 	[app-containers/zot]=github:project-zot/zot
