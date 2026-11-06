@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 
 # torchaudio for the system sci-ml/pytorch. Upstream is in maintenance
-# mode: the newest tag is v2.11.0 while the system pytorch is newer,
+# mode: the newest tag is v2.11.1 while the system pytorch is newer,
 # so this builds a version pair upstream never shipped together —
 # accepted under the overlay's system-torch policy, with each
 # consuming backend audited individually. This torchaudio generation
@@ -14,7 +14,7 @@
 EAPI=8
 
 DISTUTILS_USE_PEP517=setuptools
-LOCAL_AI_TORCH_GEN=2.13
+LOCAL_AI_TORCH_GEN=2.14
 inherit local-ai-torch multiprocessing
 
 DESCRIPTION="Audio processing library for PyTorch"
