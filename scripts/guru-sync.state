@@ -1,10 +1,10 @@
-dev-lang/bun-bin e48b4e789fb3ab5f8b7167f8bc4674d3fad1211a
-dev-python/av d8b9ada81ddffa273328c1650d543dc0f836b790
-dev-python/pydub fcdf5d9d35000d87d16986c745300a840a76385a
-dev-python/addict 68fbddeaec33c84681344a53d9ce231bc2df3348
-sci-libs/onnxruntime ea49afc91cf6ba7552d652a7c0ee56f035c33821
+dev-lang/bun-bin 3d85ea06718a57c5021313f9e0218bbf62f74fdf guru
+dev-python/av 59f98117e4ec409c9adb2aa94c648536b0051f09 guru
+dev-python/pydub 59f98117e4ec409c9adb2aa94c648536b0051f09 guru
+dev-python/addict 59f98117e4ec409c9adb2aa94c648536b0051f09 guru
+sci-libs/onnxruntime 9ce84217eebe89cfbfac81ba83cd3fd7b4d2dd8b guru
 sci-libs/onnxruntime-bin c728365ec3005437c6d5a2b4619d059a55967b01
 sci-libs/dlpack 0101b5d46c1d8c163d901db1f9e20fde16c8a3b3
 dev-cpp/safeint e20912358a42d926063111e9dc281e1888a0f2b7
-dev-python/tiktoken 3838ee4178a217362cd4008531a66b967f823bc3
+dev-python/tiktoken 59f98117e4ec409c9adb2aa94c648536b0051f09 guru
 sci-libs/hipSOLVER 8b2d970aa42c049a40eb8e4788b505f8cdc6a5fa gentoo
