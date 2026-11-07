@@ -28,7 +28,11 @@ jobs:
           # safetensors are retired families (packages dropped for tree
           # equivalents): their pkgdirs never match an ebuild, so their
           # releases age out and get deleted like any stale version.
-          declare -A FAMILIES=( [localai]=www-apps/localai-server [local-ai]=www-apps/localai-server [hf-xet]=dev-python/hf-xet [tokenizers]=dev-python/tokenizers [safetensors]=dev-python/safetensors [opencode]=dev-util/opencode [gitea-runner]=dev-util/gitea-runner [zot]=app-containers/zot [dagu]=sys-process/dagu [diffusers]=localai-backend/diffusers [fish-speech]=localai-backend/fish-speech [ormsgpack]=dev-python/ormsgpack [python-common]=localai-backend/python-common [rerankers]=localai-backend/rerankers [speaker-recognition]=localai-backend/speaker-recognition [transformers]=localai-backend/transformers [vibevoice]=localai-backend/vibevoice [voxcpm]=localai-backend/voxcpm )
+          # Families come from scripts/families.sh; a release's version is
+          # checked against the first directory of its family. The aliases
+          # cover tag families that predate the registry.
+          source scripts/families.sh
+          declare -A LEGACY=( [local-ai]=www-apps/localai-server [hf-xet]=dev-python/hf-xet [tokenizers]=dev-python/tokenizers [safetensors]=dev-python/safetensors )
           page=1
           while :; do
             rels=$(curl -sf -H "${AUTH}" "${API}/releases?limit=50&page=${page}")
@@ -39,7 +43,7 @@ jobs:
                 *-v[0-9]*) version=${tag##*-v}; family=${tag%-v${version}}; trigger=${family}-distfiles-v${version} ;;
                 *) echo "skip (unrecognized tag): ${tag}"; continue ;;
               esac
-              pkgdir=${FAMILIES[${family}]}
+              pkgdir=${LEGACY[${family}]:-$(family_dirs "${family}" 2>/dev/null | cut -d' ' -f1)}
               if [ -z "${pkgdir}" ]; then echo "skip (unknown family): ${tag}"; continue; fi
               if compgen -G "${pkgdir}/${pkgdir##*/}-${version}*.ebuild" >/dev/null; then
                 echo "keep (referenced): ${tag}"; continue
@@ -75,7 +79,7 @@ jobs:
                 *-distfiles-v[0-9]*) version=${tag##*-distfiles-v}; family=${tag%-distfiles-v${version}}; reltag=${family}-v${version} ;;
                 *) continue ;;
               esac
-              pkgdir=${FAMILIES[${family}]}
+              pkgdir=${LEGACY[${family}]:-$(family_dirs "${family}" 2>/dev/null | cut -d' ' -f1)}
               [ -z "${pkgdir}" ] && { echo "skip (unknown family): ${tag}"; continue; }
               compgen -G "${pkgdir}/${pkgdir##*/}-${version}*.ebuild" >/dev/null && continue
               code=$(curl -s -o /dev/null -w '%{http_code}' -H "${AUTH}" "${API}/releases/tags/${reltag}")
