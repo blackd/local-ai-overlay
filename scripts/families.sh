@@ -20,6 +20,7 @@ declare -A FAMILY_DIRS=(
 	[gitea-runner]="dev-util/gitea-runner"
 	[zot]="app-containers/zot"
 	[dagu]="sys-process/dagu"
+	[caddyui]="www-apps/caddyui"
 	[ormsgpack]="dev-python/ormsgpack"
 )
 

@@ -1,0 +1,21 @@
+#!/sbin/openrc-run
+# OpenRC service for CaddyUI. Settings come from /etc/conf.d/caddyui.
+
+description="Web UI for Caddy"
+command="/usr/bin/caddyui"
+command_user="caddyui:caddyui"
+command_background="yes"
+pidfile="/run/${RC_SVCNAME}.pid"
+directory="/var/lib/caddyui"
+output_log="/var/log/caddyui.log"
+error_log="/var/log/caddyui.log"
+
+depend() {
+	need net
+}
+
+start_pre() {
+	checkpath -f -o caddyui:caddyui "${output_log}"
+	# CaddyUI is configured through the environment only.
+	export CADDYUI_DB CADDYUI_LISTEN CADDY_ADMIN_URL CADDYUI_INGEST_LISTEN SQLITE_TMPDIR
+}

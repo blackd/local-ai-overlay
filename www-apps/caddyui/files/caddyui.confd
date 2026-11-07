@@ -1,0 +1,10 @@
+# SQLite database (or set CADDYUI_DB_DRIVER/CADDYUI_DB_DSN for MySQL).
+CADDYUI_DB=/var/lib/caddyui/caddyui.db
+# Address the web interface listens on.
+CADDYUI_LISTEN=127.0.0.1:8080
+# Admin API of the Caddy server this instance manages.
+CADDY_ADMIN_URL=http://127.0.0.1:2019
+# Visitor-analytics ingest listener; empty disables it.
+CADDYUI_INGEST_LISTEN=127.0.0.1:9019
+# Keep SQLite's temporary files next to the database.
+SQLITE_TMPDIR=/var/lib/caddyui

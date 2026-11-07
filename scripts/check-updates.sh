@@ -30,6 +30,7 @@ declare -A UPSTREAMS=(
 	[dev-util/gitea-runner]=gitea:gitea.com/gitea/runner
 	[app-containers/zot]=github:project-zot/zot
 	[sys-process/dagu]=github:dagucloud/dagu
+	[www-apps/caddyui]=github:X4Applegate/caddyui
 )
 
 latest_upstream() {
