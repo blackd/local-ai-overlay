@@ -21,6 +21,7 @@ declare -A UPSTREAMS=(
 	[dev-python/einops]=github:arogozhnikov/einops
 	[dev-python/kaldifst]=github:k2-fsa/kaldifst
 	[dev-python/pyahocorasick]=github:WojciechMula/pyahocorasick
+	[sci-ml/soup-cli]=github:MakazhanAlpamys/Soup
 	# Both pair with a pytorch generation through local-ai-torch.eclass;
 	# a new upstream release is the signal to add a rung for a newer
 	# pytorch, the ladder stays at 2.14 until then.
