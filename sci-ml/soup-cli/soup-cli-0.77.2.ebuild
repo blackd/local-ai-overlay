@@ -37,7 +37,7 @@ RDEPEND="
 	dev-python/trl[${PYTHON_SINGLE_USEDEP}]
 	sci-ml/bitsandbytes[${PYTHON_SINGLE_USEDEP}]
 	$(python_gen_cond_dep '
-		<dev-python/click-8.5[${PYTHON_USEDEP}]
+		>=dev-python/click-8.0[${PYTHON_USEDEP}]
 		dev-python/packaging[${PYTHON_USEDEP}]
 		dev-python/plotext[${PYTHON_USEDEP}]
 		dev-python/pydantic[${PYTHON_USEDEP}]
@@ -51,17 +51,24 @@ DEPEND="${RDEPEND}"
 src_prepare() {
 	distutils-r1_src_prepare
 
-	# Upstream caps typer at <0.21 as a CI-matrix precaution; the tree's
+	# Upstream caps typer at <0.28 as a CI-matrix precaution; the tree's
 	# 0.27 passes the full CLI surface (command tree, subcommands —
 	# verified 2026-09-28). Relaxing the pin here also fixes the
 	# installed metadata, so `soup env check` sees clean bounds.
-	sed -i 's/"typer>=0.15.4,<0.21.0",/"typer>=0.15.4",/' pyproject.toml || die
+	sed -i 's/"typer>=0.15.4,<0.28",/"typer>=0.15.4",/' pyproject.toml || die
 	grep -q '"typer>=0.15.4",' pyproject.toml || die "typer pin relax did not apply"
+
+	# Upstream caps click at <8.5 because click 8.5 drops the positional-
+	# argument descriptions typer puts into --help. The tree's typer 0.27
+	# renders help with its own bundled click, so the system click never
+	# touches that output, and soup's direct click imports are stable API.
+	sed -i 's/"click>=8.0.0,<8.5",/"click>=8.0.0",/' pyproject.toml || die
+	grep -q '"click>=8.0.0",' pyproject.toml || die "click pin relax did not apply"
 
 	# Upstream caps requires-python at <3.13 to keep pip users inside its
 	# CI-tested torch-wheel matrix (loader crashes in libc10.so on
 	# untested interpreters, upstream #358). That hazard does not exist
 	# here: sci-ml/pytorch is built from source for the active python.
-	sed -i 's/requires-python = ">=3.10,<3.13"/requires-python = ">=3.10"/' pyproject.toml || die
-	grep -q 'requires-python = ">=3.10"' pyproject.toml || die "requires-python relax did not apply"
+	sed -i 's/requires-python = ">=3.11,<3.14"/requires-python = ">=3.11"/' pyproject.toml || die
+	grep -q 'requires-python = ">=3.11"' pyproject.toml || die "requires-python relax did not apply"
 }
