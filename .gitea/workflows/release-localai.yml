@@ -19,6 +19,7 @@ on:
 env:
   RELEASE_API: "https://git.ipnmod.org/api/v1/repos/packages/local-ai-overlay"
   RELEASE_TOKEN: "${{ secrets.PUBLIC_RELEASE_TOKEN }}"
+  GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
 jobs:
   local-ai:
