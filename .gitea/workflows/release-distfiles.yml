@@ -24,6 +24,10 @@ on:
         type: boolean
         default: false
 
+env:
+  RELEASE_API: "https://git.ipnmod.org/api/v1/repos/packages/local-ai-overlay"
+  RELEASE_TOKEN: "${{ secrets.PUBLIC_RELEASE_TOKEN }}"
+
 jobs:
   release:
     runs-on: "gentoo-latest"
@@ -50,8 +54,6 @@ jobs:
       # family is printed by the step and carried in the tag ref.
       - name: "Release the family resolved from the tag"
         id: "rel"
-        env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         run: echo "family=${{ steps.fam.outputs.family }} version=${{ steps.fam.outputs.version }}" && bash scripts/release-family.sh "${{ steps.fam.outputs.family }}" "${{ steps.fam.outputs.version }}" "${{ inputs.rerelease || 'false' }}"
       - name: "Manifests"
         env:

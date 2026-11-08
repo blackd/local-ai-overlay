@@ -23,6 +23,10 @@ jobs:
         run: |
           API="${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}"
           AUTH="Authorization: token ${GITHUB_TOKEN}"
+          # Releases live on the public mirror, trigger tags on this
+          # repository (the mirror propagates their deletion).
+          REL_API="${RELEASE_API}"
+          REL_AUTH="Authorization: token ${RELEASE_TOKEN}"
           CUTOFF=$(date -u -d '30 days ago' +%s)
           # local-ai is the pre-rename alias, and hf-xet/tokenizers/
           # safetensors are retired families (packages dropped for tree
@@ -35,7 +39,7 @@ jobs:
           declare -A LEGACY=( [local-ai]=www-apps/localai-server [hf-xet]=dev-python/hf-xet [tokenizers]=dev-python/tokenizers [safetensors]=dev-python/safetensors )
           page=1
           while :; do
-            rels=$(curl -sf -H "${AUTH}" "${API}/releases?limit=50&page=${page}")
+            rels=$(curl -sf -H "${REL_AUTH}" "${REL_API}/releases?limit=50&page=${page}")
             [ "$(jq length <<<"${rels}")" -eq 0 ] && break
             while read -r id tag created; do
               case "${tag}" in
@@ -59,7 +63,7 @@ jobs:
               # making the old version installable again. Trigger tags
               # are pure CI levers and re-fire workflows, so they go.
               echo "deleting: release ${tag} + trigger tag ${trigger}"
-              curl -sf -X DELETE -H "${AUTH}" "${API}/releases/${id}"
+              curl -sf -X DELETE -H "${REL_AUTH}" "${REL_API}/releases/${id}"
               curl -s -X DELETE -H "${AUTH}" "${API}/tags/${trigger}"
             done < <(jq -r '.[] | "\(.id) \(.tag_name) \(.created_at)"' <<<"${rels}")
             page=$((page+1))
@@ -94,4 +98,6 @@ jobs:
           done
         env:
           GITHUB_TOKEN: "${{ github.token }}"
+          RELEASE_API: "https://git.ipnmod.org/api/v1/repos/packages/local-ai-overlay"
+          RELEASE_TOKEN: "${{ secrets.PUBLIC_RELEASE_TOKEN }}"
           DRY_RUN: "${{ github.event_name == 'schedule' && 'false' || inputs.dry_run }}"

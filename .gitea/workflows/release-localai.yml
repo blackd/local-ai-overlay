@@ -16,6 +16,10 @@ on:
         type: boolean
         default: false
 
+env:
+  RELEASE_API: "https://git.ipnmod.org/api/v1/repos/packages/local-ai-overlay"
+  RELEASE_TOKEN: "${{ secrets.PUBLIC_RELEASE_TOKEN }}"
+
 jobs:
   local-ai:
     runs-on: "gentoo-latest"
@@ -36,8 +40,6 @@ jobs:
           echo "version=$V" >> "$GITHUB_OUTPUT"
       - name: "Release local-ai"
         id: "rel"
-        env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         run: bash scripts/release-family.sh localai "${{ steps.ver.outputs.version }}" "${{ inputs.rerelease }}"
       - name: "Manifests"
         env:
@@ -67,8 +69,6 @@ jobs:
         run: git pull --rebase origin master
       - name: "Release ${{ matrix.family }}"
         id: "rel"
-        env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         run: bash scripts/release-family.sh "${{ matrix.family }}" "${{ needs.local-ai.outputs.version }}" "${{ inputs.rerelease }}"
       - name: "Manifests"
         env:

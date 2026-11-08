@@ -2,9 +2,15 @@
 # Release one distfiles family: check whether <family>-v<version> is
 # already released, generate and publish only when it is missing — or
 # delete and republish when re-release is requested. Runs inside a
-# workflow job (GITHUB_API_URL, GITHUB_REPOSITORY, GITHUB_TOKEN) with
-# the repo checkout as CWD; generated tarballs are also copied to
-# /var/cache/distfiles for the manifest step that follows.
+# workflow job with the repo checkout as CWD; generated tarballs are
+# also copied to /var/cache/distfiles for the manifest step that
+# follows.
+#
+# Releases go to the public instance (RELEASE_API, RELEASE_TOKEN), the
+# repository the ebuilds fetch from, not to the one the workflow runs
+# in. The public repository is a push mirror of this one and receives
+# master with a lag, so the release waits for the commit it is created
+# at before creating it.
 #
 # Usage: release-family.sh <family> <version> [true|false(rerelease)]
 set -euo pipefail
@@ -14,8 +20,8 @@ VERSION="${2:?usage: release-family.sh <family> <version> [rerelease]}"
 RERELEASE="${3:-false}"
 
 TAG="${FAMILY}-v${VERSION}"
-API="${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}"
-AUTH="Authorization: token ${GITHUB_TOKEN}"
+API="${RELEASE_API:?set RELEASE_API to the API URL of the public repository}"
+AUTH="Authorization: token ${RELEASE_TOKEN:?set RELEASE_TOKEN to a token for the public instance}"
 HERE=$(dirname "$(realpath "$0")")
 SHA=$(git rev-parse HEAD)
 
@@ -37,6 +43,7 @@ trap 'rm -rf "$WORK"' EXIT
 ( cd "$WORK" && bash "${HERE}/gen-${FAMILY}-distfiles.sh" "${VERSION}" )
 
 echo ">>> creating release ${TAG} at ${SHA}"
+for i in $(seq 1 60); do curl -sf -o /dev/null -H "${AUTH}" "${API}/git/commits/${SHA}" && break; [ "$i" -lt 60 ] || { echo "commit ${SHA} has not reached the public mirror after 5 minutes" >&2; exit 1; }; sleep 5; done
 rid=$(curl -sf -X POST -H "${AUTH}" -H 'Content-Type: application/json' \
 	-d "{\"tag_name\":\"${TAG}\",\"target_commitish\":\"${SHA}\",\"name\":\"${TAG}\"}" \
 	"${API}/releases" | jq -r .id)
