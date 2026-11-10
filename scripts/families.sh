@@ -21,6 +21,7 @@ declare -A FAMILY_DIRS=(
 	[zot]="app-containers/zot"
 	[dagu]="sys-process/dagu"
 	[caddyui]="www-apps/caddyui"
+	[worca]="dev-util/worca"
 	[ormsgpack]="dev-python/ormsgpack"
 )
 

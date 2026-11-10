@@ -32,6 +32,7 @@ declare -A UPSTREAMS=(
 	[app-containers/zot]=github:project-zot/zot
 	[sys-process/dagu]=github:dagucloud/dagu
 	[www-apps/caddyui]=github:X4Applegate/caddyui
+	[dev-util/worca]=github:SinishaDjukic/worca-cc
 )
 
 latest_upstream() {
@@ -45,7 +46,9 @@ latest_upstream() {
 			tag=$(curl -sf "https://${repo%%/*}/api/v1/repos/${repo#*/}/releases/latest" | jq -r '.tag_name // empty')
 			;;
 	esac
-	printf '%s\n' "${tag#v}"
+	# Tags of the form <name>-v<version> (worca-app-v1.18.0) reduce to the version.
+	tag=${tag#v}
+	printf '%s\n' "${tag##*-v}"
 }
 
 latest_ebuild() {
