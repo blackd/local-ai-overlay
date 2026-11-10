@@ -85,6 +85,12 @@ pkg_postinst() {
 	elog "default (not packaged), or OpenCode 1.x found as opencode on PATH or"
 	elog "through WORCA_OPENCODE_BIN; 1.18.0 refuses OpenCode 2. Mock mode"
 	elog "(WORCA_MOCK=1 or the UI switch) runs the pipeline without any."
+	elog
+	elog "Worca has no login and answers loopback requests only. To reach it"
+	elog "through a proxy: WORCA_HOST for the bind address, WORCA_ALLOWED_HOSTS"
+	elog "for the names it may be called by, and an identity check, Cloudflare"
+	elog "Access (WORCA_CF_ACCESS_*), a JWT issuer (WORCA_IDENTITY_ISSUER), or"
+	elog "WORCA_INSECURE_NO_IDENTITY_CHECK=1 when the proxy alone is trusted."
 	optfeature "running the agents on OpenCode" dev-util/opencode:1
 	optfeature "the media kits (promo and deck rendering)" media-video/ffmpeg
 }
