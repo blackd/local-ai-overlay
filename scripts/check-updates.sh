@@ -35,12 +35,15 @@ declare -A UPSTREAMS=(
 	[dev-util/worca]=github:SinishaDjukic/worca-cc
 )
 
+# v1.2.3 or 1.2.3, possibly with a <name>-v prefix; anything else (kaldifst's "doc" deploy tag) is not a release.
+VERSION_TAG='^(.*-v|v)?[0-9]+(\.[0-9]+)+'
 latest_upstream() {
 	local kind=${1%%:*} repo=${1#*:} tag=
 	case "${kind}" in
 		github)
 			tag=$(curl -sf "https://api.github.com/repos/${repo}/releases/latest" | jq -r '.tag_name // empty')
-			[ -n "${tag}" ] || tag=$(curl -sf "https://api.github.com/repos/${repo}/tags?per_page=1" | jq -r '.[0].name // empty')
+			# No release, or a release whose tag is not a version: the newest version-shaped tag instead.
+			[[ ${tag} =~ ${VERSION_TAG} ]] || tag=$(curl -sf "https://api.github.com/repos/${repo}/tags?per_page=30" | jq -r --arg re "${VERSION_TAG}" '[.[].name | select(test($re))][0] // empty')
 			;;
 		gitea)
 			tag=$(curl -sf "https://${repo%%/*}/api/v1/repos/${repo#*/}/releases/latest" | jq -r '.tag_name // empty')
