@@ -1,15 +1,17 @@
 #!/sbin/openrc-run
-# OpenRC service for the Gitea Actions runner.
+# OpenRC service for the Gitea Actions runner. Slot-generic: every path is
+# derived from the service name (gitea-runner-5, gitea-runner-6, ...), so
+# the same script serves every installed slot.
 
-description="Gitea Actions runner"
-command="/usr/bin/gitea-runner"
-command_args="daemon --config ${GITEA_RUNNER_CONFIG:-/etc/gitea-runner/config.yaml}"
+description="Gitea Actions runner (${RC_SVCNAME##*-}.x)"
+command="/usr/bin/${RC_SVCNAME}"
+command_args="daemon --config ${GITEA_RUNNER_CONFIG:-/etc/${RC_SVCNAME}/config.yaml}"
 command_user="gitea-runner:gitea-runner"
 command_background="yes"
 pidfile="/run/${RC_SVCNAME}.pid"
-directory="/var/lib/gitea-runner"
-output_log="/var/log/gitea-runner.log"
-error_log="/var/log/gitea-runner.log"
+directory="/var/lib/${RC_SVCNAME}"
+output_log="/var/log/${RC_SVCNAME}.log"
+error_log="/var/log/${RC_SVCNAME}.log"
 
 depend() {
 	need net

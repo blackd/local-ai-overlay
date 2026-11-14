@@ -25,7 +25,7 @@ SRC_URI="
 S="${WORKDIR}/runner"
 
 LICENSE="MIT"
-SLOT="0"
+SLOT="$(ver_cut 1)"
 KEYWORDS="~amd64"
 
 # Since 5.0 the runner fetches actions and reusable workflows over git
@@ -38,13 +38,14 @@ RDEPEND="
 "
 BDEPEND=">=dev-lang/go-1.27.3"
 
-
 src_prepare() {
 	default
 
-	einfo "Pointing the systemd unit at the installed binary path"
-	sed -i 's#/usr/local/bin/gitea-runner#/usr/bin/gitea-runner#' examples/systemd/gitea-runner.service || die
-	grep -q '/usr/bin/gitea-runner' examples/systemd/gitea-runner.service || die "unit path fix did not apply"
+	einfo "Pointing the systemd unit at the slot's binary, config and work dir"
+	sed -i -e "s#/usr/local/bin/gitea-runner#/usr/bin/gitea-runner-${SLOT}#" \
+		-e "s#/etc/gitea-runner/#/etc/gitea-runner-${SLOT}/#" \
+		-e "s#/var/lib/gitea-runner#/var/lib/gitea-runner-${SLOT}#" examples/systemd/gitea-runner.service || die
+	grep -q "/usr/bin/gitea-runner-${SLOT}" examples/systemd/gitea-runner.service || die "unit path fix did not apply"
 
 }
 
@@ -63,29 +64,41 @@ src_compile() {
 }
 
 src_install() {
-	dobin gitea-runner
+	newbin gitea-runner gitea-runner-${SLOT}
 
-	insinto /etc/gitea-runner
+	insinto /etc/gitea-runner-${SLOT}
 	doins config.yaml
 
-	newinitd "${FILESDIR}"/gitea-runner.initd gitea-runner
-	newconfd "${FILESDIR}"/gitea-runner.confd gitea-runner
-	systemd_dounit examples/systemd/gitea-runner.service
+	# The init script derives every path from its service name, so one
+	# template serves every slot.
+	newinitd "${FILESDIR}"/gitea-runner.initd gitea-runner-${SLOT}
+	newconfd "${FILESDIR}"/gitea-runner.confd gitea-runner-${SLOT}
+	systemd_newunit examples/systemd/gitea-runner.service gitea-runner-${SLOT}.service
 
+	sed "s/gitea-runner/gitea-runner-${SLOT}/" "${FILESDIR}"/gitea-runner.logrotate > "${T}"/logrotate || die
 	insinto /etc/logrotate.d
-	newins "${FILESDIR}"/gitea-runner.logrotate gitea-runner
+	newins "${T}"/logrotate gitea-runner-${SLOT}
 
-	# The .runner registration file and job workspaces live here.
-	keepdir /var/lib/gitea-runner
-	fowners gitea-runner:gitea-runner /var/lib/gitea-runner
+	# The .runner registration file and job workspaces live here, one
+	# directory per slot: each slot is its own registered runner.
+	keepdir /var/lib/gitea-runner-${SLOT}
+	fowners gitea-runner:gitea-runner /var/lib/gitea-runner-${SLOT}
 }
 
 pkg_postinst() {
 	elog "Register the runner before first start (as the service user, so"
-	elog "the registration lands in its working directory):"
-	elog "  su -s /bin/sh gitea-runner -c 'cd /var/lib/gitea-runner && \\"
-	elog "    gitea-runner register --config /etc/gitea-runner/config.yaml'"
-	elog "Then adjust /etc/gitea-runner/config.yaml and start the service."
+	elog "the registration lands in the slot's working directory):"
+	elog "  su -s /bin/sh gitea-runner -c 'cd /var/lib/gitea-runner-${SLOT} && \\"
+	elog "    gitea-runner-${SLOT} register --config /etc/gitea-runner-${SLOT}/config.yaml'"
+	elog "Then adjust /etc/gitea-runner-${SLOT}/config.yaml and start the"
+	elog "gitea-runner-${SLOT} service. Each slot is its own runner: two slots"
+	elog "on one host register separately, usually under different labels."
+	elog
+	elog "Coming from the unslotted install: the registration keeps its"
+	elog "identity when its file moves,"
+	elog "  mv /var/lib/gitea-runner/.runner /var/lib/gitea-runner-${SLOT}/"
+	elog "then swap gitea-runner for gitea-runner-${SLOT} in the runlevel and"
+	elog "clean the old install (emerge --depclean dev-util/gitea-runner:0)."
 
 	ewarn "5.0 changes the runner's requirements:"
 	ewarn "- Reusable workflows and builtin:checkout are fetched via git, and"

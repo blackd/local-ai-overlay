@@ -1,2 +1,3 @@
-# Configuration file the runner daemon starts with.
-GITEA_RUNNER_CONFIG=/etc/gitea-runner/config.yaml
+# Configuration file the runner daemon starts with. The default is the
+# slot's own: /etc/<service name>/config.yaml.
+#GITEA_RUNNER_CONFIG=
