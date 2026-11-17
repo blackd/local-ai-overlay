@@ -41,9 +41,11 @@ latest_upstream() {
 	local kind=${1%%:*} repo=${1#*:} tag=
 	case "${kind}" in
 		github)
-			tag=$(curl -sf "https://api.github.com/repos/${repo}/releases/latest" | jq -r '.tag_name // empty')
-			# No release, or a release whose tag is not a version: the newest version-shaped tag instead.
-			[[ ${tag} =~ ${VERSION_TAG} ]] || tag=$(curl -sf "https://api.github.com/repos/${repo}/tags?per_page=30" | jq -r --arg re "${VERSION_TAG}" '[.[].name | select(test($re))][0] // empty')
+			# "latest" is by date, so a maintenance release on an old line shadows a newer major
+			# (opencode 1.19.5 after 2.3.0): take the HIGHEST version-shaped release instead.
+			tag=$(curl -sf "https://api.github.com/repos/${repo}/releases?per_page=30" | jq -r --arg re "${VERSION_TAG}" '.[] | select((.prerelease or .draft) | not) | .tag_name | select(test($re))' | sed -e 's/^v//' -e 's/^.*-v//' | sort -V | tail -n1)
+			# No releases at all: the newest version-shaped tag.
+			[ -n "${tag}" ] || tag=$(curl -sf "https://api.github.com/repos/${repo}/tags?per_page=30" | jq -r --arg re "${VERSION_TAG}" '[.[].name | select(test($re))][0] // empty')
 			;;
 		gitea)
 			tag=$(curl -sf "https://${repo%%/*}/api/v1/repos/${repo#*/}/releases/latest" | jq -r '.tag_name // empty')
