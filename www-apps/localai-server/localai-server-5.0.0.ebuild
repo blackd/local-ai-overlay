@@ -79,7 +79,9 @@ src_compile() {
 		-X "github.com/mudler/LocalAI/internal.Version=v${PV}"
 		-X "github.com/mudler/LocalAI/internal.Commit=${LOCAL_AI_COMMIT}"
 	)
-	ego build -ldflags "${ldflags[*]}" -o local-ai ./cmd/local-ai
+	# 5.0.0 requires these tags on every cgo build (pure-Go BitTorrent
+	# client paths; pkg/downloader/nosqlite_guard.go errors without them).
+	ego build -tags nosqlite,purego_utp -ldflags "${ldflags[*]}" -o local-ai ./cmd/local-ai
 }
 
 src_install() {
