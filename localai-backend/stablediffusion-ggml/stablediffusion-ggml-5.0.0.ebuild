@@ -20,12 +20,12 @@ LOCAL_AI_EXTRA_CMAKE_ARGS=( -DSD_RPC=ON )
 
 inherit local-ai-ggml-go
 
-# The stable-diffusion.cpp commit LocalAI v4.9.0 builds against. Source of
+# The stable-diffusion.cpp commit this LocalAI release builds against. Source of
 # truth: backend/go/stablediffusion-ggml/Makefile
 # (STABLEDIFFUSION_GGML_VERSION) at the upstream release tag; the ggml pin
 # is that commit's submodule gitlink (leejet's ggml fork).
-SD_COMMIT="0518b34374761cb82aeda5ad3c2f0686fdad2cec"
-GGML_COMMIT="dc998771e700d49bbdf9a39cede22bb5b3311767"
+SD_COMMIT="532d2c15c430a785a712b2d94281f04e733008a4"
+GGML_COMMIT="eeda9ec48fc84a3df0bb9dcc19ae9053075a2539"
 
 DESCRIPTION="LocalAI image-generation backend (stable-diffusion.cpp gRPC server)"
 SRC_URI="
@@ -44,4 +44,18 @@ src_unpack() {
 	# stay empty and sd.cpp's cmake correctly treats them as unavailable.
 	local ggml=( "leejet-ggml-${GGML_COMMIT}.tar.gz" "ggml-${GGML_COMMIT}" ggml )
 	local-ai-backend_engine_unpack "stable-diffusion.cpp-${SD_COMMIT}.tar.gz" stablediffusion-ggml.cpp "${ggml[@]}"
+}
+
+# Header-only, build-time: sd.cpp's CUDA path compiles CUTLASS INT8 GEMM
+# and CuTe attention kernels from these headers.
+DEPEND+=" cuda? ( >=dev-libs/cutlass-3.9.2 )"
+
+src_configure() {
+	# Since 5.0.0 the CUDA build FATAL-errors unless CUTLASS headers are
+	# found (or the path is set empty to disable the kernels). The system
+	# package puts them at /usr/include/{cutlass,cute}, so /usr is the
+	# source-tree-shaped prefix the check wants. sd.cpp says tested with
+	# 3.9.2, which the tree carries.
+	use cuda && LOCAL_AI_EXTRA_CMAKE_ARGS+=( -DSD_CUDA_CUTLASS_PATH=/usr )
+	local-ai-ggml_src_configure
 }
