@@ -27,7 +27,7 @@ inherit local-ai-ggml-go
 # The kimodo.cpp commit LocalAI v4.12.1 builds against. Source of truth:
 # backend/go/kimodocpp/Makefile (KIMODO_VERSION) at the upstream release
 # tag; the ggml pin is that commit's ggml gitlink.
-KIMODO_COMMIT="ed8a931aedb132f768190f6931c365855caba74c"
+KIMODO_COMMIT="75ed52d2d3ec767a9bac79d11060b65d99f61a89"
 GGML_COMMIT="8c63e70982c95ceb862e3a1073a2c1beef75d60a"
 
 DESCRIPTION="LocalAI skeleton-animation backend (kimodo.cpp gRPC server)"

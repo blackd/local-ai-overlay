@@ -25,7 +25,7 @@ inherit local-ai-ggml
 
 # The ik_llama.cpp commit LocalAI v4.12.1 builds against. Source of truth:
 # backend/cpp/ik-llama-cpp/Makefile (IK_LLAMA_VERSION) at the release tag.
-IK_LLAMA_COMMIT="565f08d1eac9b73bd39fa369b3ffc154e8394b27"
+IK_LLAMA_COMMIT="a6383da414f74c944999e7b9312a5a5d76191f6b"
 
 DESCRIPTION="LocalAI text-generation backend (ik_llama.cpp gRPC server)"
 SRC_URI="
@@ -37,8 +37,6 @@ SRC_URI="
 # LocalAI tree: upstream's prepare.sh and the backend CMakeLists assume
 # exactly that layout. src_unpack moves it into place.
 S="${WORKDIR}/LocalAI-${PV}/backend/cpp/ik-llama-cpp/llama.cpp"
-
-PATCHES=( "${FILESDIR}/${P}-hip-vsub2.patch" )
 
 KEYWORDS="~amd64"
 

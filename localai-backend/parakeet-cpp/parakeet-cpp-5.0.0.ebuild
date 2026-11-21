@@ -33,7 +33,7 @@ inherit local-ai-ggml-go
 # backend/go/parakeet-cpp/Makefile (PARAKEET_VERSION) at the upstream
 # release tag; the ggml, ced.cpp and voice-detect.cpp pins are that
 # commit's third_party/* gitlinks.
-PARAKEET_COMMIT="5c9b0fbbd8e611d88e47d7e1ebae9bca9b447e8f"
+PARAKEET_COMMIT="2eac2e77d9c7ef8899f7a86a46e693ac5ac1a5cd"
 GGML_COMMIT="e705c5fed490514458bdd2eaddc43bd098fcce9b"
 # Subengines (PARAKEET_WITH_CED / PARAKEET_WITH_VOICEDETECT, default ON,
 # hard-required by the engine's CMake): built as static libs inside
