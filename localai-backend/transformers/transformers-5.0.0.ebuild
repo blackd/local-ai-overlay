@@ -27,7 +27,7 @@ DESCRIPTION="LocalAI generic HuggingFace transformers backend (gRPC server)"
 LICENSE="MIT Apache-2.0"
 
 RDEPEND+="
-	sci-ml/transformers[${PYTHON_SINGLE_USEDEP}]
+	>=sci-ml/transformers-5.18.0[${PYTHON_SINGLE_USEDEP}]
 	sci-ml/accelerate[${PYTHON_SINGLE_USEDEP}]
 	sci-ml/bitsandbytes[${PYTHON_SINGLE_USEDEP}]
 	$(python_gen_cond_dep '
