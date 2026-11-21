@@ -22,7 +22,11 @@ LOCAL_AI_CMAKE_TARGET="grpc-server"
 LOCAL_AI_EXTRA_CMAKE_ARGS=(
 	# Mirrors upstream's grpc build (added at 4.10.0).
 	-DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON
-	-DLLAMA_CURL=ON
+	# Since 5.0.0: LLAMA_CURL is a deprecated no-op (vendored cpp-httplib
+	# replaced curl), and LLAMA_OPENSSL (default ON) would link system
+	# openssl for its HTTPS. OFF mirrors upstream's build — the server
+	# owns model acquisition, the backend downloads nothing.
+	-DLLAMA_OPENSSL=OFF
 	-DLLAMA_BUILD_TESTS=OFF
 	-DLLAMA_BUILD_EXAMPLES=OFF
 )
@@ -32,7 +36,7 @@ inherit local-ai-ggml
 # The PrismML llama.cpp (prism branch) commit LocalAI v4.9.0 pins.
 # Source of truth: backend/cpp/bonsai/Makefile (BONSAI_VERSION) at the
 # upstream release tag — NOT the auto-bumped pin on master.
-BONSAI_COMMIT="11809184898113482c2f510fd13da669aaba1052"
+BONSAI_COMMIT="9d9efeadbdd1d77458d98717a96fbfa3a016e159"
 
 DESCRIPTION="LocalAI text-generation backend for 1-bit/ternary models (Bonsai fork of llama.cpp)"
 SRC_URI="
@@ -52,13 +56,11 @@ IUSE="test"
 RESTRICT="!test? ( test )"
 
 RDEPEND+="
-	net-misc/curl
 	dev-cpp/abseil-cpp:=
 	dev-libs/protobuf:=
 	net-libs/grpc:=
 "
 DEPEND+="
-	net-misc/curl
 	dev-cpp/abseil-cpp:=
 	dev-libs/protobuf:=
 	net-libs/grpc:=
