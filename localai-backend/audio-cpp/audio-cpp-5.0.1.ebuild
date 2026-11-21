@@ -11,7 +11,7 @@ inherit cmake flag-o-matic local-ai-backend local-ai-rocm toolchain-funcs
 
 # The audio.cpp commit LocalAI v4.12.1 builds against. Source of truth:
 # backend/cpp/audio-cpp/Makefile (AUDIO_CPP_VERSION) at the release tag.
-AUDIOCPP_COMMIT="2872e36e992c8dd98fcc47de094bd703e1ff6dab"
+AUDIOCPP_COMMIT="4de392e03f9fce78bc54154dabea898dde180c84"
 
 DESCRIPTION="LocalAI audio backend (audio.cpp gRPC server)"
 HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"

@@ -25,7 +25,7 @@ inherit local-ai-ggml
 
 # The ik_llama.cpp commit LocalAI v4.12.1 builds against. Source of truth:
 # backend/cpp/ik-llama-cpp/Makefile (IK_LLAMA_VERSION) at the release tag.
-IK_LLAMA_COMMIT="a6383da414f74c944999e7b9312a5a5d76191f6b"
+IK_LLAMA_COMMIT="093e74cb0590eaf462a04516ba1bab8c6b6637bc"
 
 DESCRIPTION="LocalAI text-generation backend (ik_llama.cpp gRPC server)"
 SRC_URI="
