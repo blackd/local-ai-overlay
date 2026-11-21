@@ -19,9 +19,9 @@ EAPI=8
 
 inherit cmake go-module local-ai-backend
 
-# The vllm.cpp commit LocalAI v4.12.1 builds against. Source of truth:
+# The vllm.cpp commit this LocalAI release builds against. Source of truth:
 # backend/go/vllm-cpp/Makefile (VLLM_CPP_VERSION) at the release tag.
-VLLM_COMMIT="46c6846b939313b591f71825a5f5878918663795"
+VLLM_COMMIT="52c291adf170c4b761c7e3f973ad7931305beef0"
 
 DESCRIPTION="LocalAI text-generation backend (vllm.cpp gRPC server)"
 HOMEPAGE="https://localai.io https://github.com/mudler/LocalAI"
@@ -82,6 +82,12 @@ src_configure() {
 		-DVLLM_CPP_BUILD_TESTS=OFF
 		-DVLLM_CPP_BUILD_EXAMPLES=OFF
 		-DVLLM_CPP_VULKAN=$(usex vulkan)
+		# Since 5.0.0 the engine can fetch HuggingFace repositories
+		# named by --model, with HTTPS via system openssl — both
+		# default ON. OFF on both: the server owns model acquisition,
+		# and nothing here may link openssl undeclared.
+		-DVLLM_CPP_HF_DOWNLOAD=OFF
+		-DVLLM_CPP_OPENSSL=OFF
 		# Diarization (ABI v30) FetchContents parakeet.cpp at configure
 		# time — a network fetch — and builds a second ggml into
 		# libvllm, for entry points the Go backend never binds. OFF
