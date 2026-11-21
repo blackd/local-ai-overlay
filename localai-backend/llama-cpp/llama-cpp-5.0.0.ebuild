@@ -14,16 +14,20 @@ LOCAL_AI_CMAKE_TARGET="grpc-server"
 LOCAL_AI_EXTRA_CMAKE_ARGS=(
 	# Mirrors upstream's grpc build (added at 4.10.0).
 	-DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON
-	-DLLAMA_CURL=ON
+	# Since 5.0.0: LLAMA_CURL is a deprecated no-op (vendored cpp-httplib
+	# replaced curl), and LLAMA_OPENSSL (default ON) would link system
+	# openssl for its HTTPS. OFF mirrors upstream's build — the server
+	# owns model acquisition, the backend downloads nothing.
+	-DLLAMA_OPENSSL=OFF
 	-DLLAMA_BUILD_TESTS=OFF
 	-DLLAMA_BUILD_EXAMPLES=OFF
 )
 
 inherit local-ai-ggml
 
-# The llama.cpp commit LocalAI v4.9.0 builds against. Source of truth:
+# The llama.cpp commit this LocalAI release builds against. Source of truth:
 # backend/cpp/llama-cpp/Makefile (LLAMA_VERSION) at the upstream release tag.
-LLAMA_COMMIT="c0fd78626405c6d9b934efef0ec7291fcc20e3d6"
+LLAMA_COMMIT="d998c676ff463b1b8ad94ad7c0b905e281422fad"
 
 DESCRIPTION="LocalAI text-generation backend (llama.cpp gRPC server)"
 SRC_URI="
@@ -41,13 +45,11 @@ IUSE="test"
 RESTRICT="!test? ( test )"
 
 RDEPEND+="
-	net-misc/curl
 	dev-cpp/abseil-cpp:=
 	dev-libs/protobuf:=
 	net-libs/grpc:=
 "
 DEPEND+="
-	net-misc/curl
 	dev-cpp/abseil-cpp:=
 	dev-libs/protobuf:=
 	net-libs/grpc:=
