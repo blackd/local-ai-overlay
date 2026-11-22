@@ -1,0 +1,19 @@
+ik_llama.cpp's new host-pointer probe in ggml-cuda.cu uses
+cudaPointerAttributes/cudaPointerGetAttributes/cudaMemoryTypeHost, which
+vendors/hip.h does not map - the HIP build fails in ggml-cuda.cu. Add the
+three mappings mainline ggml carries (HIP >= 6 names: the attribute
+struct's member is .type, matching the probe's use). Not fixed on the
+fork's master as of 093e74cb - re-check at every pin bump.
+
+--- a/ggml/src/ggml-cuda/vendors/hip.h
++++ b/ggml/src/ggml-cuda/vendors/hip.h
+@@ -87,6 +87,9 @@
+ #define cudaMemset hipMemset
+ #define cudaMemsetAsync hipMemsetAsync
+ #define cudaMemGetInfo hipMemGetInfo
++#define cudaMemoryTypeHost hipMemoryTypeHost
++#define cudaPointerAttributes hipPointerAttribute_t
++#define cudaPointerGetAttributes hipPointerGetAttributes
+ #define cudaOccupancyMaxActiveBlocksPerMultiprocessor hipOccupancyMaxActiveBlocksPerMultiprocessor
+ #define cudaOccupancyMaxPotentialBlockSize hipOccupancyMaxPotentialBlockSize
+ #define cudaSetDevice hipSetDevice

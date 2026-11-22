@@ -38,6 +38,8 @@ SRC_URI="
 # exactly that layout. src_unpack moves it into place.
 S="${WORKDIR}/LocalAI-${PV}/backend/cpp/ik-llama-cpp/llama.cpp"
 
+PATCHES=( "${FILESDIR}/${P}-hip-pointer-attributes.patch" )
+
 KEYWORDS="~amd64"
 
 RDEPEND+="
