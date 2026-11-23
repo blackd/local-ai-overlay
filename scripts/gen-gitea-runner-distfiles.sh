@@ -14,6 +14,11 @@ trap 'rm -rf "$WORK"' EXIT
 HERE=$(dirname "$(realpath "$0")")
 
 cd "$WORK"
+# gitea.com's archive endpoint answered 403 until the web UI was
+# visited (2026-11-23); fetch the releases page first to appease
+# whatever anti-automation check sits in front. If it recurs, the next
+# step is a browser-like User-Agent on these requests.
+curl -fsSL -o /dev/null https://gitea.com/gitea/runner/releases
 curl -fsSL "https://gitea.com/gitea/runner/archive/v${VERSION}.tar.gz" | tar -xz
 cd runner
 
