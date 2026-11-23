@@ -62,11 +62,14 @@ src_compile() {
 	# falls back to the rebuild, which is the Linux path.
 	local -x npm_config_nodedir="${EPREFIX}/usr"
 	local -x NODE_GYP_FORCE_PYTHON="${PYTHON}"
-	# npm skips dependency install scripts unless allow-listed; name
-	# node-pty explicitly so its gyp build never depends on npm defaults.
-	# protobufjs' postinstall, the only other install script in the tree,
-	# is a version-scheme warning printer and stays skipped.
-	npm --offline --no-audit --no-fund --foreground-scripts --allow-scripts=node-pty rebuild node-pty || die "node-pty build failed"
+	# npm skips dependency install scripts unless allow-listed, and the
+	# --allow-scripts flag is refused at project scope (EALLOWSCRIPTS):
+	# the allowlist must live in package.json, which npm's own tool
+	# writes. node-pty's gyp build is the one script we need; protobufjs'
+	# postinstall, the only other install script in the tree, is a
+	# version-scheme warning printer and stays skipped.
+	npm install-scripts approve node-pty || die "install-scripts approve failed"
+	npm --offline --no-audit --no-fund --foreground-scripts rebuild node-pty || die "node-pty build failed"
 	# Keep the addon and its spawn helper, drop the objects.
 	local build=node_modules/node-pty/build
 	find "${build}" -mindepth 1 -maxdepth 1 ! -name Release -exec rm -r {} + || die
