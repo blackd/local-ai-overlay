@@ -22,10 +22,10 @@ PYTHON_COMPAT=( python3_{12..14} )
 
 inherit distutils-r1 pypi
 
-OPENFST_TAG="1.8.5-2026-07-09"
+OPENFST_TAG="1.8.5-2026-11-21"
 PYBIND11_PV="3.0.0"
-# gh-pages commit "deploy: 3bd58c1b", the v1.9.0 release commit.
-DOC_COMMIT="1d39f1d07bafb66f061ba2a39bc5dfcff2bc96a2"
+# gh-pages commit "deploy: d9e9e9b9", the v1.9.2 release commit.
+DOC_COMMIT="40d88d16cf6b071d7a29981db955f990d513acdd"
 
 DESCRIPTION="Python wrapper for OpenFST and its extensions from Kaldi"
 HOMEPAGE="https://github.com/k2-fsa/kaldifst"
