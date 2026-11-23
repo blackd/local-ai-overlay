@@ -18,7 +18,7 @@ GITEA_RUNNER_DISTFILES="https://git.ipnmod.org/packages/local-ai-overlay/release
 DESCRIPTION="Daemon that connects to a Gitea instance and runs CI action jobs"
 HOMEPAGE="https://gitea.com/gitea/runner"
 SRC_URI="
-	https://gitea.com/gitea/runner/archive/v${PV}.tar.gz -> ${P}.tar.gz
+	${GITEA_RUNNER_DISTFILES}/${P}.tar.gz
 	${GITEA_RUNNER_DISTFILES}/${P}-deps.tar.xz
 "
 # Gitea archives extract to the bare repository name.
