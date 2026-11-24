@@ -150,7 +150,6 @@ RDEPEND+="
 	$(python_gen_cond_dep 'dev-python/audioop-lts[${PYTHON_USEDEP}]' python3_{13..14})
 	$(python_gen_cond_dep '
 		dev-python/pydub[${PYTHON_USEDEP}]
-		dev-python/sentry-sdk[${PYTHON_USEDEP}]
 	')
 "
 DEPEND="${RDEPEND}"
