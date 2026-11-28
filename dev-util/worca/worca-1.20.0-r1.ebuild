@@ -26,7 +26,7 @@ inherit optfeature python-any-r1
 WORCA_DISTFILES="https://git.ipnmod.org/packages/local-ai-overlay/releases/download/worca-v${PV}"
 
 DESCRIPTION="Workflow orchestration for coding agents, each run on its own git branch"
-HOMEPAGE="https://github.com/SinishaDjukic/worca-cc https://www.npmjs.com/package/@worca/app"
+HOMEPAGE="https://github.com/worca-org/worca https://www.npmjs.com/package/@worca/app"
 SRC_URI="
 	https://registry.npmjs.org/@worca/app/-/app-${PV}.tgz -> ${P}.npm.tgz
 	${WORCA_DISTFILES}/${P}-node_modules.tar.xz

@@ -31,7 +31,7 @@ declare -A UPSTREAMS=(
 	[app-containers/zot]=github:project-zot/zot
 	[sys-process/dagu]=github:dagucloud/dagu
 	[www-apps/caddyui]=github:X4Applegate/caddyui
-	[dev-util/worca]=github:SinishaDjukic/worca-cc
+	[dev-util/worca]=github:worca-org/worca
 )
 
 # v1.2.3 or 1.2.3, possibly with a <name>-v prefix; anything else (kaldifst's "doc" deploy tag) is not a release.
@@ -42,9 +42,9 @@ latest_upstream() {
 		github)
 			# "latest" is by date, so a maintenance release on an old line shadows a newer major
 			# (opencode 1.19.5 after 2.3.0): take the HIGHEST version-shaped release instead.
-			tag=$(curl -sf "https://api.github.com/repos/${repo}/releases?per_page=30" | jq -r --arg re "${VERSION_TAG}" '.[] | select((.prerelease or .draft) | not) | .tag_name | select(test($re))' | sed -e 's/^v//' -e 's/^.*-v//' | sort -V | tail -n1)
+			tag=$(curl -sfL "https://api.github.com/repos/${repo}/releases?per_page=30" | jq -r --arg re "${VERSION_TAG}" '.[] | select((.prerelease or .draft) | not) | .tag_name | select(test($re))' | sed -e 's/^v//' -e 's/^.*-v//' | sort -V | tail -n1)
 			# No releases at all: the newest version-shaped tag.
-			[ -n "${tag}" ] || tag=$(curl -sf "https://api.github.com/repos/${repo}/tags?per_page=30" | jq -r --arg re "${VERSION_TAG}" '[.[].name | select(test($re))][0] // empty')
+			[ -n "${tag}" ] || tag=$(curl -sfL "https://api.github.com/repos/${repo}/tags?per_page=30" | jq -r --arg re "${VERSION_TAG}" '[.[].name | select(test($re))][0] // empty')
 			;;
 		gitea)
 			tag=$(curl -sf "https://${repo%%/*}/api/v1/repos/${repo#*/}/releases/latest" | jq -r '.tag_name // empty')
